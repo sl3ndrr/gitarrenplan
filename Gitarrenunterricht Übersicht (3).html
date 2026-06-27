@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gitarrenunterricht Übersicht</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+
+/* ============================================================
+   CSS-VARIABLEN
+   ============================================================ */
+:root {
+  --primary:        #1e3a8a;
+  --primary-light:  #dbeafe;
+  --accent:         #f59e0b;
+  --danger:         #dc2626;
+  --danger-light:   #fee2e2;
+  --success:        #16a34a;
+  --text-main:      #1e293b;
+  --text-muted:     #64748b;
+  --bg-gradient:    linear-gradient(135deg, #1a2f5a 0%, #2d5282 100%);
+  --border:         #e2e8f0;
+  --radius-sm:      6px;
+  --radius-md:      10px;
+  --radius-lg:      12px;
+  --shadow:         0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   RESET & BASISSTILE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background: #f1f5f9;
+  color: var(--text-main);
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.wrapper {
+  width: 210mm;
+}
+
+/* ============================================================
+   EDITOR-PANEL
+   ============================================================ */
+.editor-panel {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.editor-panel > h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+  color: var(--primary);
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.editor-box {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.editor-box.full-width {
+  grid-column: 1 / -1;
+}
+
+.editor-box h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 8px;
+  background: white;
+  color: var(--text-main);
+  transition: border-color 0.15s, outline 0.15s;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  border-color: var(--accent);
+}
+
+input[type="number"] {
+  width: 80px;
+}
+
+.plan-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+button {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.btn-primary   { background: var(--primary); color: white; }
+.btn-success   { background: var(--success); color: white; }
+.btn-danger    { background: var(--danger);  color: white; }
+.btn-secondary { background: #e2e8f0; color: var(--text-main); }
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* Gefährliche Aktionen – visuell abgetrennt */
+.danger-zone {
+  margin-top: 14px;
+  border: 1.5px solid #fca5a5;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: #fff5f5;
+}
+
+.danger-zone-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.small-note {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 12px;
+  line-height: 1.55;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast {
+  background: #1e293b;
+  color: white;
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  animation: toast-in 0.2s ease, toast-out 0.3s ease 1.8s forwards;
+}
+
+.toast.toast-success { background: var(--success); }
+.toast.toast-error   { background: var(--danger);  }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 8888;
+  padding: 16px;
+}
+
+.modal {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+}
+
+.modal h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.modal p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.modal input[type="text"],
+.modal select {
+  margin-bottom: 16px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-footer button {
+  min-width: 88px;
+}
+
+/* ============================================================
+   SEITEN (DRUCK-LAYOUT)
+   ============================================================ */
+#pages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page {
+  width: 210mm;
+  height: 297mm;
+  background: white;
+  padding: 15mm;
+  padding-bottom: 22mm;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+}
+
+.page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+.page-content {
+  height: 100%;
+}
+
+/* ============================================================
+   KOPFZEILE (erste Seite)
+   ============================================================ */
+header {
+  text-align: center;
+  margin-bottom: 10mm;
+}
+
+.header-inner {
+  background: var(--bg-gradient);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+.header-inner h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+.guitar-bg {
+  position: absolute;
+  font-size: 100px;
+  opacity: 0.1;
+  right: -20px;
+  bottom: -20px;
+  transform: rotate(-15deg);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   INFO-GRID (erste Seite)
+   ============================================================ */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10mm;
+  margin-bottom: 10mm;
+}
+
+.info-grid.has-term {
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6mm;
+}
+
+.info-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 15px;
+  background: #f8fafc;
+}
+
+.info-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.info-value {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ============================================================
+   FOLGESEITEN-HEADER
+   ============================================================ */
+.continuation-header {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 15px;
+  margin-bottom: 8mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.continuation-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.continuation-title strong {
+  color: var(--primary);
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.continuation-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ============================================================
+   SEITENFUSS
+   ============================================================ */
+.page-footer {
+  position: absolute;
+  left: 15mm;
+  right: 15mm;
+  bottom: 8mm;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 5px;
+}
+
+/* ============================================================
+   ZEITSLOTS / GRUPPEN
+   ============================================================ */
+.slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8mm;
+}
+
+.timeslot {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: white;
+  display: flex;
+  flex-direction: column;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.timeslot-header {
+  background: var(--bg-gradient);
+  color: white;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.day-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.day-badge.empty-day {
+  opacity: 0.65;
+  font-style: italic;
+}
+
+.time-text {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.slot-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.slot-actions button {
+  padding: 4px 7px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* ============================================================
+   SCHÜLER-TABELLE
+   ============================================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td {
+  padding: 10px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  height: 40px;
+}
+
+.student-name {
+  font-weight: 500;
+}
+
+.student-class {
+  text-align: right;
+  width: 100px;
+}
+
+.class-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.student-actions {
+  width: 110px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.student-actions button {
+  background: #e2e8f0;
+  color: var(--text-main);
+  padding: 4px 6px;
+  font-size: 11px;
+  margin-left: 2px;
+}
+
+.student-actions button[data-action="remove-student"] {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.student-actions button[data-action="move-student"] {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.empty-row td {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.timeslot table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ============================================================
+   INLINE-BEARBEITUNG
+   ============================================================ */
+.editable {
+  cursor: text;
+  border-radius: 5px;
+  transition: background 0.15s, outline 0.15s;
+}
+
+.editable:hover {
+  background: rgba(245, 158, 11, 0.15);
+  outline: 1px dashed rgba(245, 158, 11, 0.6);
+}
+
+.editable:focus {
+  background: white;
+  color: var(--text-main);
+  outline: 2px solid var(--accent);
+  padding: 2px 4px;
+}
+
+.timeslot-header .editable:focus {
+  color: var(--text-main);
+}
+
+.timeslot-header .day-badge.editable:focus {
+  background: white;
+  color: var(--text-main);
+}
+
+/* ============================================================
+   DRUCKEN
+   ============================================================ */
+@media print {
+  body {
+    background: white;
+    padding: 0;
+    display: block;
+  }
+
+  .wrapper {
+    width: 210mm;
+    margin: 0 auto;
+  }
+
+  #pages {
+    gap: 0;
+  }
+
+  .no-print,
+  .editor-panel,
+  .slot-actions,
+  .student-actions,
+  #toast-container,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  .page {
+    box-shadow: none;
+    border-radius: 0;
+    width: 210mm;
+    height: 297mm;
+    padding: 10mm;
+    padding-bottom: 18mm;
+    margin: 0;
+  }
+
+  .page-footer {
+    left: 10mm;
+    right: 10mm;
+    bottom: 6mm;
+  }
+
+  td {
+    height: 38px;
+  }
+
+  .timeslot table tr:last-child td {
+    border-bottom: none !important;
+  }
+
+  .editable,
+  .editable:hover,
+  .editable:focus {
+    outline: none !important;
+    background: transparent !important;
+    cursor: default;
+  }
+
+  td.student-name.editable {
+    padding: 10px 12px !important;
+    vertical-align: middle;
+  }
+
+  .time-text.editable {
+    padding: 0 !important;
+  }
+
+  .class-badge.editable {
+    background: var(--primary-light) !important;
+    padding: 3px 8px !important;
+  }
+
+  .empty-day {
+    display: none !important;
+  }
+
+  .day-badge.editable {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    padding: 3px 8px !important;
+  }
+}
+
+/* ============================================================
+   MOBIL
+   ============================================================ */
+@media screen and (max-width: 900px) {
+  body {
+    padding: 12px;
+  }
+
+  .wrapper {
+    width: 100%;
+  }
+
+  .page {
+    width: 100%;
+    height: auto;
+  }
+
+  .editor-grid,
+  .slots,
+  .info-grid,
+  .info-grid.has-term,
+  .plan-row {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-box.full-width {
+    grid-column: auto;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<main class="wrapper">
+
+  <div class="editor-panel no-print">
+    <h2>Plan bearbeiten</h2>
+
+    <div class="editor-grid">
+
+      <div class="editor-box full-width">
+        <h3>Planverwaltung</h3>
+        <div class="plan-row">
+          <div>
+            <label for="planSelect">Aktiver Plan</label>
+            <select id="planSelect" aria-label="Aktiven Plan wählen"></select>
+          </div>
+          <div>
+            <label for="planName">Planname</label>
+            <input id="planName" type="text" placeholder="z. B. Gitarrenunterricht Montag" aria-label="Name des aktiven Plans" />
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn-primary"   id="newPlanBtn">Neuer Plan</button>
+          <button class="btn-secondary" id="duplicatePlanBtn">Plan duplizieren</button>
+          <button class="btn-danger"    id="deletePlanBtn">Plan löschen</button>
+        </div>
+      </div>
+
+      <div class="editor-box full-width">
+        <h3>Allgemeine Informationen</h3>
+
+        <label for="metaTitle">Titel</label>
+        <input id="metaTitle" type="text" placeholder="z. B. Gitarrenunterricht" />
+
+        <label for="metaTeacher">Lehrkraft</label>
+        <input id="metaTeacher" type="text" placeholder="Name der Lehrkraft" />
+
+        <label for="metaLocation">Ort</label>
+        <input id="metaLocation" type="text" placeholder="z. B. Lernwerkstatt" />
+
+        <label for="metaTerm">Schuljahr / Halbjahr</label>
+        <input id="metaTerm" type="text" placeholder="z. B. 2. Halbjahr 2025/2026" />
+
+        <label for="minRows">Mindest-Zeilen pro Gruppe</label>
+        <input id="minRows" type="number" min="0" max="20" value="6" aria-label="Mindestanzahl leerer Zeilen pro Gruppe" />
+      </div>
+
+      <div class="editor-box">
+        <h3>Neue Gruppe hinzufügen</h3>
+
+        <label for="newGroupDay">Wochentag</label>
+        <select id="newGroupDay" aria-label="Wochentag für neue Gruppe">
+          <option value="">Kein Wochentag</option>
+          <option value="Montag" selected>Montag</option>
+          <option value="Dienstag">Dienstag</option>
+          <option value="Mittwoch">Mittwoch</option>
+          <option value="Donnerstag">Donnerstag</option>
+          <option value="Freitag">Freitag</option>
+          <option value="Samstag">Samstag</option>
+          <option value="Sonntag">Sonntag</option>
+        </select>
+
+        <label for="newGroupTime">Zeit / Gruppenname</label>
+        <input id="newGroupTime" type="text" placeholder="z. B. 15:45 – 16:15 Uhr" aria-label="Uhrzeit oder Name der neuen Gruppe" />
+
+        <button class="btn-primary" id="addGroupBtn">Gruppe hinzufügen</button>
+      </div>
+
+      <div class="editor-box">
+        <h3>Neuen Schüler hinzufügen</h3>
+
+        <label for="groupSelect">Gruppe auswählen</label>
+        <select id="groupSelect" aria-label="Zielgruppe für neuen Schüler"></select>
+
+        <label for="studentName">Name</label>
+        <input id="studentName" type="text" placeholder="Name des Schülers" />
+
+        <label for="studentClass">Klasse</label>
+        <input id="studentClass" type="text" placeholder="z. B. Klasse 2 b" />
+
+        <button class="btn-success" id="addStudentBtn">Schüler hinzufügen</button>
+      </div>
+
+    </div><div class="button-row">
+      <button class="btn-secondary" onclick="window.print()" aria-label="Plan drucken">🖨 Drucken</button>
+      <button class="btn-secondary" id="exportBtn"    aria-label="Aktiven Plan exportieren">⬇ Exportieren</button>
+      <button class="btn-secondary" id="exportAllBtn" aria-label="Alle Pläne exportieren">⬇ Alle exportieren</button>
+      <button class="btn-secondary" id="importBtn"    aria-label="Plan importieren">⬆ Importieren</button>
+      <button class="btn-secondary" id="undoBtn" disabled aria-label="Letzte Änderung rückgängig machen (Strg+Z)">↩ Rückgängig</button>
+    </div>
+
+    <input id="importFile" type="file" accept="application/json,.json" hidden aria-hidden="true" />
+
+    <div class="danger-zone" role="region" aria-label="Gefährliche Aktionen">
+      <div class="danger-zone-label" aria-hidden="true">⚠ Gefährliche Aktionen</div>
+      <div class="button-row" style="margin-top: 0;">
+        <button class="btn-danger" id="clearPlanBtn">Plan vollständig leeren</button>
+        <button class="btn-danger" id="resetBtn">Ursprünglichen Plan wiederherstellen</button>
+      </div>
+    </div>
+
+    <p class="small-note">
+      Änderungen werden automatisch lokal in diesem Browser gespeichert und sind nur auf diesem Gerät verfügbar.<br>
+      Die Daten werden nicht an einen Server übertragen. Beim Export entsteht eine JSON-Datei mit den eingetragenen Namen.<br>
+      Gruppenzeiten, Wochentage, Schülernamen und Klassen sind direkt im Plan per Klick bearbeitbar. Rückgängig: Strg+Z.
+    </p>
+  </div><div id="pages"></div>
+
+</main><div id="modal-overlay" class="modal-overlay hidden"
+     role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <p  id="modal-message"></p>
+    <input   id="modal-input"  type="text" class="hidden" aria-label="Eingabefeld" />
+    <select  id="modal-select"             class="hidden" aria-label="Auswahl"></select>
+    <div class="modal-footer">
+      <button id="modal-cancel"  class="btn-secondary">Abbrechen</button>
+      <button id="modal-confirm" class="btn-primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+/* ============================================================
+   KONSTANTEN
+   ============================================================ */
+const STORAGE_KEY_PLANS       = "gitarrenunterricht_plans_v2";
+const STORAGE_KEY_ACTIVE_PLAN = "gitarrenunterricht_active_plan_v2";
+const STORAGE_KEY_MIN_ROWS    = "gitarrenunterricht_min_rows";
+const LEGACY_KEY_GROUPS       = "gitarrenunterricht_plan_v1";
+const LEGACY_KEY_META         = "gitarrenunterricht_meta_v1";
+const MAX_UNDO_STEPS          = 10;
+
+/* ============================================================
+   STANDARDDATEN  ·  Leerer Grundzustand
+   ============================================================ */
+const defaultMeta = {
+  title:    "Gitarrenunterricht",
+  teacher:  "Lehrkraft",
+  location: "Lernwerkstatt",
+  term:     ""
+};
+
+const defaultGroups = [];
+
+/* ============================================================
+   ZUSTAND
+   ============================================================ */
+let plans        = loadPlans();
+let activePlanId = loadActivePlanId();
+let undoStack    = [];
+let minRows      = parseInt(safeGetItem(STORAGE_KEY_MIN_ROWS) || "6") || 6;
+
+ensureActivePlanExists();
+
+/* ============================================================
+   LOCALSTORAGE – SICHER
+   ============================================================ */
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    showToast("Speichern fehlgeschlagen – Browserspeicher möglicherweise voll.", "error");
+    return false;
+  }
+}
+
+function safeGetItem(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/* ============================================================
+   DATEN LADEN & SPEICHERN
+   ============================================================ */
+function loadPlans() {
+  const saved = safeGetItem(STORAGE_KEY_PLANS);
+
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(normalizePlan);
+      }
+    } catch {
+      return [createDefaultPlan()];
+    }
+  }
+
+  // Legacy-Migration (v1 → v2)
+  const legacyMeta   = safeGetItem(LEGACY_KEY_META);
+  const legacyGroups = safeGetItem(LEGACY_KEY_GROUPS);
+
+  if (legacyMeta || legacyGroups) {
+    let migratedMeta   = clone(defaultMeta);
+    let migratedGroups = [];
+
+    try { if (legacyMeta)   migratedMeta   = { ...clone(defaultMeta), ...JSON.parse(legacyMeta) }; } catch {}
+    try { if (legacyGroups) migratedGroups = normalizeGroups(JSON.parse(legacyGroups)); } catch {}
+
+    return [{
+      id:     createPlanId(),
+      name:   "Gitarrenunterricht Montag",
+      meta:   migratedMeta,
+      groups: migratedGroups
+    }];
+  }
+
+  return [createDefaultPlan()];
+}
+
+function loadActivePlanId() {
+  return safeGetItem(STORAGE_KEY_ACTIVE_PLAN) || plans[0]?.id;
+}
+
+function ensureActivePlanExists() {
+  if (!plans.some(p => p.id === activePlanId)) {
+    activePlanId = plans[0].id;
+    saveActivePlanId();
+  }
+}
+
+function savePlans() {
+  safeSetItem(STORAGE_KEY_PLANS, JSON.stringify(plans));
+}
+
+function saveActivePlanId() {
+  safeSetItem(STORAGE_KEY_ACTIVE_PLAN, activePlanId);
+}
+
+function saveAll() {
+  savePlans();
+  saveActivePlanId();
+}
+
+/* ============================================================
+   UNDO-SYSTEM
+   ============================================================ */
+function captureUndo() {
+  undoStack.push(JSON.stringify(plans));
+  if (undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
+  updateUndoButton();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  plans = JSON.parse(undoStack.pop());
+  ensureActivePlanExists();
+  savePlans();
+  updateEditorValues();
+  render();
+  updateUndoButton();
+  showToast("Rückgängig gemacht ✓");
+}
+
+function updateUndoButton() {
+  const btn = document.getElementById("undoBtn");
+  if (btn) btn.disabled = undoStack.length === 0;
+}
+
+/* ============================================================
+   HILFSFUNKTIONEN
+   ============================================================ */
+function createPlanId() {
+  return crypto.randomUUID();
+}
+
+function createGroupId() {
+  return crypto.randomUUID();
+}
+
+function clone(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll("&",  "&amp;")
+    .replaceAll("<",  "&lt;")
+    .replaceAll(">",  "&gt;")
+    .replaceAll('"',  "&quot;")
+    .replaceAll("'",  "&#039;");
+}
+
+function formatDate(date) {
+  return date.toLocaleDateString("de-DE", {
+    day:   "2-digit",
+    month: "2-digit",
+    year:  "numeric"
+  });
+}
+
+function sanitizeFilename(name) {
+  return String(name)
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, "_")
+    .slice(0, 80) || "gitarrenunterricht";
+}
+
+function moveItem(array, from, to) {
+  if (from < 0 || to < 0 || from >= array.length || to >= array.length) return false;
+  const [item] = array.splice(from, 1);
+  array.splice(to, 0, item);
+  return true;
+}
+
+function getActivePlan() {
+  return plans.find(p => p.id === activePlanId) || plans[0];
+}
+
+function normalizePlan(plan) {
+  return {
+    id:     plan.id   || createPlanId(),
+    name:   plan.name || "Gitarrenunterricht",
+    meta:   { ...clone(defaultMeta), ...(plan.meta || {}) },
+    groups: normalizeGroups(Array.isArray(plan.groups) ? plan.groups : [])
+  };
+}
+
+function normalizeGroups(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(g => ({
+    id:       g.id   || createGroupId(),
+    day:      g.day  || "",
+    time:     g.time || "Neue Gruppe",
+    students: Array.isArray(g.students)
+      ? g.students.map(s => ({ name: s.name || "Name", className: s.className || "Klasse" }))
+      : []
+  }));
+}
+
+function createDefaultPlan(name = "Gitarrenunterricht") {
+  return {
+    id:     createPlanId(),
+    name,
+    meta:   clone(defaultMeta),
+    groups: []
+  };
+}
+
+function downloadJson(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   MODAL-SYSTEM
+   ============================================================ */
+function showModal({
+  title         = "",
+  message       = "",
+  type          = "alert",
+  inputValue    = "",
+  inputPlaceholder = "",
+  options       = null,
+  confirmLabel  = "OK",
+  confirmClass  = "btn-primary",
+  onConfirm     = null,
+  onCancel      = null
+} = {}) {
+  const overlay    = document.getElementById("modal-overlay");
+  const titleEl    = document.getElementById("modal-title");
+  const msgEl      = document.getElementById("modal-message");
+  const inputEl    = document.getElementById("modal-input");
+  const selectEl   = document.getElementById("modal-select");
+  const cancelBtn  = document.getElementById("modal-cancel");
+  const confirmBtn = document.getElementById("modal-confirm");
+
+  titleEl.textContent     = title;
+  msgEl.textContent       = message;
+  confirmBtn.textContent  = confirmLabel;
+  confirmBtn.className    = confirmClass;
+
+  inputEl.classList.add("hidden");
+  selectEl.classList.add("hidden");
+  cancelBtn.style.display = type === "alert" ? "none" : "";
+
+  if (type === "prompt") {
+    inputEl.classList.remove("hidden");
+    inputEl.value       = inputValue;
+    inputEl.placeholder = inputPlaceholder;
+    setTimeout(() => inputEl.select(), 50);
+  }
+
+  if (type === "select" && Array.isArray(options)) {
+    selectEl.classList.remove("hidden");
+    selectEl.innerHTML = "";
+    options.forEach(opt => {
+      const o = document.createElement("option");
+      o.value       = opt.value;
+      o.textContent = opt.label;
+      selectEl.appendChild(o);
+    });
+  }
+
+  overlay.classList.remove("hidden");
+
+  function cleanup() {
+    overlay.classList.add("hidden");
+    confirmBtn.removeEventListener("click",    onConfirmClick);
+    cancelBtn.removeEventListener("click",     onCancelClick);
+    overlay.removeEventListener("click",       onOverlayClick);
+    inputEl.removeEventListener("keydown",     onInputKey);
+    document.removeEventListener("keydown",    onDocKey);
+  }
+
+  function onConfirmClick() {
+    cleanup();
+    if (onConfirm) {
+      if (type === "prompt")  onConfirm(inputEl.value);
+      else if (type === "select") onConfirm(selectEl.value);
+      else onConfirm();
+    }
+  }
+
+  function onCancelClick() {
+    cleanup();
+    if (onCancel) onCancel();
+  }
+
+  function onOverlayClick(e) {
+    if (e.target === overlay) onCancelClick();
+  }
+
+  function onInputKey(e) {
+    if (e.key === "Enter")  { e.preventDefault(); onConfirmClick(); }
+    if (e.key === "Escape") { e.preventDefault(); onCancelClick();  }
+  }
+
+  function onDocKey(e) {
+    if (e.key === "Escape") { e.preventDefault(); onCancelClick(); }
+  }
+
+  confirmBtn.addEventListener("click", onConfirmClick);
+  cancelBtn.addEventListener("click",  onCancelClick);
+  overlay.addEventListener("click",    onOverlayClick);
+  inputEl.addEventListener("keydown",  onInputKey);
+  document.addEventListener("keydown", onDocKey);
+}
+
+/* ============================================================
+   TOAST-SYSTEM
+   ============================================================ */
+function showToast(message, type = "success") {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className   = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 2200);
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  const plan      = getActivePlan();
+  const container = document.getElementById("pages");
+  container.innerHTML = "";
+
+  const FIRST_PAGE_MAX  = 4;
+  const FOLLOW_PAGE_MAX = 6;
+  const pageGroups      = [];
+
+  if (plan.groups.length === 0) {
+    pageGroups.push([]);
+  } else {
+    pageGroups.push(plan.groups.slice(0, FIRST_PAGE_MAX));
+    let i = FIRST_PAGE_MAX;
+    while (i < plan.groups.length) {
+      pageGroups.push(plan.groups.slice(i, i + FOLLOW_PAGE_MAX));
+      i += FOLLOW_PAGE_MAX;
+    }
+  }
+
+  const totalPages = pageGroups.length;
+  const printDate  = formatDate(new Date());
+
+  pageGroups.forEach((groupsForPage, pageIdx) => {
+    const pageNum     = pageIdx + 1;
+    const isFirstPage = pageIdx === 0;
+    const page        = document.createElement("div");
+    page.className    = isFirstPage ? "page" : "page continuation-page";
+
+    page.innerHTML = `
+      <div class="page-content">
+        ${isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta)}
+        <div class="slots">${groupsForPage.map(renderGroup).join("")}</div>
+      </div>
+      <div class="page-footer">
+        ${totalPages > 1 ? `Seite ${pageNum} von ${totalPages} · ` : ""}Stand: ${printDate}
+      </div>
+    `;
+
+    container.appendChild(page);
+  });
+
+  renderGroupSelect();
+}
+
+function renderMainHeader(meta) {
+  const hasTerm = Boolean(meta.term && meta.term.trim());
+  return `
+    <header>
+      <div class="header-inner">
+        <h1>${escapeHtml(meta.title)}</h1>
+        <div class="guitar-bg" aria-hidden="true">🎸</div>
+      </div>
+    </header>
+    <div class="info-grid ${hasTerm ? "has-term" : ""}">
+      <div class="info-box">
+        <span class="info-label">Lehrkraft</span>
+        <span class="info-value">${escapeHtml(meta.teacher)}</span>
+      </div>
+      <div class="info-box">
+        <span class="info-label">Ort</span>
+        <span class="info-value">${escapeHtml(meta.location)}</span>
+      </div>
+      ${hasTerm ? `
+      <div class="info-box">
+        <span class="info-label">Schuljahr / Halbjahr</span>
+        <span class="info-value">${escapeHtml(meta.term)}</span>
+      </div>` : ""}
+    </div>
+  `;
+}
+
+function renderContinuationHeader(meta) {
+  const hasTerm = Boolean(meta.term && meta.term.trim());
+  return `
+    <div class="continuation-header">
+      <div class="continuation-title">
+        <strong>${escapeHtml(meta.title)}</strong>
+        ${hasTerm ? `<span>${escapeHtml(meta.term)}</span>` : ""}
+      </div>
+      <div class="continuation-meta">
+        ${escapeHtml(meta.teacher)}<br>${escapeHtml(meta.location)}
+      </div>
+    </div>
+  `;
+}
+
+function renderGroup(group) {
+  let rowsHtml = "";
+
+  group.students.forEach((student, idx) => {
+    rowsHtml += `
+      <tr>
+        <td
+          class="student-name editable"
+          contenteditable="true"
+          tabindex="0"
+          spellcheck="false"
+          data-edit="student-name"
+          data-group-id="${group.id}"
+          data-student-index="${idx}"
+          aria-label="Name von Schüler ${idx + 1} – klicken zum Bearbeiten"
+          title="Klicken zum Bearbeiten">${escapeHtml(student.name)}</td>
+
+        <td class="student-class">
+          <span
+            class="class-badge editable"
+            contenteditable="true"
+            tabindex="0"
+            spellcheck="false"
+            data-edit="student-class"
+            data-group-id="${group.id}"
+            data-student-index="${idx}"
+            aria-label="Klasse von Schüler ${idx + 1} – klicken zum Bearbeiten"
+            title="Klicken zum Bearbeiten">${escapeHtml(student.className)}</span>
+        </td>
+
+        <td class="student-actions no-print">
+          <button
+            aria-label="${escapeHtml(student.name)} nach oben"
+            title="Nach oben"
+            data-action="student-up"
+            data-group-id="${group.id}"
+            data-student-index="${idx}">↑</button>
+          <button
+            aria-label="${escapeHtml(student.name)} nach unten"
+            title="Nach unten"
+            data-action="student-down"
+            data-group-id="${group.id}"
+            data-student-index="${idx}">↓</button>
+          <button
+            aria-label="${escapeHtml(student.name)} in andere Gruppe verschieben"
+            title="In andere Gruppe verschieben"
+            data-action="move-student"
+            data-group-id="${group.id}"
+            data-student-index="${idx}">⇄</button>
+          <button
+            aria-label="${escapeHtml(student.name)} entfernen"
+            title="Entfernen"
+            data-action="remove-student"
+            data-group-id="${group.id}"
+            data-student-index="${idx}">✕</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  const emptyCount = Math.max(0, minRows - group.students.length);
+  for (let i = 0; i < emptyCount; i++) {
+    rowsHtml += `
+      <tr class="empty-row">
+        <td></td>
+        <td></td>
+        <td class="student-actions no-print"></td>
+      </tr>
+    `;
+  }
+
+  const dayText  = group.day || "Wochentag";
+  const dayClass = group.day ? "day-badge editable" : "day-badge editable empty-day";
+
+  return `
+    <div class="timeslot">
+      <div class="timeslot-header">
+        <div class="group-header-left">
+          <span
+            class="${dayClass}"
+            contenteditable="true"
+            tabindex="0"
+            spellcheck="false"
+            data-edit="group-day"
+            data-group-id="${group.id}"
+            aria-label="Wochentag dieser Gruppe – klicken zum Bearbeiten"
+            title="Wochentag bearbeiten">${escapeHtml(dayText)}</span>
+
+          <span
+            class="time-text editable"
+            contenteditable="true"
+            tabindex="0"
+            spellcheck="false"
+            data-edit="group-time"
+            data-group-id="${group.id}"
+            aria-label="Uhrzeit dieser Gruppe – klicken zum Bearbeiten"
+            title="Zeit oder Gruppenname bearbeiten">${escapeHtml(group.time)}</span>
+        </div>
+
+        <span class="slot-actions no-print" role="group" aria-label="Aktionen für diese Gruppe">
+          <button
+            aria-label="Gruppe nach oben verschieben"
+            title="Gruppe nach oben"
+            data-action="group-up"
+            data-group-id="${group.id}">↑</button>
+          <button
+            aria-label="Gruppe nach unten verschieben"
+            title="Gruppe nach unten"
+            data-action="group-down"
+            data-group-id="${group.id}">↓</button>
+          <button
+            aria-label="Schüler alphabetisch sortieren"
+            title="Alphabetisch sortieren"
+            data-action="sort-group"
+            data-group-id="${group.id}">A–Z</button>
+          <button
+            aria-label="Gruppe entfernen"
+            title="Gruppe entfernen"
+            data-action="remove-group"
+            data-group-id="${group.id}">✕ Entfernen</button>
+        </span>
+      </div>
+
+      <table>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderPlanSelect() {
+  const select = document.getElementById("planSelect");
+  select.innerHTML = "";
+  plans.forEach(plan => {
+    const opt = document.createElement("option");
+    opt.value       = plan.id;
+    opt.textContent = plan.name;
+    select.appendChild(opt);
+  });
+  select.value = activePlanId;
+}
+
+function renderGroupSelect() {
+  const select = document.getElementById("groupSelect");
+  const plan   = getActivePlan();
+  select.innerHTML = "";
+  plan.groups.forEach(group => {
+    const opt = document.createElement("option");
+    opt.value       = group.id;
+    opt.textContent = group.day ? `${group.day} · ${group.time}` : group.time;
+    select.appendChild(opt);
+  });
+}
+
+function updateEditorValues() {
+  const plan = getActivePlan();
+  document.getElementById("planName").value     = plan.name;
+  document.getElementById("metaTitle").value    = plan.meta.title;
+  document.getElementById("metaTeacher").value  = plan.meta.teacher;
+  document.getElementById("metaLocation").value = plan.meta.location;
+  document.getElementById("metaTerm").value     = plan.meta.term || "";
+  document.getElementById("minRows").value      = minRows;
+  document.getElementById("newGroupDay").value  = "Montag";
+  renderPlanSelect();
+}
+
+/* ============================================================
+   EDITOREN INITIALISIEREN
+   ============================================================ */
+function initEditors() {
+  document.getElementById("planSelect").addEventListener("change", e => {
+    activePlanId = e.target.value;
+    saveActivePlanId();
+    updateEditorValues();
+    render();
+  });
+
+  document.getElementById("planName").addEventListener("input", e => {
+    const plan = getActivePlan();
+    plan.name  = e.target.value.trim() || "Unbenannter Plan";
+    savePlans();
+    renderPlanSelect();
+  });
+
+  document.getElementById("metaTitle").addEventListener("input", e => {
+    const plan = getActivePlan();
+    plan.meta.title = e.target.value.trim() || "Gitarrenunterricht";
+    savePlans(); render();
+  });
+
+  document.getElementById("metaTeacher").addEventListener("input", e => {
+    const plan = getActivePlan();
+    plan.meta.teacher = e.target.value.trim() || "Lehrkraft";
+    savePlans(); render();
+  });
+
+  document.getElementById("metaLocation").addEventListener("input", e => {
+    const plan = getActivePlan();
+    plan.meta.location = e.target.value.trim() || "Ort";
+    savePlans(); render();
+  });
+
+  document.getElementById("metaTerm").addEventListener("input", e => {
+    const plan = getActivePlan();
+    plan.meta.term = e.target.value.trim();
+    savePlans(); render();
+  });
+
+  document.getElementById("minRows").addEventListener("input", e => {
+    minRows = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+    safeSetItem(STORAGE_KEY_MIN_ROWS, String(minRows));
+    render();
+  });
+}
+
+/* ============================================================
+   PLAN-AKTIONEN
+   ============================================================ */
+document.getElementById("newPlanBtn").addEventListener("click", () => {
+  showModal({
+    title:            "Neuer Plan",
+    message:          "Wie soll der neue Plan heißen?",
+    type:             "prompt",
+    inputValue:       "Neuer Gitarrenunterricht-Plan",
+    inputPlaceholder: "Planname",
+    confirmLabel:     "Erstellen",
+    onConfirm: name => {
+      const trimmed = name.trim() || "Neuer Gitarrenunterricht-Plan";
+      const newPlan = createDefaultPlan(trimmed);
+      plans.push(newPlan);
+      activePlanId = newPlan.id;
+      saveAll();
+      updateEditorValues();
+      render();
+      showToast(`Plan „${trimmed}" erstellt ✓`);
+    }
+  });
+});
+
+document.getElementById("duplicatePlanBtn").addEventListener("click", () => {
+  const current    = getActivePlan();
+  const duplicated = normalizePlan({
+    ...clone(current),
+    id:   createPlanId(),
+    name: `${current.name} – Kopie`
+  });
+  plans.push(duplicated);
+  activePlanId = duplicated.id;
+  saveAll();
+  updateEditorValues();
+  render();
+  showToast("Plan dupliziert ✓");
+});
+
+document.getElementById("deletePlanBtn").addEventListener("click", () => {
+  const current = getActivePlan();
+
+  if (plans.length <= 1) {
+    showModal({
+      title:   "Plan kann nicht gelöscht werden",
+      message: "Der letzte vorhandene Plan kann nicht gelöscht werden. Du kannst ihn stattdessen vollständig leeren oder zurücksetzen.",
+      type:    "alert"
+    });
+    return;
+  }
+
+  showModal({
+    title:        "Plan löschen",
+    message:      `Plan „${current.name}" wirklich löschen? Diese Aktion entfernt den gesamten Plan dauerhaft aus diesem Browser.`,
+    type:         "confirm",
+    confirmLabel: "Löschen",
+    confirmClass: "btn-danger",
+    onConfirm: () => {
+      captureUndo();
+      plans        = plans.filter(p => p.id !== current.id);
+      activePlanId = plans[0].id;
+      saveAll();
+      updateEditorValues();
+      render();
+      showToast("Plan gelöscht");
+    }
+  });
+});
+
+/* ============================================================
+   GRUPPE HINZUFÜGEN
+   ============================================================ */
+document.getElementById("addGroupBtn").addEventListener("click", addGroup);
+
+function addGroup() {
+  const plan      = getActivePlan();
+  const dayInput  = document.getElementById("newGroupDay");
+  const timeInput = document.getElementById("newGroupTime");
+  const day  = dayInput.value.trim();
+  const time = timeInput.value.trim();
+
+  if (!time) {
+    showModal({ title: "Fehler", message: "Bitte eine Zeit oder einen Gruppennamen eingeben.", type: "alert" });
+    timeInput.focus();
+    return;
+  }
+
+  captureUndo();
+  plan.groups.push({ id: createGroupId(), day, time, students: [] });
+  dayInput.value  = "Montag";
+  timeInput.value = "";
+  savePlans();
+  render();
+  showToast("Gruppe hinzugefügt ✓");
+  timeInput.focus();
+}
+
+/* ============================================================
+   SCHÜLER HINZUFÜGEN
+   ============================================================ */
+document.getElementById("addStudentBtn").addEventListener("click", addStudent);
+
+function addStudent() {
+  const plan       = getActivePlan();
+  const groupId    = document.getElementById("groupSelect").value;
+  const nameInput  = document.getElementById("studentName");
+  const classInput = document.getElementById("studentClass");
+  const name       = nameInput.value.trim();
+  const className  = classInput.value.trim();
+
+  if (!groupId) {
+    showModal({ title: "Fehler", message: "Bitte zuerst eine Gruppe anlegen oder auswählen.", type: "alert" });
+    return;
+  }
+
+  if (!name) {
+    showModal({ title: "Fehler", message: "Bitte einen Namen eingeben.", type: "alert" });
+    nameInput.focus();
+    return;
+  }
+
+  const group = plan.groups.find(g => g.id === groupId);
+  if (!group) return;
+
+  captureUndo();
+  group.students.push({ name, className: className || "Klasse" });
+  nameInput.value  = "";
+  classInput.value = "";
+  savePlans();
+  render();
+  showToast(`${name} hinzugefügt ✓`);
+  nameInput.focus();
+}
+
+/* ============================================================
+   TASTATUR-SHORTCUTS
+   ============================================================ */
+document.getElementById("newGroupTime").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); addGroup(); }
+});
+
+document.getElementById("studentName").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (document.getElementById("studentClass").value.trim()) addStudent();
+    else document.getElementById("studentClass").focus();
+  }
+});
+
+document.getElementById("studentClass").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); addStudent(); }
+});
+
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+    const active    = document.activeElement;
+    const isEditing = active && (
+      active.isContentEditable ||
+      ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName)
+    );
+    if (!isEditing) {
+      e.preventDefault();
+      undo();
+    }
+  }
+});
+
+/* ============================================================
+   KLICK-DELEGIERUNG (SEITEN)
+   ============================================================ */
+document.getElementById("pages").addEventListener("click", event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+
+  const plan       = getActivePlan();
+  const action     = button.dataset.action;
+  const groupId    = button.dataset.groupId;
+  const groupIndex = plan.groups.findIndex(g => g.id === groupId);
+  const group      = plan.groups[groupIndex];
+  if (!group) return;
+
+  if (action === "group-up") {
+    captureUndo();
+    if (moveItem(plan.groups, groupIndex, groupIndex - 1)) {
+      savePlans(); render(); showToast("Gruppe verschoben ✓");
+    } else {
+      undoStack.pop(); updateUndoButton();
+    }
+    return;
+  }
+
+  if (action === "group-down") {
+    captureUndo();
+    if (moveItem(plan.groups, groupIndex, groupIndex + 1)) {
+      savePlans(); render(); showToast("Gruppe verschoben ✓");
+    } else {
+      undoStack.pop(); updateUndoButton();
+    }
+    return;
+  }
+
+  if (action === "sort-group") {
+    if (group.students.length < 2) {
+      showToast("Nichts zu sortieren.", "error");
+      return;
+    }
+    showModal({
+      title:        "Alphabetisch sortieren",
+      message:      `Schüler in der Gruppe „${group.time}" alphabetisch nach Namen sortieren?`,
+      type:         "confirm",
+      confirmLabel: "Sortieren",
+      onConfirm: () => {
+        captureUndo();
+        group.students.sort((a, b) => a.name.localeCompare(b.name, "de"));
+        savePlans(); render();
+        showToast("Alphabetisch sortiert ✓");
+      }
+    });
+    return;
+  }
+
+  if (action === "remove-group") {
+    const label = group.day ? `${group.day} · ${group.time}` : group.time;
+    showModal({
+      title:        "Gruppe entfernen",
+      message:      `Gruppe „${label}" wirklich entfernen? Alle Schüler dieser Gruppe werden ebenfalls gelöscht.`,
+      type:         "confirm",
+      confirmLabel: "Entfernen",
+      confirmClass: "btn-danger",
+      onConfirm: () => {
+        captureUndo();
+        plan.groups.splice(groupIndex, 1);
+        savePlans(); render();
+        showToast("Gruppe entfernt");
+      }
+    });
+    return;
+  }
+
+  const studentIndex = Number(button.dataset.studentIndex);
+
+  if (action === "student-up") {
+    captureUndo();
+    if (moveItem(group.students, studentIndex, studentIndex - 1)) {
+      savePlans(); render();
+    } else {
+      undoStack.pop(); updateUndoButton();
+    }
+    return;
+  }
+
+  if (action === "student-down") {
+    captureUndo();
+    if (moveItem(group.students, studentIndex, studentIndex + 1)) {
+      savePlans(); render();
+    } else {
+      undoStack.pop(); updateUndoButton();
+    }
+    return;
+  }
+
+  if (action === "move-student") {
+    const student     = group.students[studentIndex];
+    const otherGroups = plan.groups
+      .filter(g => g.id !== group.id)
+      .map(g => ({ value: g.id, label: g.day ? `${g.day} · ${g.time}` : g.time }));
+
+    if (otherGroups.length === 0) {
+      showModal({
+        title:   "Verschieben nicht möglich",
+        message: "Es gibt keine andere Gruppe. Lege zuerst eine weitere Gruppe an.",
+        type:    "alert"
+      });
+      return;
+    }
+
+    showModal({
+      title:        "Schüler verschieben",
+      message:      `„${student.name}" in welche Gruppe verschieben?`,
+      type:         "select",
+      options:      otherGroups,
+      confirmLabel: "Verschieben",
+      onConfirm: targetId => {
+        const targetGroup = plan.groups.find(g => g.id === targetId);
+        if (!targetGroup) return;
+        captureUndo();
+        const [moved] = group.students.splice(studentIndex, 1);
+        targetGroup.students.push(moved);
+        savePlans(); render();
+        showToast(`${moved.name} verschoben ✓`);
+      }
+    });
+    return;
+  }
+
+  if (action === "remove-student") {
+    const student = group.students[studentIndex];
+    showModal({
+      title:        "Schüler entfernen",
+      message:      `„${student.name}" aus der Gruppe entfernen?`,
+      type:         "confirm",
+      confirmLabel: "Entfernen",
+      confirmClass: "btn-danger",
+      onConfirm: () => {
+        captureUndo();
+        group.students.splice(studentIndex, 1);
+        savePlans(); render();
+        showToast(`${student.name} entfernt`);
+      }
+    });
+  }
+});
+
+/* ============================================================
+   INLINE-BEARBEITUNG (focusout – erfasst Undo VOR Änderung)
+   ============================================================ */
+document.getElementById("pages").addEventListener("focusout", event => {
+  const el = event.target;
+  if (!el.dataset || !el.dataset.edit) return;
+
+  const plan         = getActivePlan();
+  const editType     = el.dataset.edit;
+  const groupId      = el.dataset.groupId;
+  const studentIndex = Number(el.dataset.studentIndex);
+  const newValue     = el.innerText.trim();
+  const group        = plan.groups.find(g => g.id === groupId);
+  if (!group) return;
+
+  let mutation = null;
+
+  if (editType === "group-day") {
+    const finalValue = newValue === "Wochentag" ? "" : newValue;
+    if (group.day !== finalValue) mutation = () => { group.day = finalValue; };
+  }
+  if (editType === "group-time") {
+    const finalValue = newValue || "Neue Gruppe";
+    if (group.time !== finalValue) mutation = () => { group.time = finalValue; };
+  }
+  if (editType === "student-name" && group.students[studentIndex]) {
+    const finalValue = newValue || "Name";
+    if (group.students[studentIndex].name !== finalValue) mutation = () => { group.students[studentIndex].name = finalValue; };
+  }
+  if (editType === "student-class" && group.students[studentIndex]) {
+    const finalValue = newValue || "Klasse";
+    if (group.students[studentIndex].className !== finalValue) mutation = () => { group.students[studentIndex].className = finalValue; };
+  }
+
+  if (mutation) {
+    captureUndo();
+    mutation();
+    savePlans();
+    render();
+    showToast("Gespeichert ✓");
+  }
+});
+
+document.getElementById("pages").addEventListener("keydown", event => {
+  const editable = event.target.closest("[contenteditable='true']");
+  if (!editable) return;
+  if (event.key === "Enter") { event.preventDefault(); editable.blur(); }
+});
+
+/* ============================================================
+   EXPORT / IMPORT
+   ============================================================ */
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const plan = getActivePlan();
+  downloadJson(
+    { type: "gitarrenunterricht-plan", version: 2, exportedAt: new Date().toISOString(), plan: plan },
+    sanitizeFilename(plan.name) + ".json"
+  );
+  showToast("Plan exportiert ✓");
+});
+
+document.getElementById("exportAllBtn").addEventListener("click", () => {
+  const date = formatDate(new Date()).replace(/\./g, "-");
+  downloadJson(
+    { type: "gitarrenunterricht-plans", version: 2, exportedAt: new Date().toISOString(), plans: plans },
+    `alle_plaene_${date}.json`
+  );
+  showToast("Alle Pläne exportiert ✓");
+});
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+
+document.getElementById("importFile").addEventListener("change", event => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+
+      if (imported.type === "gitarrenunterricht-plans" && Array.isArray(imported.plans)) {
+        captureUndo();
+        const importedPlans = imported.plans.map(p => normalizePlan({ ...p, id: createPlanId() }));
+
+        if (plans.length === 1 && plans[0].groups.length === 0) {
+          plans = importedPlans;
+        } else {
+          plans.push(...importedPlans);
+        }
+
+        activePlanId = importedPlans[0].id;
+        saveAll();
+        updateEditorValues();
+        render();
+        showToast(`${importedPlans.length} Plan(e) importiert ✓`);
+        return;
+      }
+
+      let importedPlan;
+      if (imported.type === "gitarrenunterricht-plan" && imported.plan) {
+        importedPlan = imported.plan;
+      } else if (imported.meta || imported.groups) {
+        importedPlan = imported;
+      } else {
+        throw new Error("Unbekanntes Format.");
+      }
+
+      captureUndo();
+      importedPlan = normalizePlan({
+        ...importedPlan,
+        id:   createPlanId(),
+        name: importedPlan.name || "Importierter Plan"
+      });
+
+      if (plans.length === 1 && plans[0].groups.length === 0) {
+        plans = [importedPlan];
+      } else {
+        plans.push(importedPlan);
+      }
+
+      activePlanId = importedPlan.id;
+      saveAll();
+      updateEditorValues();
+      render();
+      showToast(`Plan „${importedPlan.name}" importiert ✓`);
+
+    } catch {
+      showModal({
+        title:   "Import fehlgeschlagen",
+        message: "Die Datei konnte nicht importiert werden. Bitte eine gültige JSON-Exportdatei auswählen.",
+        type:    "alert"
+      });
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  reader.readAsText(file);
+});
+
+/* ============================================================
+   UNDO-BUTTON
+   ============================================================ */
+document.getElementById("undoBtn").addEventListener("click", undo);
+
+/* ============================================================
+   PLAN LEEREN / ZURÜCKSETZEN
+   ============================================================ */
+document.getElementById("clearPlanBtn").addEventListener("click", () => {
+  const plan = getActivePlan();
+  showModal({
+    title:        "Plan leeren",
+    message:      `Plan „${plan.name}" vollständig leeren? Alle Gruppen und Schüler werden entfernt.`,
+    type:         "confirm",
+    confirmLabel: "Jetzt leeren",
+    confirmClass: "btn-danger",
+    onConfirm: () => {
+      captureUndo();
+      plan.groups = [];
+      savePlans();
+      render();
+      showToast("Plan geleert");
+    }
+  });
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  const plan = getActivePlan();
+  showModal({
+    title:        "Plan zurücksetzen",
+    message:      `Plan „${plan.name}" auf den leeren Grundzustand zurücksetzen?`,
+    type:         "confirm",
+    confirmLabel: "Zurücksetzen",
+    confirmClass: "btn-danger",
+    onConfirm: () => {
+      captureUndo();
+      plan.name   = "Gitarrenunterricht";
+      plan.meta   = clone(defaultMeta);
+      plan.groups = [];
+      savePlans();
+      updateEditorValues();
+      render();
+      showToast("Plan zurückgesetzt");
+    }
+  });
+});
+
+/* ============================================================
+   START
+   ============================================================ */
+initEditors();
+updateEditorValues();
+render();
+updateUndoButton();
+</script>
+</body>
+</html>
