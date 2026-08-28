@@ -194,6 +194,10 @@ button:disabled {
   margin-bottom: 8px;
 }
 
+.danger-actions {
+  margin-top: 0;
+}
+
 .small-note {
   color: var(--text-muted);
   font-size: 12px;
@@ -736,4 +740,3 @@ td {
     grid-column: auto;
   }
 }
-
