@@ -21,19 +21,25 @@ gitarrenplan/
 ├── js/
 │   ├── app.js                  # Initialisierung und Zusammensetzen der Anwendung
 │   ├── config.js               # Konfiguration und Standardwerte
-│   ├── state.js                # Zentraler Laufzeit-Zustand
-│   ├── storage.js              # Local-Storage-Laden, -Migration und -Speichern
+│   ├── state.js                # Gekapselter Store, Dispatch, Undo und Mehrtab-Schutz
+│   ├── commands.js             # Fachliche Command-Handler
+│   ├── storage.js              # Migration und Phase-1-Adapter
+│   ├── persistence.js          # Fehlerisolierte V3-Lese-/Schreiboperationen
+│   ├── normalization.js        # Zentrale Validierung des Datenvertrags
 │   ├── utils.js                # Reine Hilfsfunktionen
 │   ├── render.js               # Erzeugt die Druckvorschau und Auswahlfelder
 │   ├── ui/
-│   │   └── feedback.js         # Modal- und Toast-Komponenten
+│   │   ├── feedback.js         # Modal- und Toast-Komponenten
+│   │   └── text-edit.js        # Debounce und gruppierte Text-Undo-Schritte
 │   └── features/
 │       ├── data-transfer.js    # JSON-Import und -Export
 │       ├── editor.js           # Formularfelder der Planverwaltung
 │       ├── history.js          # Undo-Verlauf
-│       ├── plan-actions.js     # Plan anlegen, duplizieren, löschen, leeren
-│       └── schedule-actions.js # Gruppen, Schüler und Inline-Bearbeitung
-└── .gitignore
+│       ├── lifecycle.js        # Print/Pagehide/Storage-Listener
+│       ├── plan-actions.js     # Plan-Dialoge und Commands
+│       └── schedule-actions.js # Gruppen-, Schüler- und Inline-Events
+├── tests/                      # Vitest-/jsdom-Regressionstests
+└── docs/                       # Datenvertrag und Architektur
 ~~~
 
 Für spätere Bilder, Logos oder andere statische Dateien kann ein Ordner namens assets direkt im Projektstamm angelegt werden. Da Git leere Ordner nicht versioniert, wird er erst dann eingecheckt, wenn er Inhalt hat.
@@ -53,6 +59,13 @@ http://localhost:8000
 ~~~
 
 Ein lokaler Server ist für JavaScript-Module nötig; das Öffnen der HTML-Datei per Dateipfad ist nicht vorgesehen.
+
+Qualitätssicherung nutzt ausschließlich Dev-Abhängigkeiten:
+
+~~~bash
+npm install
+npm test
+~~~
 
 ## Daten und Datenschutz
 

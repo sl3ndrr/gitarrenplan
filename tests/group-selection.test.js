@@ -1,10 +1,23 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { APP_STATE_VERSION } from "../js/config.js";
 import { initialiseEditor } from "../js/features/editor.js";
-import { addGroup, addStudent } from "../js/features/schedule-actions.js";
+import {
+  addGroup,
+  addStudent
+} from "../js/features/schedule-actions.js";
 import { normalizeAppState } from "../js/normalization.js";
-import { render, updateEditorValues } from "../js/render.js";
-import { getActivePlan, initialiseState } from "../js/state.js";
+import {
+  disposeRenderScheduler,
+  flushRender,
+  render,
+  requestRender
+} from "../js/render.js";
+import {
+  getActivePlan,
+  initialiseState,
+  subscribe
+} from "../js/state.js";
+import { disposeTextEdits } from "../js/ui/text-edit.js";
 import { mountAppFixture } from "./dom-fixture.js";
 
 function createState() {
@@ -31,17 +44,35 @@ function createState() {
   });
 }
 
+let cleanups;
+
 beforeEach(() => {
+  vi.useFakeTimers();
   localStorage.clear();
   mountAppFixture();
   initialiseState(createState());
-  updateEditorValues();
+  cleanups = [subscribe((event) => {
+    if (event.type === "change") {
+      const scope = { ...(event.render || {}) };
+      if (event.commandType === "group/add" && event.value?.groupId) {
+        scope.preferredGroupId = event.value.groupId;
+      }
+      requestRender(scope);
+    }
+  })];
   render();
+});
+
+afterEach(() => {
+  cleanups.splice(0).reverse().forEach((cleanup) => cleanup());
+  disposeTextEdits();
+  disposeRenderScheduler();
+  vi.useRealTimers();
 });
 
 describe("Gruppenauswahl", () => {
   it("behält die zweite Gruppe nach Render und Metadatenänderung bei", () => {
-    initialiseEditor();
+    cleanups.push(initialiseEditor());
     const groupSelect = document.getElementById("groupSelect");
     groupSelect.value = "group-2";
 
@@ -49,8 +80,11 @@ describe("Gruppenauswahl", () => {
     expect(groupSelect.value).toBe("group-2");
 
     const termInput = document.getElementById("metaTerm");
+    termInput.focus();
     termInput.value = "2. Halbjahr 2026";
     termInput.dispatchEvent(new Event("input", { bubbles: true }));
+    vi.advanceTimersByTime(300);
+    flushRender();
 
     expect(groupSelect.value).toBe("group-2");
     expect(getActivePlan().meta.term).toBe("2. Halbjahr 2026");
@@ -65,12 +99,13 @@ describe("Gruppenauswahl", () => {
     nameInput.value = "Ada";
     classInput.value = "2 a";
     addStudent();
-
+    flushRender();
     expect(groupSelect.value).toBe("group-2");
 
     nameInput.value = "Berta";
     classInput.value = "3 b";
     addStudent();
+    flushRender();
 
     const [firstGroup, secondGroup] = getActivePlan().groups;
     expect(firstGroup.students).toHaveLength(0);
@@ -85,6 +120,7 @@ describe("Gruppenauswahl", () => {
     document.getElementById("newGroupTime").value = "17:00";
 
     addGroup();
+    flushRender();
 
     const newGroup = getActivePlan().groups.at(-1);
     expect(newGroup.time).toBe("17:00");
@@ -92,14 +128,29 @@ describe("Gruppenauswahl", () => {
   });
 
   it("deaktiviert Gruppenauswahl und Schüler-Button ohne Gruppen", () => {
+    const state = createState();
     initialiseState(normalizeAppState({
-      ...createState(),
-      plans: [{ ...createState().plans[0], groups: [] }]
+      ...state,
+      plans: [{ ...state.plans[0], groups: [] }]
     }));
-
     render();
 
     expect(document.getElementById("groupSelect").disabled).toBe(true);
     expect(document.getElementById("addStudentBtn").disabled).toBe(true);
   });
+
+  it("baut Select-Optionen bei reinen Metadatenänderungen nicht neu", () => {
+    cleanups.push(initialiseEditor());
+    const planOption = document.querySelector("#planSelect option");
+    const groupOption = document.querySelector("#groupSelect option");
+    const input = document.getElementById("metaLocation");
+    input.focus();
+    input.value = "Neuer Raum";
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    flushRender();
+
+    expect(document.querySelector("#planSelect option")).toBe(planOption);
+    expect(document.querySelector("#groupSelect option")).toBe(groupOption);
+  });
 });
+

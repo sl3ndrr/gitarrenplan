@@ -1,104 +1,81 @@
-import { getActivePlan, getActivePlanId, getMinRows } from "../state.js";
-import { render, renderPlanSelect, updateEditorValues } from "../render.js";
-import { commitState } from "../storage.js";
-import { showSaveError } from "../ui/feedback.js";
+import { DATA_LIMITS } from "../config.js";
+import {
+  dispatch,
+  getActivePlan,
+  getActivePlanId,
+  getMinRows
+} from "../state.js";
+import { bindDebouncedTextInput } from "../ui/text-edit.js";
 
-function findDraftActivePlan(draft) {
-  return draft.plans.find((plan) => plan.id === draft.activePlanId) || draft.plans[0];
-}
-
-function commitEditorChange(mutator) {
-  const result = commitState(mutator);
-
-  if (!result.ok) {
-    showSaveError(result.error);
-  }
-
-  return result.ok;
+function bindPlanTextField(elementId, field, maxLength, selector) {
+  const element = document.getElementById(elementId);
+  element.maxLength = maxLength;
+  return bindDebouncedTextInput(element, () => ({
+    key: "plan:" + getActivePlanId() + ":" + field,
+    getValue: () => selector(getActivePlan()),
+    createCommand: (value) => ({
+      type: field === "name" ? "plan/nameSet" : "meta/set",
+      payload: field === "name" ? { name: value } : { field, value }
+    })
+  }));
 }
 
 export function initialiseEditor() {
-  document.getElementById("planSelect").addEventListener("change", (event) => {
-    if (!commitEditorChange((draft) => {
-      draft.activePlanId = event.target.value;
-    })) {
+  const cleanups = [];
+  const planSelect = document.getElementById("planSelect");
+  const onPlanChange = (event) => {
+    const result = dispatch({
+      type: "plan/select",
+      payload: { planId: event.target.value }
+    });
+    if (!result.ok) {
       event.target.value = getActivePlanId();
-      return;
     }
+  };
+  planSelect.addEventListener("change", onPlanChange);
+  cleanups.push(() => planSelect.removeEventListener("change", onPlanChange));
 
-    updateEditorValues();
-    render();
-  });
+  cleanups.push(bindPlanTextField(
+    "planName",
+    "name",
+    DATA_LIMITS.planNameLength,
+    (plan) => plan.name
+  ));
+  cleanups.push(bindPlanTextField(
+    "metaTitle",
+    "title",
+    DATA_LIMITS.metadataLength,
+    (plan) => plan.meta.title
+  ));
+  cleanups.push(bindPlanTextField(
+    "metaTeacher",
+    "teacher",
+    DATA_LIMITS.personNameLength,
+    (plan) => plan.meta.teacher
+  ));
+  cleanups.push(bindPlanTextField(
+    "metaLocation",
+    "location",
+    DATA_LIMITS.metadataLength,
+    (plan) => plan.meta.location
+  ));
+  cleanups.push(bindPlanTextField(
+    "metaTerm",
+    "term",
+    DATA_LIMITS.metadataLength,
+    (plan) => plan.meta.term
+  ));
 
-  document.getElementById("planName").addEventListener("input", (event) => {
-    if (!commitEditorChange((draft) => {
-      findDraftActivePlan(draft).name = event.target.value;
-    })) {
-      event.target.value = getActivePlan().name;
-      return;
-    }
+  const minRows = document.getElementById("minRows");
+  cleanups.push(bindDebouncedTextInput(minRows, () => ({
+    key: "state:minRows",
+    getValue: () => String(getMinRows()),
+    createCommand: (value) => ({
+      type: "minRows/set",
+      payload: { value }
+    })
+  })));
 
-    event.target.value = getActivePlan().name;
-    renderPlanSelect();
-  });
-
-  document.getElementById("metaTitle").addEventListener("input", (event) => {
-    if (!commitEditorChange((draft) => {
-      findDraftActivePlan(draft).meta.title = event.target.value;
-    })) {
-      event.target.value = getActivePlan().meta.title;
-      return;
-    }
-
-    event.target.value = getActivePlan().meta.title;
-    render();
-  });
-
-  document.getElementById("metaTeacher").addEventListener("input", (event) => {
-    if (!commitEditorChange((draft) => {
-      findDraftActivePlan(draft).meta.teacher = event.target.value;
-    })) {
-      event.target.value = getActivePlan().meta.teacher;
-      return;
-    }
-
-    event.target.value = getActivePlan().meta.teacher;
-    render();
-  });
-
-  document.getElementById("metaLocation").addEventListener("input", (event) => {
-    if (!commitEditorChange((draft) => {
-      findDraftActivePlan(draft).meta.location = event.target.value;
-    })) {
-      event.target.value = getActivePlan().meta.location;
-      return;
-    }
-
-    event.target.value = getActivePlan().meta.location;
-    render();
-  });
-
-  document.getElementById("metaTerm").addEventListener("input", (event) => {
-    if (!commitEditorChange((draft) => {
-      findDraftActivePlan(draft).meta.term = event.target.value;
-    })) {
-      event.target.value = getActivePlan().meta.term;
-      return;
-    }
-
-    event.target.value = getActivePlan().meta.term;
-    render();
-  });
-
-  document.getElementById("minRows").addEventListener("input", (event) => {
-    if (!commitEditorChange((draft) => {
-      draft.minRows = event.target.value;
-    })) {
-      event.target.value = getMinRows();
-      return;
-    }
-
-    event.target.value = getMinRows();
-    render();
-  });
+  return () => cleanups.splice(0).reverse().forEach((cleanup) => cleanup());
 }
+

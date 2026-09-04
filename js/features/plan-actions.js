@@ -1,31 +1,5 @@
-import { DEFAULT_META } from "../config.js";
-import { getActivePlan, getPlans } from "../state.js";
-import { render, updateEditorValues } from "../render.js";
-import { commitState } from "../storage.js";
-import { commitWithUndo } from "./history.js";
-import { showModal, showSaveError, showToast } from "../ui/feedback.js";
-import { clone, createPlanId } from "../utils.js";
-import { createDefaultPlan } from "../normalization.js";
-
-export function initialisePlanActions() {
-  document.getElementById("newPlanBtn").addEventListener("click", createPlan);
-  document.getElementById("duplicatePlanBtn").addEventListener("click", duplicatePlan);
-  document.getElementById("deletePlanBtn").addEventListener("click", deletePlan);
-  document.getElementById("clearPlanBtn").addEventListener("click", clearPlan);
-  document.getElementById("resetBtn").addEventListener("click", resetPlan);
-}
-
-function finishPlanAction(result, successMessage) {
-  if (!result.ok) {
-    showSaveError(result.error);
-    return false;
-  }
-
-  updateEditorValues();
-  render();
-  showToast(successMessage);
-  return true;
-}
+import { dispatch, getActivePlan, getPlans } from "../state.js";
+import { showModal } from "../ui/feedback.js";
 
 function createPlan() {
   showModal({
@@ -36,35 +10,20 @@ function createPlan() {
     inputPlaceholder: "Planname",
     confirmLabel: "Erstellen",
     onConfirm(name) {
-      const newPlan = createDefaultPlan(name || "Neuer Gitarrenunterricht-Plan");
-      const result = commitWithUndo((draft) => {
-        draft.plans.push(newPlan);
-        draft.activePlanId = newPlan.id;
-      });
-
-      finishPlanAction(result, "Plan „" + (result.ok ? getActivePlan().name : newPlan.name) + "“ erstellt ✓");
+      dispatch({ type: "plan/create", payload: { name } });
     }
   });
 }
 
 function duplicatePlan() {
-  const currentPlan = getActivePlan();
-  const duplicate = {
-    ...clone(currentPlan),
-    id: createPlanId(),
-    name: currentPlan.name + " – Kopie"
-  };
-  const result = commitWithUndo((draft) => {
-    draft.plans.push(duplicate);
-    draft.activePlanId = duplicate.id;
+  dispatch({
+    type: "plan/duplicate",
+    payload: { planId: getActivePlan().id }
   });
-
-  finishPlanAction(result, "Plan dupliziert ✓");
 }
 
 function deletePlan() {
   const currentPlan = getActivePlan();
-
   if (getPlans().length <= 1) {
     showModal({
       title: "Plan kann nicht gelöscht werden",
@@ -81,19 +40,13 @@ function deletePlan() {
     confirmLabel: "Löschen",
     confirmClass: "btn-danger",
     onConfirm() {
-      const result = commitWithUndo((draft) => {
-        draft.plans = draft.plans.filter((plan) => plan.id !== currentPlan.id);
-        draft.activePlanId = draft.plans[0].id;
-      });
-
-      finishPlanAction(result, "Plan gelöscht");
+      dispatch({ type: "plan/delete", payload: { planId: currentPlan.id } });
     }
   });
 }
 
 function clearPlan() {
   const plan = getActivePlan();
-
   showModal({
     title: "Plan leeren",
     message: "Plan „" + plan.name + "“ vollständig leeren? Alle Gruppen und Schüler werden entfernt.",
@@ -101,19 +54,13 @@ function clearPlan() {
     confirmLabel: "Jetzt leeren",
     confirmClass: "btn-danger",
     onConfirm() {
-      const result = commitWithUndo((draft) => {
-        const target = draft.plans.find((item) => item.id === plan.id);
-        target.groups = [];
-      });
-
-      finishPlanAction(result, "Plan geleert");
+      dispatch({ type: "plan/clear", payload: { planId: plan.id } });
     }
   });
 }
 
 function resetPlan() {
   const plan = getActivePlan();
-
   showModal({
     title: "Plan zurücksetzen",
     message: "Plan „" + plan.name + "“ auf den leeren Grundzustand zurücksetzen?",
@@ -121,14 +68,24 @@ function resetPlan() {
     confirmLabel: "Zurücksetzen",
     confirmClass: "btn-danger",
     onConfirm() {
-      const result = commitWithUndo((draft) => {
-        const target = draft.plans.find((item) => item.id === plan.id);
-        target.name = "Gitarrenunterricht";
-        target.meta = clone(DEFAULT_META);
-        target.groups = [];
-      });
-
-      finishPlanAction(result, "Plan zurückgesetzt");
+      dispatch({ type: "plan/reset", payload: { planId: plan.id } });
     }
   });
 }
+
+export function initialisePlanActions() {
+  const bindings = [
+    ["newPlanBtn", createPlan],
+    ["duplicatePlanBtn", duplicatePlan],
+    ["deletePlanBtn", deletePlan],
+    ["clearPlanBtn", clearPlan],
+    ["resetBtn", resetPlan]
+  ];
+  bindings.forEach(([id, listener]) => {
+    document.getElementById(id).addEventListener("click", listener);
+  });
+  return () => bindings.forEach(([id, listener]) => {
+    document.getElementById(id)?.removeEventListener("click", listener);
+  });
+}
+

@@ -9,48 +9,29 @@ import {
   createDefaultPlan,
   normalizeAppState
 } from "./normalization.js";
-import { getStateSnapshot, replaceState } from "./state.js";
+import {
+  getDefaultStorage,
+  persistState,
+  safeGetItem,
+  safeSetItem
+} from "./persistence.js";
+import { runUndoable } from "./state.js";
 import { clone } from "./utils.js";
 
-function getDefaultStorage() {
-  try {
-    return globalThis.localStorage;
-  } catch {
-    return null;
-  }
-}
-
-export function safeGetItem(key, storage = getDefaultStorage()) {
-  try {
-    return storage?.getItem(key) ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export function safeSetItem(key, value, storage = getDefaultStorage()) {
-  try {
-    if (!storage) {
-      throw new DOMException("LocalStorage ist nicht verfügbar.", "SecurityError");
-    }
-
-    storage.setItem(key, value);
-    return { ok: true, error: null };
-  } catch (error) {
-    return { ok: false, error };
-  }
-}
+export {
+  getDefaultStorage,
+  persistState,
+  readStoredState,
+  safeGetItem,
+  safeSetItem
+} from "./persistence.js";
 
 function safeRemoveItem(key, storage) {
   try {
     storage?.removeItem(key);
   } catch {
-    // Cleanup is best-effort. A valid v3 state has already been persisted.
+    // Best effort: Der gültige V3-State ist zu diesem Zeitpunkt bereits gespeichert.
   }
-}
-
-function parseJson(value) {
-  return JSON.parse(value);
 }
 
 function buildMigratedState({ plans, activePlanId, minRows, now }) {
@@ -69,11 +50,9 @@ function readV2State(storage, now) {
   if (rawPlans === null) {
     return null;
   }
-
   try {
-    const plans = parseJson(rawPlans);
     return buildMigratedState({
-      plans,
+      plans: JSON.parse(rawPlans),
       activePlanId: safeGetItem(STORAGE_KEYS.activePlanV2, storage),
       minRows: safeGetItem(STORAGE_KEYS.minRowsV1, storage) ?? DEFAULT_MIN_ROWS,
       now
@@ -86,25 +65,22 @@ function readV2State(storage, now) {
 function readV1State(storage, now) {
   const rawMeta = safeGetItem(STORAGE_KEYS.legacyMetaV1, storage);
   const rawGroups = safeGetItem(STORAGE_KEYS.legacyGroupsV1, storage);
-
   if (rawMeta === null && rawGroups === null) {
     return null;
   }
 
   let meta = clone(DEFAULT_META);
   let groups = [];
-
   try {
     if (rawMeta !== null) {
-      meta = parseJson(rawMeta);
+      meta = JSON.parse(rawMeta);
     }
   } catch {
     meta = clone(DEFAULT_META);
   }
-
   try {
     if (rawGroups !== null) {
-      groups = parseJson(rawGroups);
+      groups = JSON.parse(rawGroups);
     }
   } catch {
     groups = [];
@@ -114,7 +90,6 @@ function readV1State(storage, now) {
     const plan = createDefaultPlan("Gitarrenunterricht Montag");
     plan.meta = meta;
     plan.groups = groups;
-
     return buildMigratedState({
       plans: [plan],
       activePlanId: plan.id,
@@ -124,18 +99,6 @@ function readV1State(storage, now) {
   } catch {
     return null;
   }
-}
-
-function persistLoadedState(state, storage) {
-  let serialized;
-
-  try {
-    serialized = JSON.stringify(state);
-  } catch (error) {
-    return { ok: false, error };
-  }
-
-  return safeSetItem(STORAGE_KEYS.state, serialized, storage);
 }
 
 function removeLegacyKeys(storage) {
@@ -154,57 +117,34 @@ export function loadState(storage = getDefaultStorage()) {
 
   if (rawState !== null) {
     try {
-      const state = normalizeAppState(parseJson(rawState), { now });
+      const state = normalizeAppState(JSON.parse(rawState), { now });
       const canonical = JSON.stringify(state);
-
       if (canonical !== rawState) {
         safeSetItem(STORAGE_KEYS.state, canonical, storage);
       }
-
       return state;
     } catch {
-      // A damaged v3 value must not prevent recovery from older keys.
+      // Ein beschädigter V3-Wert darf die Migration aus älteren Keys nicht blockieren.
     }
   }
 
   const migratedState = readV2State(storage, now) || readV1State(storage, now);
   const state = migratedState || createDefaultAppState({ now });
-  const persisted = persistLoadedState(state, storage);
+  const persisted = persistState(state, storage);
 
   if (migratedState && persisted.ok) {
     removeLegacyKeys(storage);
   }
-
   return state;
 }
 
+// Kompatibilitätsadapter aus Phase 1. Neue Feature-Module verwenden dispatch().
 export function commitState(mutator, storage = getDefaultStorage()) {
-  const before = getStateSnapshot();
-
-  try {
-    if (typeof mutator !== "function") {
-      throw new TypeError("commitState erwartet eine Mutator-Funktion.");
-    }
-
-    const draft = clone(before);
+  return runUndoable("Direkte Änderung", (draft) => {
     mutator(draft);
-
-    const nextState = normalizeAppState({
-      ...draft,
-      version: APP_STATE_VERSION,
-      revision: before.revision + 1,
-      updatedAt: new Date().toISOString()
-    });
-    const serialized = JSON.stringify(nextState);
-    const persisted = safeSetItem(STORAGE_KEYS.state, serialized, storage);
-
-    if (!persisted.ok) {
-      return persisted;
-    }
-
-    replaceState(nextState);
-    return { ok: true, error: null };
-  } catch (error) {
-    return { ok: false, error };
-  }
+    return {};
+  }, {
+    undoable: false,
+    storage
+  });
 }

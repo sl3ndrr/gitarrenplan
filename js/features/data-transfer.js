@@ -1,49 +1,28 @@
 import { DATA_LIMITS, EXPORT_VERSION } from "../config.js";
-import { getActivePlan, getPlans } from "../state.js";
-import { render, updateEditorValues } from "../render.js";
 import { normalizeImportPayload, DataValidationError } from "../normalization.js";
-import { commitWithUndo } from "./history.js";
+import { dispatch, getActivePlan, getPlans } from "../state.js";
 import { downloadJson, formatDate, sanitizeFilename } from "../utils.js";
-import { showModal, showSaveError, showToast } from "../ui/feedback.js";
-
-export function initialiseDataTransfer() {
-  document.getElementById("exportBtn").addEventListener("click", exportActivePlan);
-  document.getElementById("exportAllBtn").addEventListener("click", exportAllPlans);
-  document.getElementById("importBtn").addEventListener("click", () => {
-    document.getElementById("importFile").click();
-  });
-  document.getElementById("importFile").addEventListener("change", importPlans);
-}
+import { showModal, showToast } from "../ui/feedback.js";
 
 function exportActivePlan() {
   const plan = getActivePlan();
-
-  downloadJson(
-    {
-      type: "gitarrenunterricht-plan",
-      version: EXPORT_VERSION,
-      exportedAt: new Date().toISOString(),
-      plan
-    },
-    sanitizeFilename(plan.name) + ".json"
-  );
-
+  downloadJson({
+    type: "gitarrenunterricht-plan",
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    plan
+  }, sanitizeFilename(plan.name) + ".json");
   showToast("Plan exportiert ✓");
 }
 
 function exportAllPlans() {
   const date = formatDate(new Date()).replace(/\./g, "-");
-
-  downloadJson(
-    {
-      type: "gitarrenunterricht-plans",
-      version: EXPORT_VERSION,
-      exportedAt: new Date().toISOString(),
-      plans: getPlans()
-    },
-    "alle_plaene_" + date + ".json"
-  );
-
+  downloadJson({
+    type: "gitarrenunterricht-plans",
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    plans: getPlans()
+  }, "alle_plaene_" + date + ".json");
   showToast("Alle Pläne exportiert ✓");
 }
 
@@ -52,6 +31,7 @@ function byteLength(text) {
 }
 
 export function importPlansFromText(text) {
+  let dispatched = false;
   try {
     if (typeof text !== "string" || byteLength(text) > DATA_LIMITS.importBytes) {
       throw new DataValidationError(
@@ -67,39 +47,25 @@ export function importPlansFromText(text) {
     }
 
     const imported = normalizeImportPayload(parsed);
-    const firstPlanId = imported.plans[0].id;
-    const result = commitWithUndo((draft) => {
-      if (draft.plans.length === 1 && draft.plans[0].groups.length === 0) {
-        draft.plans = imported.plans;
-      } else {
-        draft.plans.push(...imported.plans);
-      }
-
-      draft.activePlanId = firstPlanId;
+    dispatched = true;
+    const result = dispatch({
+      type: "import/add",
+      payload: { plans: imported.plans, kind: imported.kind }
     });
-
-    if (!result.ok) {
-      return result;
-    }
-
     return {
-      ok: true,
-      error: null,
+      ...result,
       count: imported.plans.length,
       kind: imported.kind,
-      planName: imported.plans[0].name
+      planName: imported.plans[0].name,
+      reported: !result.ok
     };
   } catch (error) {
-    return { ok: false, error };
+    return { ok: false, changed: false, error, reported: dispatched };
   }
 }
 
 function showImportError(message = "Die Datei konnte nicht importiert werden. Bitte eine gültige JSON-Exportdatei auswählen.") {
-  showModal({
-    title: "Import fehlgeschlagen",
-    message,
-    type: "alert"
-  });
+  showModal({ title: "Import fehlgeschlagen", message, type: "alert" });
 }
 
 function importPlans(event) {
@@ -116,37 +82,40 @@ function importPlans(event) {
   }
 
   const reader = new FileReader();
-
   reader.onload = () => {
     const result = importPlansFromText(String(reader.result ?? ""));
     input.value = "";
-
-    if (!result.ok) {
-      if (result.error?.code === "INVALID_DATA") {
-        showImportError(result.error.message);
-      } else {
-        showSaveError(result.error);
-      }
-      return;
+    if (!result.ok && !result.reported && result.error?.code === "INVALID_DATA") {
+      showImportError(result.error.message);
     }
-
-    updateEditorValues();
-    render();
-    const message = result.kind === "all"
-      ? result.count + " Plan(e) importiert ✓"
-      : "Plan „" + result.planName + "“ importiert ✓";
-    showToast(message);
   };
-
   reader.onerror = () => {
     input.value = "";
     showImportError("Die Datei konnte nicht gelesen werden.");
   };
-
   reader.onabort = () => {
     input.value = "";
     showImportError("Das Einlesen der Datei wurde abgebrochen.");
   };
-
   reader.readAsText(file);
+}
+
+export function initialiseDataTransfer() {
+  const exportButton = document.getElementById("exportBtn");
+  const exportAllButton = document.getElementById("exportAllBtn");
+  const importButton = document.getElementById("importBtn");
+  const importInput = document.getElementById("importFile");
+  const openImport = () => importInput.click();
+
+  exportButton.addEventListener("click", exportActivePlan);
+  exportAllButton.addEventListener("click", exportAllPlans);
+  importButton.addEventListener("click", openImport);
+  importInput.addEventListener("change", importPlans);
+
+  return () => {
+    exportButton.removeEventListener("click", exportActivePlan);
+    exportAllButton.removeEventListener("click", exportAllPlans);
+    importButton.removeEventListener("click", openImport);
+    importInput.removeEventListener("change", importPlans);
+  };
 }
