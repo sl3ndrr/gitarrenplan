@@ -1,9 +1,8 @@
-import { getActivePlan, getPlans } from "../state.js";
-import { savePlans } from "../storage.js";
+import { getActivePlan } from "../state.js";
 import { render } from "../render.js";
-import { createGroupId, moveItem } from "../utils.js";
-import { showModal, showToast } from "../ui/feedback.js";
-import { captureUndo, discardLatestUndo, undo } from "./history.js";
+import { createGroupId, createStudentId, moveItem } from "../utils.js";
+import { showModal, showSaveError, showToast } from "../ui/feedback.js";
+import { commitWithUndo, undo } from "./history.js";
 
 export function initialiseScheduleActions() {
   document.getElementById("addGroupBtn").addEventListener("click", addGroup);
@@ -45,8 +44,24 @@ export function initialiseScheduleActions() {
   pages.addEventListener("keydown", finishInlineEditOnEnter);
 }
 
-function addGroup() {
-  const plan = getActivePlan();
+function commitScheduleChange(mutator, preferredGroupId, successMessage = "") {
+  const result = commitWithUndo(mutator);
+
+  if (!result.ok) {
+    showSaveError(result.error);
+    render(preferredGroupId);
+    return false;
+  }
+
+  render(preferredGroupId);
+  if (successMessage) {
+    showToast(successMessage);
+  }
+
+  return true;
+}
+
+export function addGroup() {
   const dayInput = document.getElementById("newGroupDay");
   const timeInput = document.getElementById("newGroupTime");
   const day = dayInput.value.trim();
@@ -62,18 +77,22 @@ function addGroup() {
     return;
   }
 
-  captureUndo();
-  plan.groups.push({ id: createGroupId(), day, time, students: [] });
+  const groupId = createGroupId();
+  const saved = commitScheduleChange((draft) => {
+    const plan = draft.plans.find((item) => item.id === draft.activePlanId);
+    plan.groups.push({ id: groupId, day, time, students: [] });
+  }, groupId, "Gruppe hinzugefügt ✓");
+
+  if (!saved) {
+    return;
+  }
+
   dayInput.value = "Montag";
   timeInput.value = "";
-  savePlans(getPlans());
-  render();
-  showToast("Gruppe hinzugefügt ✓");
   timeInput.focus();
 }
 
-function addStudent() {
-  const plan = getActivePlan();
+export function addStudent() {
   const groupId = document.getElementById("groupSelect").value;
   const nameInput = document.getElementById("studentName");
   const classInput = document.getElementById("studentClass");
@@ -99,18 +118,24 @@ function addStudent() {
     return;
   }
 
-  const group = plan.groups.find((item) => item.id === groupId);
-  if (!group) {
+  const studentId = createStudentId();
+  const saved = commitScheduleChange((draft) => {
+    const plan = draft.plans.find((item) => item.id === draft.activePlanId);
+    const group = plan.groups.find((item) => item.id === groupId);
+
+    if (!group) {
+      throw new Error("Die ausgewählte Gruppe existiert nicht mehr.");
+    }
+
+    group.students.push({ id: studentId, name, className: className || "Klasse" });
+  }, groupId, name + " hinzugefügt ✓");
+
+  if (!saved) {
     return;
   }
 
-  captureUndo();
-  group.students.push({ name, className: className || "Klasse" });
   nameInput.value = "";
   classInput.value = "";
-  savePlans(getPlans());
-  render();
-  showToast(name + " hinzugefügt ✓");
   nameInput.focus();
 }
 
@@ -121,8 +146,8 @@ function handleUndoShortcut(event) {
 
   const activeElement = document.activeElement;
   const isEditing = activeElement && (
-    activeElement.isContentEditable ||
-    ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement.tagName)
+    activeElement.isContentEditable
+    || ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement.tagName)
   );
 
   if (!isEditing) {
@@ -148,12 +173,12 @@ function handlePageClick(event) {
   }
 
   if (action === "group-up") {
-    moveGroup(plan, groupIndex, groupIndex - 1);
+    moveGroup(groupIndex, groupIndex - 1, groupId);
     return;
   }
 
   if (action === "group-down") {
-    moveGroup(plan, groupIndex, groupIndex + 1);
+    moveGroup(groupIndex, groupIndex + 1, groupId);
     return;
   }
 
@@ -163,11 +188,12 @@ function handlePageClick(event) {
   }
 
   if (action === "remove-group") {
-    removeGroup(plan, group, groupIndex);
+    removeGroup(group);
     return;
   }
 
-  const studentIndex = Number(button.dataset.studentIndex);
+  const studentId = button.dataset.studentId;
+  const studentIndex = group.students.findIndex((student) => student.id === studentId);
 
   if (action === "student-up") {
     moveStudent(group, studentIndex, studentIndex - 1);
@@ -180,25 +206,25 @@ function handlePageClick(event) {
   }
 
   if (action === "move-student") {
-    moveStudentToAnotherGroup(plan, group, studentIndex);
+    moveStudentToAnotherGroup(plan, group, studentId);
     return;
   }
 
   if (action === "remove-student") {
-    removeStudent(group, studentIndex);
+    removeStudent(group, studentId);
   }
 }
 
-function moveGroup(plan, from, to) {
-  captureUndo();
-
-  if (moveItem(plan.groups, from, to)) {
-    savePlans(getPlans());
-    render();
-    showToast("Gruppe verschoben ✓");
-  } else {
-    discardLatestUndo();
+function moveGroup(from, to, groupId) {
+  const plan = getActivePlan();
+  if (to < 0 || to >= plan.groups.length) {
+    return;
   }
+
+  commitScheduleChange((draft) => {
+    const targetPlan = draft.plans.find((item) => item.id === draft.activePlanId);
+    moveItem(targetPlan.groups, from, to);
+  }, groupId, "Gruppe verschoben ✓");
 }
 
 function sortGroup(group) {
@@ -213,17 +239,18 @@ function sortGroup(group) {
     type: "confirm",
     confirmLabel: "Sortieren",
     onConfirm() {
-      captureUndo();
-      group.students.sort((first, second) => first.name.localeCompare(second.name, "de"));
-      savePlans(getPlans());
-      render();
-      showToast("Alphabetisch sortiert ✓");
+      commitScheduleChange((draft) => {
+        const plan = draft.plans.find((item) => item.id === draft.activePlanId);
+        const target = plan.groups.find((item) => item.id === group.id);
+        target.students.sort((first, second) => first.name.localeCompare(second.name, "de"));
+      }, group.id, "Alphabetisch sortiert ✓");
     }
   });
 }
 
-function removeGroup(plan, group, groupIndex) {
+function removeGroup(group) {
   const label = group.day ? group.day + " · " + group.time : group.time;
+  const selectedGroupId = document.getElementById("groupSelect").value;
 
   showModal({
     title: "Gruppe entfernen",
@@ -232,28 +259,28 @@ function removeGroup(plan, group, groupIndex) {
     confirmLabel: "Entfernen",
     confirmClass: "btn-danger",
     onConfirm() {
-      captureUndo();
-      plan.groups.splice(groupIndex, 1);
-      savePlans(getPlans());
-      render();
-      showToast("Gruppe entfernt");
+      commitScheduleChange((draft) => {
+        const plan = draft.plans.find((item) => item.id === draft.activePlanId);
+        plan.groups = plan.groups.filter((item) => item.id !== group.id);
+      }, selectedGroupId, "Gruppe entfernt");
     }
   });
 }
 
 function moveStudent(group, from, to) {
-  captureUndo();
-
-  if (moveItem(group.students, from, to)) {
-    savePlans(getPlans());
-    render();
-  } else {
-    discardLatestUndo();
+  if (from < 0 || to < 0 || to >= group.students.length) {
+    return;
   }
+
+  commitScheduleChange((draft) => {
+    const plan = draft.plans.find((item) => item.id === draft.activePlanId);
+    const target = plan.groups.find((item) => item.id === group.id);
+    moveItem(target.students, from, to);
+  }, group.id);
 }
 
-function moveStudentToAnotherGroup(plan, group, studentIndex) {
-  const student = group.students[studentIndex];
+function moveStudentToAnotherGroup(plan, group, studentId) {
+  const student = group.students.find((item) => item.id === studentId);
   if (!student) {
     return;
   }
@@ -281,23 +308,25 @@ function moveStudentToAnotherGroup(plan, group, studentIndex) {
     options: otherGroups,
     confirmLabel: "Verschieben",
     onConfirm(targetId) {
-      const targetGroup = plan.groups.find((item) => item.id === targetId);
-      if (!targetGroup) {
-        return;
-      }
+      commitScheduleChange((draft) => {
+        const targetPlan = draft.plans.find((item) => item.id === draft.activePlanId);
+        const sourceGroup = targetPlan.groups.find((item) => item.id === group.id);
+        const targetGroup = targetPlan.groups.find((item) => item.id === targetId);
+        const studentIndex = sourceGroup.students.findIndex((item) => item.id === studentId);
 
-      captureUndo();
-      const [movedStudent] = group.students.splice(studentIndex, 1);
-      targetGroup.students.push(movedStudent);
-      savePlans(getPlans());
-      render();
-      showToast(movedStudent.name + " verschoben ✓");
+        if (!targetGroup || studentIndex < 0) {
+          throw new Error("Der Schüler oder die Zielgruppe existiert nicht mehr.");
+        }
+
+        const [movedStudent] = sourceGroup.students.splice(studentIndex, 1);
+        targetGroup.students.push(movedStudent);
+      }, targetId, student.name + " verschoben ✓");
     }
   });
 }
 
-function removeStudent(group, studentIndex) {
-  const student = group.students[studentIndex];
+function removeStudent(group, studentId) {
+  const student = group.students.find((item) => item.id === studentId);
   if (!student) {
     return;
   }
@@ -309,11 +338,11 @@ function removeStudent(group, studentIndex) {
     confirmLabel: "Entfernen",
     confirmClass: "btn-danger",
     onConfirm() {
-      captureUndo();
-      group.students.splice(studentIndex, 1);
-      savePlans(getPlans());
-      render();
-      showToast(student.name + " entfernt");
+      commitScheduleChange((draft) => {
+        const plan = draft.plans.find((item) => item.id === draft.activePlanId);
+        const target = plan.groups.find((item) => item.id === group.id);
+        target.students = target.students.filter((item) => item.id !== studentId);
+      }, group.id, student.name + " entfernt");
     }
   });
 }
@@ -327,8 +356,8 @@ function handleInlineEdit(event) {
   const plan = getActivePlan();
   const editType = element.dataset.edit;
   const groupId = element.dataset.groupId;
-  const studentIndex = Number(element.dataset.studentIndex);
-  const newValue = element.innerText.trim();
+  const studentId = element.dataset.studentId;
+  const newValue = String(element.innerText ?? element.textContent ?? "").trim();
   const group = plan.groups.find((item) => item.id === groupId);
 
   if (!group) {
@@ -340,8 +369,8 @@ function handleInlineEdit(event) {
   if (editType === "group-day") {
     const finalValue = newValue === "Wochentag" ? "" : newValue;
     if (group.day !== finalValue) {
-      mutation = () => {
-        group.day = finalValue;
+      mutation = (draftGroup) => {
+        draftGroup.day = finalValue;
       };
     }
   }
@@ -349,26 +378,27 @@ function handleInlineEdit(event) {
   if (editType === "group-time") {
     const finalValue = newValue || "Neue Gruppe";
     if (group.time !== finalValue) {
-      mutation = () => {
-        group.time = finalValue;
+      mutation = (draftGroup) => {
+        draftGroup.time = finalValue;
       };
     }
   }
 
-  if (editType === "student-name" && group.students[studentIndex]) {
+  const student = group.students.find((item) => item.id === studentId);
+  if (editType === "student-name" && student) {
     const finalValue = newValue || "Name";
-    if (group.students[studentIndex].name !== finalValue) {
-      mutation = () => {
-        group.students[studentIndex].name = finalValue;
+    if (student.name !== finalValue) {
+      mutation = (draftGroup) => {
+        draftGroup.students.find((item) => item.id === studentId).name = finalValue;
       };
     }
   }
 
-  if (editType === "student-class" && group.students[studentIndex]) {
+  if (editType === "student-class" && student) {
     const finalValue = newValue || "Klasse";
-    if (group.students[studentIndex].className !== finalValue) {
-      mutation = () => {
-        group.students[studentIndex].className = finalValue;
+    if (student.className !== finalValue) {
+      mutation = (draftGroup) => {
+        draftGroup.students.find((item) => item.id === studentId).className = finalValue;
       };
     }
   }
@@ -377,11 +407,11 @@ function handleInlineEdit(event) {
     return;
   }
 
-  captureUndo();
-  mutation();
-  savePlans(getPlans());
-  render();
-  showToast("Gespeichert ✓");
+  commitScheduleChange((draft) => {
+    const targetPlan = draft.plans.find((item) => item.id === draft.activePlanId);
+    const draftGroup = targetPlan.groups.find((item) => item.id === groupId);
+    mutation(draftGroup);
+  }, groupId, "Gespeichert ✓");
 }
 
 function finishInlineEditOnEnter(event) {

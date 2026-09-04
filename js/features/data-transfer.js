@@ -1,21 +1,10 @@
-import {
-  getActivePlan,
-  getActivePlanId,
-  getPlans,
-  setActivePlanId,
-  setPlans
-} from "../state.js";
+import { DATA_LIMITS, EXPORT_VERSION } from "../config.js";
+import { getActivePlan, getPlans } from "../state.js";
 import { render, updateEditorValues } from "../render.js";
-import { saveAll } from "../storage.js";
-import { captureUndo } from "./history.js";
-import {
-  createPlanId,
-  downloadJson,
-  formatDate,
-  normalizePlan,
-  sanitizeFilename
-} from "../utils.js";
-import { showModal, showToast } from "../ui/feedback.js";
+import { normalizeImportPayload, DataValidationError } from "../normalization.js";
+import { commitWithUndo } from "./history.js";
+import { downloadJson, formatDate, sanitizeFilename } from "../utils.js";
+import { showModal, showSaveError, showToast } from "../ui/feedback.js";
 
 export function initialiseDataTransfer() {
   document.getElementById("exportBtn").addEventListener("click", exportActivePlan);
@@ -32,7 +21,7 @@ function exportActivePlan() {
   downloadJson(
     {
       type: "gitarrenunterricht-plan",
-      version: 2,
+      version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       plan
     },
@@ -48,7 +37,7 @@ function exportAllPlans() {
   downloadJson(
     {
       type: "gitarrenunterricht-plans",
-      version: 2,
+      version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       plans: getPlans()
     },
@@ -58,77 +47,106 @@ function exportAllPlans() {
   showToast("Alle Pläne exportiert ✓");
 }
 
+function byteLength(text) {
+  return new TextEncoder().encode(text).byteLength;
+}
+
+export function importPlansFromText(text) {
+  try {
+    if (typeof text !== "string" || byteLength(text) > DATA_LIMITS.importBytes) {
+      throw new DataValidationError(
+        "Die Importdatei darf höchstens " + DATA_LIMITS.importBytes + " Bytes groß sein."
+      );
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      throw new DataValidationError("Die Importdatei enthält kein gültiges JSON.");
+    }
+
+    const imported = normalizeImportPayload(parsed);
+    const firstPlanId = imported.plans[0].id;
+    const result = commitWithUndo((draft) => {
+      if (draft.plans.length === 1 && draft.plans[0].groups.length === 0) {
+        draft.plans = imported.plans;
+      } else {
+        draft.plans.push(...imported.plans);
+      }
+
+      draft.activePlanId = firstPlanId;
+    });
+
+    if (!result.ok) {
+      return result;
+    }
+
+    return {
+      ok: true,
+      error: null,
+      count: imported.plans.length,
+      kind: imported.kind,
+      planName: imported.plans[0].name
+    };
+  } catch (error) {
+    return { ok: false, error };
+  }
+}
+
+function showImportError(message = "Die Datei konnte nicht importiert werden. Bitte eine gültige JSON-Exportdatei auswählen.") {
+  showModal({
+    title: "Import fehlgeschlagen",
+    message,
+    type: "alert"
+  });
+}
+
 function importPlans(event) {
-  const file = event.target.files[0];
+  const input = event.target;
+  const file = input.files[0];
   if (!file) {
+    return;
+  }
+
+  if (file.size > DATA_LIMITS.importBytes) {
+    input.value = "";
+    showImportError("Die Datei ist zu groß. Maximal erlaubt sind 2 MiB.");
     return;
   }
 
   const reader = new FileReader();
 
   reader.onload = () => {
-    try {
-      const imported = JSON.parse(reader.result);
+    const result = importPlansFromText(String(reader.result ?? ""));
+    input.value = "";
 
-      if (imported.type === "gitarrenunterricht-plans" && Array.isArray(imported.plans)) {
-        const importedPlans = imported.plans.map((plan) => {
-          return normalizePlan({ ...plan, id: createPlanId() });
-        });
-
-        if (importedPlans.length === 0) {
-          throw new Error("Keine Pläne gefunden.");
-        }
-
-        captureUndo();
-        addImportedPlans(importedPlans);
-        showToast(importedPlans.length + " Plan(e) importiert ✓");
-        return;
-      }
-
-      let importedPlan;
-
-      if (imported.type === "gitarrenunterricht-plan" && imported.plan) {
-        importedPlan = imported.plan;
-      } else if (imported.meta || imported.groups) {
-        importedPlan = imported;
+    if (!result.ok) {
+      if (result.error?.code === "INVALID_DATA") {
+        showImportError(result.error.message);
       } else {
-        throw new Error("Unbekanntes Format.");
+        showSaveError(result.error);
       }
-
-      const normalisedPlan = normalizePlan({
-        ...importedPlan,
-        id: createPlanId(),
-        name: importedPlan.name || "Importierter Plan"
-      });
-
-      captureUndo();
-      addImportedPlans([normalisedPlan]);
-      showToast("Plan „" + normalisedPlan.name + "“ importiert ✓");
-    } catch {
-      showModal({
-        title: "Import fehlgeschlagen",
-        message: "Die Datei konnte nicht importiert werden. Bitte eine gültige JSON-Exportdatei auswählen.",
-        type: "alert"
-      });
-    } finally {
-      event.target.value = "";
+      return;
     }
+
+    updateEditorValues();
+    render();
+    const message = result.kind === "all"
+      ? result.count + " Plan(e) importiert ✓"
+      : "Plan „" + result.planName + "“ importiert ✓";
+    showToast(message);
+  };
+
+  reader.onerror = () => {
+    input.value = "";
+    showImportError("Die Datei konnte nicht gelesen werden.");
+  };
+
+  reader.onabort = () => {
+    input.value = "";
+    showImportError("Das Einlesen der Datei wurde abgebrochen.");
   };
 
   reader.readAsText(file);
-}
-
-function addImportedPlans(importedPlans) {
-  const currentPlans = getPlans();
-
-  if (currentPlans.length === 1 && currentPlans[0].groups.length === 0) {
-    setPlans(importedPlans);
-  } else {
-    currentPlans.push(...importedPlans);
-  }
-
-  setActivePlanId(importedPlans[0].id);
-  saveAll(getPlans(), getActivePlanId());
-  updateEditorValues();
-  render();
 }

@@ -5,7 +5,7 @@ const FIRST_PAGE_MAX = 4;
 const FOLLOW_PAGE_MAX = 6;
 const COMPACT_PAGE_MAX_ROW_SUM = 30;
 
-export function render() {
+export function render(preferredGroupId) {
   const plan = getActivePlan();
   const container = document.getElementById("pages");
 
@@ -41,7 +41,7 @@ export function render() {
     container.appendChild(page);
   });
 
-  renderGroupSelect();
+  renderGroupSelect(preferredGroupId);
 }
 
 function getPageGroups(groups, minRows) {
@@ -160,22 +160,22 @@ function renderGroup(group) {
 }
 
 function renderStudentRow(student, groupId, index) {
+  const studentId = escapeHtml(student.id);
   const labelName = escapeHtml(student.name);
-  const safeIndex = String(index);
 
   return [
     "<tr>",
-    '<td class="student-name editable" contenteditable="true" tabindex="0" spellcheck="false" data-edit="student-name" data-group-id="' + groupId + '" data-student-index="' + safeIndex + '" aria-label="Name von Schüler ' + (index + 1) + ' – klicken zum Bearbeiten" title="Klicken zum Bearbeiten">',
+    '<td class="student-name editable" contenteditable="true" tabindex="0" spellcheck="false" data-edit="student-name" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Name von Schüler ' + (index + 1) + ' – klicken zum Bearbeiten" title="Klicken zum Bearbeiten">',
     labelName,
     "</td>",
-    '<td class="student-class"><span class="class-badge editable" contenteditable="true" tabindex="0" spellcheck="false" data-edit="student-class" data-group-id="' + groupId + '" data-student-index="' + safeIndex + '" aria-label="Klasse von Schüler ' + (index + 1) + ' – klicken zum Bearbeiten" title="Klicken zum Bearbeiten">',
+    '<td class="student-class"><span class="class-badge editable" contenteditable="true" tabindex="0" spellcheck="false" data-edit="student-class" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Schüler ' + (index + 1) + ' – klicken zum Bearbeiten" title="Klicken zum Bearbeiten">',
     escapeHtml(student.className),
     "</span></td>",
     '<td class="student-actions no-print">',
-    '<button aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-index="' + safeIndex + '">↑</button>',
-    '<button aria-label="' + labelName + ' nach unten" title="Nach unten" data-action="student-down" data-group-id="' + groupId + '" data-student-index="' + safeIndex + '">↓</button>',
-    '<button aria-label="' + labelName + ' in andere Gruppe verschieben" title="In andere Gruppe verschieben" data-action="move-student" data-group-id="' + groupId + '" data-student-index="' + safeIndex + '">⇄</button>',
-    '<button aria-label="' + labelName + ' entfernen" title="Entfernen" data-action="remove-student" data-group-id="' + groupId + '" data-student-index="' + safeIndex + '">✕</button>',
+    '<button aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '">↑</button>',
+    '<button aria-label="' + labelName + ' nach unten" title="Nach unten" data-action="student-down" data-group-id="' + groupId + '" data-student-id="' + studentId + '">↓</button>',
+    '<button aria-label="' + labelName + ' in andere Gruppe verschieben" title="In andere Gruppe verschieben" data-action="move-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '">⇄</button>',
+    '<button aria-label="' + labelName + ' entfernen" title="Entfernen" data-action="remove-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '">✕</button>',
     "</td>",
     "</tr>"
   ].join("");
@@ -199,9 +199,11 @@ export function renderPlanSelect() {
   select.value = getActivePlanId();
 }
 
-export function renderGroupSelect() {
+export function renderGroupSelect(preferredGroupId) {
   const select = document.getElementById("groupSelect");
+  const addStudentButton = document.getElementById("addStudentBtn");
   const plan = getActivePlan();
+  const previousGroupId = preferredGroupId ?? select.value;
 
   select.innerHTML = "";
   plan.groups.forEach((group) => {
@@ -210,6 +212,15 @@ export function renderGroupSelect() {
     option.textContent = group.day ? group.day + " · " + group.time : group.time;
     select.appendChild(option);
   });
+
+  const hasGroups = plan.groups.length > 0;
+  const selectedGroupId = plan.groups.some((group) => group.id === previousGroupId)
+    ? previousGroupId
+    : plan.groups[0]?.id || "";
+
+  select.value = selectedGroupId;
+  select.disabled = !hasGroups;
+  addStudentButton.disabled = !hasGroups;
 }
 
 export function updateEditorValues() {
@@ -219,7 +230,7 @@ export function updateEditorValues() {
   document.getElementById("metaTitle").value = plan.meta.title;
   document.getElementById("metaTeacher").value = plan.meta.teacher;
   document.getElementById("metaLocation").value = plan.meta.location;
-  document.getElementById("metaTerm").value = plan.meta.term || "";
+  document.getElementById("metaTerm").value = plan.meta.term;
   document.getElementById("minRows").value = getMinRows();
   document.getElementById("newGroupDay").value = "Montag";
 
