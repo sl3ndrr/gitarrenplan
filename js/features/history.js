@@ -1,18 +1,15 @@
 import {
   canUndo,
-  capturePlanSnapshot,
+  captureStateSnapshot,
   discardLatestSnapshot,
-  ensureActivePlanExists,
-  getActivePlanId,
-  getPlans,
-  restorePreviousSnapshot
+  peekPreviousSnapshot
 } from "../state.js";
-import { saveAll } from "../storage.js";
+import { commitState } from "../storage.js";
 import { render, updateEditorValues } from "../render.js";
-import { showToast } from "../ui/feedback.js";
+import { showSaveError, showToast } from "../ui/feedback.js";
 
 export function captureUndo() {
-  capturePlanSnapshot();
+  captureStateSnapshot();
   updateUndoButton();
 }
 
@@ -21,16 +18,37 @@ export function discardLatestUndo() {
   updateUndoButton();
 }
 
+export function commitWithUndo(mutator) {
+  captureUndo();
+  const result = commitState(mutator);
+
+  if (!result.ok) {
+    discardLatestUndo();
+  }
+
+  return result;
+}
+
 export function undo() {
-  if (!restorePreviousSnapshot()) {
+  const previous = peekPreviousSnapshot();
+  if (!previous) {
     return;
   }
 
-  ensureActivePlanExists();
-  saveAll(getPlans(), getActivePlanId());
+  const result = commitState((draft) => {
+    draft.plans = previous.plans;
+    draft.activePlanId = previous.activePlanId;
+    draft.minRows = previous.minRows;
+  });
+
+  if (!result.ok) {
+    showSaveError(result.error);
+    return;
+  }
+
+  discardLatestUndo();
   updateEditorValues();
   render();
-  updateUndoButton();
   showToast("Rückgängig gemacht ✓");
 }
 

@@ -1,73 +1,68 @@
-import { DEFAULT_MIN_ROWS, MAX_UNDO_STEPS } from "./config.js";
+import { MAX_UNDO_STEPS } from "./config.js";
+import {
+  createDefaultAppState,
+  normalizeAppState
+} from "./normalization.js";
+import { clone } from "./utils.js";
 
-let plans = [];
-let activePlanId = "";
-let minRows = DEFAULT_MIN_ROWS;
+function deepFreeze(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) {
+    return value;
+  }
+
+  Object.freeze(value);
+  Object.values(value).forEach(deepFreeze);
+  return value;
+}
+
+let appState = deepFreeze(createDefaultAppState());
 let undoStack = [];
 
-export function initialiseState({
-  initialPlans,
-  initialActivePlanId,
-  initialMinRows = DEFAULT_MIN_ROWS
-}) {
-  plans = initialPlans;
-  activePlanId = initialActivePlanId;
-  minRows = initialMinRows;
+export function initialiseState(initialState) {
+  appState = deepFreeze(normalizeAppState(initialState));
   undoStack = [];
 }
 
-export function getPlans() {
-  return plans;
+export function replaceState(nextState) {
+  appState = deepFreeze(nextState);
 }
 
-export function setPlans(nextPlans) {
-  plans = nextPlans;
+export function getState() {
+  return appState;
+}
+
+export function getStateSnapshot() {
+  return clone(appState);
+}
+
+export function getPlans() {
+  return appState.plans;
 }
 
 export function getActivePlanId() {
-  return activePlanId;
-}
-
-export function setActivePlanId(nextActivePlanId) {
-  activePlanId = nextActivePlanId;
+  return appState.activePlanId;
 }
 
 export function getActivePlan() {
-  return plans.find((plan) => plan.id === activePlanId) || plans[0];
-}
-
-export function ensureActivePlanExists() {
-  if (plans.some((plan) => plan.id === activePlanId)) {
-    return false;
-  }
-
-  activePlanId = plans[0]?.id || "";
-  return true;
+  return appState.plans.find((plan) => plan.id === appState.activePlanId)
+    || appState.plans[0];
 }
 
 export function getMinRows() {
-  return minRows;
+  return appState.minRows;
 }
 
-export function setMinRows(nextMinRows) {
-  minRows = Math.max(0, Math.min(20, Number.parseInt(nextMinRows, 10) || 0));
-}
-
-export function capturePlanSnapshot() {
-  undoStack.push(JSON.stringify(plans));
+export function captureStateSnapshot() {
+  undoStack.push(getStateSnapshot());
 
   if (undoStack.length > MAX_UNDO_STEPS) {
     undoStack.shift();
   }
 }
 
-export function restorePreviousSnapshot() {
-  if (undoStack.length === 0) {
-    return false;
-  }
-
-  plans = JSON.parse(undoStack.pop());
-  return true;
+export function peekPreviousSnapshot() {
+  const snapshot = undoStack.at(-1);
+  return snapshot ? clone(snapshot) : null;
 }
 
 export function discardLatestSnapshot() {

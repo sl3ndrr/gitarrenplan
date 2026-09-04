@@ -1,3 +1,6 @@
+let lastSaveErrorAt = 0;
+const SAVE_ERROR_THROTTLE_MS = 5000;
+
 export function showToast(message, type = "success") {
   const container = document.getElementById("toast-container");
   if (!container) {
@@ -10,6 +13,19 @@ export function showToast(message, type = "success") {
   container.appendChild(toast);
 
   window.setTimeout(() => toast.remove(), 2200);
+}
+
+export function showSaveError(error) {
+  const now = Date.now();
+  if (now - lastSaveErrorAt < SAVE_ERROR_THROTTLE_MS) {
+    return;
+  }
+
+  lastSaveErrorAt = now;
+  const message = error?.code === "INVALID_DATA"
+    ? error.message
+    : "Speichern fehlgeschlagen – die Änderung wurde zurückgerollt.";
+  showToast(message, "error");
 }
 
 export function showModal({

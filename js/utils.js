@@ -1,19 +1,21 @@
-import { DEFAULT_META } from "./config.js";
-
-function createId() {
+function createId(prefix) {
   if (typeof globalThis.crypto?.randomUUID === "function") {
     return globalThis.crypto.randomUUID();
   }
 
-  return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  return prefix + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
 }
 
 export function createPlanId() {
-  return createId();
+  return createId("plan");
 }
 
 export function createGroupId() {
-  return createId();
+  return createId("group");
+}
+
+export function createStudentId() {
+  return createId("student");
 }
 
 export function clone(data) {
@@ -53,52 +55,6 @@ export function moveItem(array, from, to) {
   const [item] = array.splice(from, 1);
   array.splice(to, 0, item);
   return true;
-}
-
-export function normalizeGroups(list) {
-  if (!Array.isArray(list)) {
-    return [];
-  }
-
-  return list.map((group) => {
-    const sourceGroup = group && typeof group === "object" ? group : {};
-
-    return {
-      id: sourceGroup.id || createGroupId(),
-      day: sourceGroup.day || "",
-      time: sourceGroup.time || "Neue Gruppe",
-      students: Array.isArray(sourceGroup.students)
-        ? sourceGroup.students.map((student) => {
-            const sourceStudent = student && typeof student === "object" ? student : {};
-
-            return {
-              name: sourceStudent.name || "Name",
-              className: sourceStudent.className || "Klasse"
-            };
-          })
-        : []
-    };
-  });
-}
-
-export function normalizePlan(plan = {}) {
-  const sourcePlan = plan && typeof plan === "object" ? plan : {};
-
-  return {
-    id: sourcePlan.id || createPlanId(),
-    name: sourcePlan.name || "Gitarrenunterricht",
-    meta: { ...clone(DEFAULT_META), ...(sourcePlan.meta || {}) },
-    groups: normalizeGroups(Array.isArray(sourcePlan.groups) ? sourcePlan.groups : [])
-  };
-}
-
-export function createDefaultPlan(name = "Gitarrenunterricht") {
-  return {
-    id: createPlanId(),
-    name,
-    meta: clone(DEFAULT_META),
-    groups: []
-  };
 }
 
 export function downloadJson(data, filename) {
