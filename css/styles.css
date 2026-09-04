@@ -600,102 +600,102 @@ td {
    ============================================================ */
 @media print, screen and (min-width: 901px) {
   .compact-first-page header {
-    margin-bottom: 4mm;
+    margin-bottom: 3mm;
   }
 
   .compact-first-page .header-inner {
-    padding: 10px 14px;
+    padding: 8px 12px;
   }
 
   .compact-first-page .header-inner h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .compact-first-page .guitar-bg {
-    font-size: 64px;
-    right: -12px;
-    bottom: -14px;
+    font-size: 56px;
+    right: -10px;
+    bottom: -12px;
   }
 
   .compact-first-page .info-grid,
   .compact-first-page .info-grid.has-term {
-    gap: 4mm;
-    margin-bottom: 4mm;
+    gap: 3mm;
+    margin-bottom: 3mm;
   }
 
   .compact-first-page .info-box {
     min-width: 0;
-    padding: 6px 8px;
+    padding: 4px 6px;
     overflow-wrap: anywhere;
   }
 
   .compact-first-page .info-label {
     margin-bottom: 0;
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .compact-first-page .info-value {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   /*
-   * Druck-Höhenbudget: 269mm Inhaltsfläche. Bei höchstens 20 Tabellenzeilen
-   * über beide Rasterreihen ergeben 20 × 30px ca. 159mm. Mit zwei Slot-Köpfen
-   * (ca. 20mm), Rasterabstand (4mm) und einzeiligem Kopf/Info (ca. 36mm) bleiben
-   * rund 50mm Reserve für Rahmen und vereinzelte Textumbrüche.
+   * Druck-Höhenbudget: 269mm Inhaltsfläche. Bei höchstens 30 Tabellenzeilen
+   * über die drei Rasterreihen ergeben 30 × 22px ca. 175mm. Mit drei Slot-Köpfen
+   * (ca. 21mm), zwei Rasterabständen (6mm) und einzeiligem Kopf/Info (ca. 28mm)
+   * bleiben rund 39mm Reserve für Rahmen und vereinzelte Textumbrüche.
    */
   .compact-first-page .slots {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 4mm;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3mm;
   }
 
   .compact-first-page .timeslot-header {
-    padding: 6px 8px;
-    gap: 5px;
+    padding: 4px 6px;
+    gap: 4px;
     flex-wrap: wrap;
   }
 
   .compact-first-page .group-header-left {
     min-width: 0;
-    gap: 5px;
+    gap: 4px;
   }
 
   .compact-first-page .day-badge {
-    padding: 2px 5px;
-    font-size: 9px;
+    padding: 1px 4px;
+    font-size: 8px;
   }
 
   .compact-first-page .time-text {
-    font-size: 11px;
-  }
-
-  .compact-first-page .slot-actions {
-    flex-basis: 100%;
-    justify-content: flex-start;
-  }
-
-  .compact-first-page td {
-    height: 30px;
-    padding: 5px 6px;
     font-size: 10px;
-    line-height: 1.2;
   }
 
-  .compact-first-page td.student-name.editable {
-    padding: 5px 6px !important;
-  }
-
-  .compact-first-page .student-class {
-    width: 60px;
-  }
-
-  .compact-first-page .class-badge.editable {
-    padding: 2px 4px !important;
+  .compact-first-page .slot-actions button {
+    padding: 2px 4px;
     font-size: 9px;
   }
 
-  .compact-first-page .student-actions {
+  .compact-first-page td {
+    height: 22px;
+    padding: 3px 4px;
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .compact-first-page td.student-name.editable {
+    padding: 3px 4px !important;
+  }
+
+  .compact-first-page .student-class {
     width: 72px;
+  }
+
+  .compact-first-page .class-badge.editable {
+    padding: 1px 4px !important;
+    font-size: 8px;
+  }
+
+  .compact-first-page .student-actions {
+    width: 84px;
     padding-left: 0;
   }
 
@@ -706,7 +706,7 @@ td {
   }
 
   .compact-first-page .day-badge.editable {
-    padding: 2px 5px !important;
+    padding: 1px 4px !important;
   }
 }
 
