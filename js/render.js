@@ -3,7 +3,7 @@ import { escapeHtml, formatDate } from "./utils.js";
 
 const FIRST_PAGE_MAX = 4;
 const FOLLOW_PAGE_MAX = 6;
-const COMPACT_PAGE_MAX_ROW_SUM = 20;
+const COMPACT_PAGE_MAX_ROW_SUM = 30;
 
 export function render() {
   const plan = getActivePlan();
@@ -67,7 +67,11 @@ function canUseCompactFirstPage(groups, minRows) {
     return false;
   }
 
-  const gridRows = [groups.slice(0, 3), groups.slice(3, 6)];
+  const gridRows = [
+    groups.slice(0, 2),
+    groups.slice(2, 4),
+    groups.slice(4, 6)
+  ];
   const rowSum = gridRows.reduce((sum, gridRow) => {
     const largestGroup = Math.max(
       ...gridRow.map((group) => Math.max(minRows, group.students.length))
