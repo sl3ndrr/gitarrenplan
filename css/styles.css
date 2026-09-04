@@ -764,6 +764,54 @@ td {
   color: var(--text-main);
 }
 
+.print-only {
+  display: none;
+}
+
+input[type="text"].inline-editor {
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+.group-header-left input.day-badge.inline-editor {
+  width: 105px;
+  padding: 3px 8px;
+  color: white;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.group-header-left input.time-text.inline-editor {
+  width: 130px;
+}
+
+.student-name input.student-name-input {
+  display: block;
+  width: 100%;
+  font-weight: 500;
+}
+
+.student-class input.class-badge.inline-editor {
+  width: 82px;
+  text-align: right;
+  padding: 3px 8px;
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.group-header-left input.day-badge.inline-editor:focus,
+.student-class input.class-badge.inline-editor:focus {
+  color: var(--text-main);
+  background: white;
+}
+
 /* ============================================================
    DRUCKEN
    ============================================================ */
@@ -790,6 +838,10 @@ td {
   #toast-container,
   .modal-overlay {
     display: none !important;
+  }
+
+  .print-only {
+    display: inline-block !important;
   }
 
   .page {

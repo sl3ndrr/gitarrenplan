@@ -1,61 +1,24 @@
-import {
-  canUndo,
-  captureStateSnapshot,
-  discardLatestSnapshot,
-  peekPreviousSnapshot
-} from "../state.js";
-import { commitState } from "../storage.js";
-import { render, updateEditorValues } from "../render.js";
-import { showSaveError, showToast } from "../ui/feedback.js";
-
-export function captureUndo() {
-  captureStateSnapshot();
-  updateUndoButton();
-}
-
-export function discardLatestUndo() {
-  discardLatestSnapshot();
-  updateUndoButton();
-}
-
-export function commitWithUndo(mutator) {
-  captureUndo();
-  const result = commitState(mutator);
-
-  if (!result.ok) {
-    discardLatestUndo();
-  }
-
-  return result;
-}
+import { canUndo, undo as undoState } from "../state.js";
+import { flushPendingTextEdits } from "../ui/text-edit.js";
 
 export function undo() {
-  const previous = peekPreviousSnapshot();
-  if (!previous) {
-    return;
+  const flushed = flushPendingTextEdits();
+  if (!flushed.ok) {
+    return flushed;
   }
-
-  const result = commitState((draft) => {
-    draft.plans = previous.plans;
-    draft.activePlanId = previous.activePlanId;
-    draft.minRows = previous.minRows;
-  });
-
-  if (!result.ok) {
-    showSaveError(result.error);
-    return;
-  }
-
-  discardLatestUndo();
-  updateEditorValues();
-  render();
-  showToast("Rückgängig gemacht ✓");
+  return undoState();
 }
 
 export function updateUndoButton() {
   const button = document.getElementById("undoBtn");
-
   if (button) {
     button.disabled = !canUndo();
   }
 }
+
+export function initialiseHistory() {
+  const button = document.getElementById("undoBtn");
+  button.addEventListener("click", undo);
+  return () => button.removeEventListener("click", undo);
+}
+

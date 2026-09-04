@@ -1,18 +1,35 @@
 let lastSaveErrorAt = 0;
 const SAVE_ERROR_THROTTLE_MS = 5000;
+const feedbackTimers = new Set();
+let activeModalCleanup = null;
+
+function schedule(callback, delay) {
+  const timer = globalThis.setTimeout(() => {
+    feedbackTimers.delete(timer);
+    callback();
+  }, delay);
+  feedbackTimers.add(timer);
+  return timer;
+}
+
+function cancelScheduled(timer) {
+  if (timer === null) {
+    return;
+  }
+  globalThis.clearTimeout(timer);
+  feedbackTimers.delete(timer);
+}
 
 export function showToast(message, type = "success") {
   const container = document.getElementById("toast-container");
-  if (!container) {
+  if (!container || !message) {
     return;
   }
-
   const toast = document.createElement("div");
   toast.className = "toast toast-" + type;
   toast.textContent = message;
   container.appendChild(toast);
-
-  window.setTimeout(() => toast.remove(), 2200);
+  schedule(() => toast.remove(), 2200);
 }
 
 export function showSaveError(error) {
@@ -20,12 +37,14 @@ export function showSaveError(error) {
   if (now - lastSaveErrorAt < SAVE_ERROR_THROTTLE_MS) {
     return;
   }
-
   lastSaveErrorAt = now;
-  const message = error?.code === "INVALID_DATA"
-    ? error.message
-    : "Speichern fehlgeschlagen – die Änderung wurde zurückgerollt.";
-  showToast(message, "error");
+  const isUserFacing = ["INVALID_DATA", "COMMAND_INVALID"].includes(error?.code);
+  showToast(
+    isUserFacing
+      ? error.message
+      : "Speichern fehlgeschlagen – die Änderung wurde zurückgerollt.",
+    "error"
+  );
 }
 
 export function showModal({
@@ -37,9 +56,12 @@ export function showModal({
   options = null,
   confirmLabel = "OK",
   confirmClass = "btn-primary",
+  cancelLabel = "Abbrechen",
   onConfirm = null,
   onCancel = null
 } = {}) {
+  activeModalCleanup?.();
+
   const overlay = document.getElementById("modal-overlay");
   const titleElement = document.getElementById("modal-title");
   const messageElement = document.getElementById("modal-message");
@@ -47,12 +69,14 @@ export function showModal({
   const selectElement = document.getElementById("modal-select");
   const cancelButton = document.getElementById("modal-cancel");
   const confirmButton = document.getElementById("modal-confirm");
+  let closed = false;
+  let focusTimer = null;
 
   titleElement.textContent = title;
   messageElement.textContent = message;
   confirmButton.textContent = confirmLabel;
   confirmButton.className = confirmClass;
-
+  cancelButton.textContent = cancelLabel;
   inputElement.classList.add("hidden");
   selectElement.classList.add("hidden");
   cancelButton.style.display = type === "alert" ? "none" : "";
@@ -62,11 +86,9 @@ export function showModal({
     inputElement.value = inputValue;
     inputElement.placeholder = inputPlaceholder;
   }
-
   if (type === "select" && Array.isArray(options)) {
     selectElement.classList.remove("hidden");
-    selectElement.innerHTML = "";
-
+    selectElement.replaceChildren();
     options.forEach((option) => {
       const element = document.createElement("option");
       element.value = option.value;
@@ -74,54 +96,39 @@ export function showModal({
       selectElement.appendChild(element);
     });
   }
-
   overlay.classList.remove("hidden");
 
-  window.setTimeout(() => {
-    if (type === "prompt") {
-      inputElement.select();
-    }
-
-    if (type === "select") {
-      selectElement.focus();
-    }
-
-    if (type === "alert") {
-      confirmButton.focus();
-    }
-  }, 0);
-
   function cleanup() {
+    if (closed) {
+      return;
+    }
+    closed = true;
     overlay.classList.add("hidden");
     confirmButton.removeEventListener("click", onConfirmClick);
     cancelButton.removeEventListener("click", onCancelClick);
     overlay.removeEventListener("click", onOverlayClick);
     inputElement.removeEventListener("keydown", onInputKey);
     document.removeEventListener("keydown", onDocumentKey);
+    cancelScheduled(focusTimer);
+    focusTimer = null;
+    if (activeModalCleanup === cleanup) {
+      activeModalCleanup = null;
+    }
   }
 
   function onConfirmClick() {
+    const value = type === "prompt"
+      ? inputElement.value
+      : type === "select"
+        ? selectElement.value
+        : undefined;
     cleanup();
-
-    if (!onConfirm) {
-      return;
-    }
-
-    if (type === "prompt") {
-      onConfirm(inputElement.value);
-    } else if (type === "select") {
-      onConfirm(selectElement.value);
-    } else {
-      onConfirm();
-    }
+    onConfirm?.(value);
   }
 
   function onCancelClick() {
     cleanup();
-
-    if (onCancel) {
-      onCancel();
-    }
+    onCancel?.();
   }
 
   function onOverlayClick(event) {
@@ -134,9 +141,7 @@ export function showModal({
     if (event.key === "Enter") {
       event.preventDefault();
       onConfirmClick();
-    }
-
-    if (event.key === "Escape") {
+    } else if (event.key === "Escape") {
       event.preventDefault();
       onCancelClick();
     }
@@ -154,4 +159,26 @@ export function showModal({
   overlay.addEventListener("click", onOverlayClick);
   inputElement.addEventListener("keydown", onInputKey);
   document.addEventListener("keydown", onDocumentKey);
+  activeModalCleanup = cleanup;
+
+  focusTimer = schedule(() => {
+    focusTimer = null;
+    if (type === "prompt") {
+      inputElement.select();
+    } else if (type === "select") {
+      selectElement.focus();
+    } else {
+      confirmButton.focus();
+    }
+  }, 0);
 }
+
+export function disposeFeedback() {
+  activeModalCleanup?.();
+  activeModalCleanup = null;
+  feedbackTimers.forEach((timer) => globalThis.clearTimeout(timer));
+  feedbackTimers.clear();
+  document.getElementById("toast-container")?.replaceChildren();
+  lastSaveErrorAt = 0;
+}
+

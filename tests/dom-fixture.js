@@ -7,6 +7,11 @@ export function mountAppFixture() {
     <input id="metaLocation" type="text">
     <input id="metaTerm" type="text">
     <input id="minRows" type="number">
+    <button id="newPlanBtn" type="button">Neu</button>
+    <button id="duplicatePlanBtn" type="button">Duplizieren</button>
+    <button id="deletePlanBtn" type="button">Löschen</button>
+    <button id="clearPlanBtn" type="button">Leeren</button>
+    <button id="resetBtn" type="button">Zurücksetzen</button>
     <select id="newGroupDay">
       <option value="">Kein Wochentag</option>
       <option value="Montag">Montag</option>
@@ -19,6 +24,11 @@ export function mountAppFixture() {
     <input id="studentClass" type="text">
     <button id="addStudentBtn" type="button">Schüler hinzufügen</button>
     <button id="undoBtn" type="button"></button>
+    <button id="printBtn" type="button">Drucken</button>
+    <button id="exportBtn" type="button">Export</button>
+    <button id="exportAllBtn" type="button">Alle exportieren</button>
+    <button id="importBtn" type="button">Import</button>
+    <input id="importFile" type="file">
     <section id="pages"></section>
     <div id="toast-container"></div>
     <div id="modal-overlay" class="hidden">
@@ -31,3 +41,4 @@ export function mountAppFixture() {
     </div>
   `;
 }
+

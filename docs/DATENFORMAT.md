@@ -19,6 +19,12 @@ Zustands. Erst danach wird der vollständige Zustand mit genau einem
 `localStorage.setItem` geschrieben. Schlägt Validierung, Serialisierung oder
 Speicherung fehl, bleibt der Laufzeit-Zustand unverändert.
 
+Jeder erfolgreiche lokale Schreibvorgang erhöht `revision` und aktualisiert
+`updatedAt`. Vor einem Write wird ein bereits gespeicherter neuerer Zustand
+erkannt. Valide neuere Zustände aus dem `storage`-Event werden automatisch
+übernommen, solange keine lokale Texteingabe offen ist; andernfalls wird eine
+explizite Konfliktentscheidung verlangt.
+
 ## Harte Grenzen
 
 | Bereich | Höchstwert |

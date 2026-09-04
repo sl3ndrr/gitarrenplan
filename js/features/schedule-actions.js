@@ -1,257 +1,117 @@
-import { getActivePlan } from "../state.js";
-import { render } from "../render.js";
-import { createGroupId, createStudentId, moveItem } from "../utils.js";
-import { showModal, showSaveError, showToast } from "../ui/feedback.js";
-import { commitWithUndo, undo } from "./history.js";
+import { dispatch, getActivePlan } from "../state.js";
+import { showModal } from "../ui/feedback.js";
+import {
+  beginTextEdit,
+  cancelTextEdit,
+  finishTextEdit,
+  hasTextEditSession,
+  queueTextEdit
+} from "../ui/text-edit.js";
+import { undo } from "./history.js";
 
-export function initialiseScheduleActions() {
-  document.getElementById("addGroupBtn").addEventListener("click", addGroup);
-  document.getElementById("addStudentBtn").addEventListener("click", addStudent);
-
-  document.getElementById("newGroupTime").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      addGroup();
-    }
-  });
-
-  document.getElementById("studentName").addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-
-    if (document.getElementById("studentClass").value.trim()) {
-      addStudent();
-    } else {
-      document.getElementById("studentClass").focus();
-    }
-  });
-
-  document.getElementById("studentClass").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      addStudent();
-    }
-  });
-
-  document.addEventListener("keydown", handleUndoShortcut);
-
-  const pages = document.getElementById("pages");
-  pages.addEventListener("click", handlePageClick);
-  pages.addEventListener("focusout", handleInlineEdit);
-  pages.addEventListener("keydown", finishInlineEditOnEnter);
-}
-
-function commitScheduleChange(mutator, preferredGroupId, successMessage = "") {
-  const result = commitWithUndo(mutator);
-
-  if (!result.ok) {
-    showSaveError(result.error);
-    render(preferredGroupId);
-    return false;
+function inlineConfig(element) {
+  const { inlineKey, inlineType, field, groupId, studentId } = element.dataset;
+  if (inlineType === "group") {
+    return {
+      key: inlineKey,
+      getValue: () => {
+        const group = getActivePlan().groups.find((item) => item.id === groupId);
+        return group?.[field] ?? "";
+      },
+      createCommand: (value) => ({
+        type: "group/update",
+        payload: { groupId, field, value }
+      })
+    };
   }
 
-  render(preferredGroupId);
-  if (successMessage) {
-    showToast(successMessage);
-  }
-
-  return true;
+  return {
+    key: inlineKey,
+    getValue: () => {
+      const group = getActivePlan().groups.find((item) => item.id === groupId);
+      const student = group?.students.find((item) => item.id === studentId);
+      return student?.[field] ?? "";
+    },
+    createCommand: (value) => ({
+      type: "student/update",
+      payload: { groupId, studentId, field, value }
+    })
+  };
 }
 
 export function addGroup() {
   const dayInput = document.getElementById("newGroupDay");
   const timeInput = document.getElementById("newGroupTime");
-  const day = dayInput.value.trim();
-  const time = timeInput.value.trim();
+  const result = dispatch({
+    type: "group/add",
+    payload: { day: dayInput.value, time: timeInput.value }
+  });
 
-  if (!time) {
-    showModal({
-      title: "Fehler",
-      message: "Bitte eine Zeit oder einen Gruppennamen eingeben.",
-      type: "alert"
-    });
+  if (!result.ok) {
     timeInput.focus();
-    return;
+    return result;
   }
-
-  const groupId = createGroupId();
-  const saved = commitScheduleChange((draft) => {
-    const plan = draft.plans.find((item) => item.id === draft.activePlanId);
-    plan.groups.push({ id: groupId, day, time, students: [] });
-  }, groupId, "Gruppe hinzugefügt ✓");
-
-  if (!saved) {
-    return;
-  }
-
   dayInput.value = "Montag";
   timeInput.value = "";
   timeInput.focus();
+  return result;
 }
 
 export function addStudent() {
   const groupId = document.getElementById("groupSelect").value;
   const nameInput = document.getElementById("studentName");
   const classInput = document.getElementById("studentClass");
-  const name = nameInput.value.trim();
-  const className = classInput.value.trim();
-
-  if (!groupId) {
-    showModal({
-      title: "Fehler",
-      message: "Bitte zuerst eine Gruppe anlegen oder auswählen.",
-      type: "alert"
-    });
-    return;
-  }
-
-  if (!name) {
-    showModal({
-      title: "Fehler",
-      message: "Bitte einen Namen eingeben.",
-      type: "alert"
-    });
-    nameInput.focus();
-    return;
-  }
-
-  const studentId = createStudentId();
-  const saved = commitScheduleChange((draft) => {
-    const plan = draft.plans.find((item) => item.id === draft.activePlanId);
-    const group = plan.groups.find((item) => item.id === groupId);
-
-    if (!group) {
-      throw new Error("Die ausgewählte Gruppe existiert nicht mehr.");
+  const result = dispatch({
+    type: "student/add",
+    payload: {
+      groupId,
+      student: { name: nameInput.value, className: classInput.value }
     }
+  });
 
-    group.students.push({ id: studentId, name, className: className || "Klasse" });
-  }, groupId, name + " hinzugefügt ✓");
-
-  if (!saved) {
-    return;
+  if (!result.ok) {
+    nameInput.focus();
+    return result;
   }
-
   nameInput.value = "";
   classInput.value = "";
   nameInput.focus();
+  return result;
 }
 
 function handleUndoShortcut(event) {
   if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z") {
     return;
   }
-
   const activeElement = document.activeElement;
   const isEditing = activeElement && (
     activeElement.isContentEditable
     || ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement.tagName)
   );
-
   if (!isEditing) {
     event.preventDefault();
     undo();
   }
 }
 
-function handlePageClick(event) {
-  const button = event.target.closest("button");
-  if (!button) {
-    return;
-  }
-
-  const plan = getActivePlan();
-  const action = button.dataset.action;
-  const groupId = button.dataset.groupId;
-  const groupIndex = plan.groups.findIndex((group) => group.id === groupId);
-  const group = plan.groups[groupIndex];
-
-  if (!group) {
-    return;
-  }
-
-  if (action === "group-up") {
-    moveGroup(groupIndex, groupIndex - 1, groupId);
-    return;
-  }
-
-  if (action === "group-down") {
-    moveGroup(groupIndex, groupIndex + 1, groupId);
-    return;
-  }
-
-  if (action === "sort-group") {
-    sortGroup(group);
-    return;
-  }
-
-  if (action === "remove-group") {
-    removeGroup(group);
-    return;
-  }
-
-  const studentId = button.dataset.studentId;
-  const studentIndex = group.students.findIndex((student) => student.id === studentId);
-
-  if (action === "student-up") {
-    moveStudent(group, studentIndex, studentIndex - 1);
-    return;
-  }
-
-  if (action === "student-down") {
-    moveStudent(group, studentIndex, studentIndex + 1);
-    return;
-  }
-
-  if (action === "move-student") {
-    moveStudentToAnotherGroup(plan, group, studentId);
-    return;
-  }
-
-  if (action === "remove-student") {
-    removeStudent(group, studentId);
-  }
-}
-
-function moveGroup(from, to, groupId) {
-  const plan = getActivePlan();
-  if (to < 0 || to >= plan.groups.length) {
-    return;
-  }
-
-  commitScheduleChange((draft) => {
-    const targetPlan = draft.plans.find((item) => item.id === draft.activePlanId);
-    moveItem(targetPlan.groups, from, to);
-  }, groupId, "Gruppe verschoben ✓");
-}
-
 function sortGroup(group) {
   if (group.students.length < 2) {
-    showToast("Nichts zu sortieren.", "error");
+    dispatch({ type: "group/sort", payload: { groupId: group.id } });
     return;
   }
-
   showModal({
     title: "Alphabetisch sortieren",
     message: "Schüler in der Gruppe „" + group.time + "“ alphabetisch nach Namen sortieren?",
     type: "confirm",
     confirmLabel: "Sortieren",
     onConfirm() {
-      commitScheduleChange((draft) => {
-        const plan = draft.plans.find((item) => item.id === draft.activePlanId);
-        const target = plan.groups.find((item) => item.id === group.id);
-        target.students.sort((first, second) => first.name.localeCompare(second.name, "de"));
-      }, group.id, "Alphabetisch sortiert ✓");
+      dispatch({ type: "group/sort", payload: { groupId: group.id } });
     }
   });
 }
 
 function removeGroup(group) {
   const label = group.day ? group.day + " · " + group.time : group.time;
-  const selectedGroupId = document.getElementById("groupSelect").value;
-
   showModal({
     title: "Gruppe entfernen",
     message: "Gruppe „" + label + "“ wirklich entfernen? Alle Schüler dieser Gruppe werden ebenfalls gelöscht.",
@@ -259,32 +119,12 @@ function removeGroup(group) {
     confirmLabel: "Entfernen",
     confirmClass: "btn-danger",
     onConfirm() {
-      commitScheduleChange((draft) => {
-        const plan = draft.plans.find((item) => item.id === draft.activePlanId);
-        plan.groups = plan.groups.filter((item) => item.id !== group.id);
-      }, selectedGroupId, "Gruppe entfernt");
+      dispatch({ type: "group/remove", payload: { groupId: group.id } });
     }
   });
 }
 
-function moveStudent(group, from, to) {
-  if (from < 0 || to < 0 || to >= group.students.length) {
-    return;
-  }
-
-  commitScheduleChange((draft) => {
-    const plan = draft.plans.find((item) => item.id === draft.activePlanId);
-    const target = plan.groups.find((item) => item.id === group.id);
-    moveItem(target.students, from, to);
-  }, group.id);
-}
-
-function moveStudentToAnotherGroup(plan, group, studentId) {
-  const student = group.students.find((item) => item.id === studentId);
-  if (!student) {
-    return;
-  }
-
+function moveStudentToAnotherGroup(plan, group, student) {
   const otherGroups = plan.groups
     .filter((item) => item.id !== group.id)
     .map((item) => ({
@@ -307,30 +147,20 @@ function moveStudentToAnotherGroup(plan, group, studentId) {
     type: "select",
     options: otherGroups,
     confirmLabel: "Verschieben",
-    onConfirm(targetId) {
-      commitScheduleChange((draft) => {
-        const targetPlan = draft.plans.find((item) => item.id === draft.activePlanId);
-        const sourceGroup = targetPlan.groups.find((item) => item.id === group.id);
-        const targetGroup = targetPlan.groups.find((item) => item.id === targetId);
-        const studentIndex = sourceGroup.students.findIndex((item) => item.id === studentId);
-
-        if (!targetGroup || studentIndex < 0) {
-          throw new Error("Der Schüler oder die Zielgruppe existiert nicht mehr.");
+    onConfirm(targetGroupId) {
+      dispatch({
+        type: "student/moveToGroup",
+        payload: {
+          sourceGroupId: group.id,
+          targetGroupId,
+          studentId: student.id
         }
-
-        const [movedStudent] = sourceGroup.students.splice(studentIndex, 1);
-        targetGroup.students.push(movedStudent);
-      }, targetId, student.name + " verschoben ✓");
+      });
     }
   });
 }
 
-function removeStudent(group, studentId) {
-  const student = group.students.find((item) => item.id === studentId);
-  if (!student) {
-    return;
-  }
-
+function removeStudent(group, student) {
   showModal({
     title: "Schüler entfernen",
     message: "„" + student.name + "“ aus der Gruppe entfernen?",
@@ -338,88 +168,161 @@ function removeStudent(group, studentId) {
     confirmLabel: "Entfernen",
     confirmClass: "btn-danger",
     onConfirm() {
-      commitScheduleChange((draft) => {
-        const plan = draft.plans.find((item) => item.id === draft.activePlanId);
-        const target = plan.groups.find((item) => item.id === group.id);
-        target.students = target.students.filter((item) => item.id !== studentId);
-      }, group.id, student.name + " entfernt");
+      dispatch({
+        type: "student/remove",
+        payload: { groupId: group.id, studentId: student.id }
+      });
     }
   });
 }
 
-function handleInlineEdit(event) {
-  const element = event.target;
-  if (!element.dataset || !element.dataset.edit) {
+function handlePageClick(event) {
+  const button = event.target.closest?.("button[data-action]");
+  if (!button) {
     return;
   }
 
   const plan = getActivePlan();
-  const editType = element.dataset.edit;
-  const groupId = element.dataset.groupId;
-  const studentId = element.dataset.studentId;
-  const newValue = String(element.innerText ?? element.textContent ?? "").trim();
-  const group = plan.groups.find((item) => item.id === groupId);
-
+  const group = plan.groups.find((item) => item.id === button.dataset.groupId);
   if (!group) {
     return;
   }
 
-  let mutation = null;
-
-  if (editType === "group-day") {
-    const finalValue = newValue === "Wochentag" ? "" : newValue;
-    if (group.day !== finalValue) {
-      mutation = (draftGroup) => {
-        draftGroup.day = finalValue;
-      };
-    }
+  const action = button.dataset.action;
+  if (action === "group-up" || action === "group-down") {
+    dispatch({
+      type: "group/move",
+      payload: { groupId: group.id, offset: action === "group-up" ? -1 : 1 }
+    });
+    return;
   }
-
-  if (editType === "group-time") {
-    const finalValue = newValue || "Neue Gruppe";
-    if (group.time !== finalValue) {
-      mutation = (draftGroup) => {
-        draftGroup.time = finalValue;
-      };
-    }
+  if (action === "sort-group") {
+    sortGroup(group);
+    return;
   }
-
-  const student = group.students.find((item) => item.id === studentId);
-  if (editType === "student-name" && student) {
-    const finalValue = newValue || "Name";
-    if (student.name !== finalValue) {
-      mutation = (draftGroup) => {
-        draftGroup.students.find((item) => item.id === studentId).name = finalValue;
-      };
-    }
-  }
-
-  if (editType === "student-class" && student) {
-    const finalValue = newValue || "Klasse";
-    if (student.className !== finalValue) {
-      mutation = (draftGroup) => {
-        draftGroup.students.find((item) => item.id === studentId).className = finalValue;
-      };
-    }
-  }
-
-  if (!mutation) {
+  if (action === "remove-group") {
+    removeGroup(group);
     return;
   }
 
-  commitScheduleChange((draft) => {
-    const targetPlan = draft.plans.find((item) => item.id === draft.activePlanId);
-    const draftGroup = targetPlan.groups.find((item) => item.id === groupId);
-    mutation(draftGroup);
-  }, groupId, "Gespeichert ✓");
-}
-
-function finishInlineEditOnEnter(event) {
-  const editable = event.target.closest("[contenteditable='true']");
-  if (!editable || event.key !== "Enter") {
+  const student = group.students.find((item) => item.id === button.dataset.studentId);
+  if (!student) {
     return;
   }
-
-  event.preventDefault();
-  editable.blur();
+  if (action === "student-up" || action === "student-down") {
+    dispatch({
+      type: "student/move",
+      payload: {
+        groupId: group.id,
+        studentId: student.id,
+        offset: action === "student-up" ? -1 : 1
+      }
+    });
+  } else if (action === "move-student") {
+    moveStudentToAnotherGroup(plan, group, student);
+  } else if (action === "remove-student") {
+    removeStudent(group, student);
+  }
 }
+
+function closestInlineInput(event) {
+  return event.target.closest?.("input[data-inline-key]") || null;
+}
+
+function inlineInput(event) {
+  const element = closestInlineInput(event);
+  if (element) {
+    queueTextEdit(element, inlineConfig(element));
+  }
+}
+
+function inlineFocusIn(event) {
+  const element = closestInlineInput(event);
+  if (element) {
+    beginTextEdit(element, inlineConfig(element));
+  }
+}
+
+function inlineChange(event) {
+  const element = closestInlineInput(event);
+  if (element) {
+    finishTextEdit(element, inlineConfig(element));
+  }
+}
+
+function inlineFocusOut(event) {
+  const element = closestInlineInput(event);
+  if (!element) {
+    return;
+  }
+  const config = inlineConfig(element);
+  if (hasTextEditSession(config.key)) {
+    finishTextEdit(element, config);
+  }
+}
+
+function inlineKeyDown(event) {
+  const element = closestInlineInput(event);
+  if (!element) {
+    return;
+  }
+  if (event.key === "Enter") {
+    event.preventDefault();
+    finishTextEdit(element, inlineConfig(element));
+    element.blur();
+  } else if (event.key === "Escape") {
+    event.preventDefault();
+    cancelTextEdit(element, inlineConfig(element));
+    element.blur();
+  }
+}
+
+export function initialiseScheduleActions() {
+  const bindings = [];
+  const listen = (target, type, listener) => {
+    target.addEventListener(type, listener);
+    bindings.push(() => target.removeEventListener(type, listener));
+  };
+
+  const addGroupButton = document.getElementById("addGroupBtn");
+  const addStudentButton = document.getElementById("addStudentBtn");
+  const groupTime = document.getElementById("newGroupTime");
+  const studentName = document.getElementById("studentName");
+  const studentClass = document.getElementById("studentClass");
+  const pages = document.getElementById("pages");
+
+  listen(addGroupButton, "click", addGroup);
+  listen(addStudentButton, "click", addStudent);
+  listen(groupTime, "keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addGroup();
+    }
+  });
+  listen(studentName, "keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (studentClass.value.trim()) {
+        addStudent();
+      } else {
+        studentClass.focus();
+      }
+    }
+  });
+  listen(studentClass, "keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addStudent();
+    }
+  });
+  listen(document, "keydown", handleUndoShortcut);
+  listen(pages, "click", handlePageClick);
+  listen(pages, "focusin", inlineFocusIn);
+  listen(pages, "input", inlineInput);
+  listen(pages, "change", inlineChange);
+  listen(pages, "focusout", inlineFocusOut);
+  listen(pages, "keydown", inlineKeyDown);
+
+  return () => bindings.splice(0).reverse().forEach((cleanup) => cleanup());
+}
+

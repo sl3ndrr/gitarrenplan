@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { APP_STATE_VERSION, DEFAULT_MIN_ROWS, STORAGE_KEYS } from "../js/config.js";
 import { importPlansFromText } from "../js/features/data-transfer.js";
-import { createDefaultAppState, normalizeAppState } from "../js/normalization.js";
-import { getState, getStateSnapshot, initialiseState } from "../js/state.js";
+import { createDefaultAppState } from "../js/normalization.js";
+import {
+  getState,
+  getStateSnapshot,
+  getUndoDepth,
+  initialiseState
+} from "../js/state.js";
 import { commitState, loadState } from "../js/storage.js";
 
 beforeEach(() => {
@@ -29,13 +34,15 @@ describe("atomare Persistenz", () => {
   });
 
   it("rollt bei QuotaExceededError die gesamte Änderung zurück", () => {
-    initialiseState(createDefaultAppState());
-    const before = getStateSnapshot();
+    const initial = createDefaultAppState();
     const failingStorage = {
+      getItem: () => null,
       setItem() {
         throw new DOMException("Quota exceeded", "QuotaExceededError");
       }
     };
+    initialiseState(initial, { storage: failingStorage });
+    const before = getStateSnapshot();
 
     const result = commitState((draft) => {
       draft.plans[0].name = "Darf nicht bleiben";
@@ -45,6 +52,7 @@ describe("atomare Persistenz", () => {
     expect(result.ok).toBe(false);
     expect(result.error.name).toBe("QuotaExceededError");
     expect(getState()).toEqual(before);
+    expect(getUndoDepth()).toBe(0);
   });
 
   it("verändert bei einer ungültigen Importdatei den Zustand nicht", () => {
@@ -59,12 +67,13 @@ describe("atomare Persistenz", () => {
 
     expect(result.ok).toBe(false);
     expect(getState()).toEqual(before);
+    expect(getUndoDepth()).toBe(0);
   });
 });
 
 describe("Migration", () => {
   it("migriert bestehende V2-Daten atomar in den V3-State", () => {
-    localStorage.setItem(STORAGE_KEYS.plansV2, JSON.stringify([{ 
+    localStorage.setItem(STORAGE_KEYS.plansV2, JSON.stringify([{
       id: "plan-v2",
       name: "Alter Plan",
       meta: { title: "Alt", teacher: "T", location: "L", term: 2025 },
