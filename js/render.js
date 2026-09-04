@@ -3,6 +3,7 @@ import { escapeHtml, formatDate } from "./utils.js";
 
 const FIRST_PAGE_MAX = 4;
 const FOLLOW_PAGE_MAX = 6;
+const COMPACT_PAGE_MAX_ROW_SUM = 20;
 
 export function render() {
   const plan = getActivePlan();
@@ -10,16 +11,20 @@ export function render() {
 
   container.innerHTML = "";
 
-  const pageGroups = getPageGroups(plan.groups);
+  const minRows = getMinRows();
+  const pageGroups = getPageGroups(plan.groups, minRows);
   const totalPages = pageGroups.length;
   const printDate = formatDate(new Date());
 
   pageGroups.forEach((groupsForPage, pageIndex) => {
     const pageNumber = pageIndex + 1;
     const isFirstPage = pageIndex === 0;
+    const isCompactFirstPage = isFirstPage && groupsForPage.length > FIRST_PAGE_MAX;
     const page = document.createElement("article");
 
-    page.className = isFirstPage ? "page" : "page continuation-page";
+    page.className = isFirstPage
+      ? "page" + (isCompactFirstPage ? " compact-first-page" : "")
+      : "page continuation-page";
     page.innerHTML = [
       '<div class="page-content">',
       isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta),
@@ -39,9 +44,13 @@ export function render() {
   renderGroupSelect();
 }
 
-function getPageGroups(groups) {
+function getPageGroups(groups, minRows) {
   if (groups.length === 0) {
     return [[]];
+  }
+
+  if (canUseCompactFirstPage(groups, minRows)) {
+    return [groups];
   }
 
   const result = [groups.slice(0, FIRST_PAGE_MAX)];
@@ -51,6 +60,23 @@ function getPageGroups(groups) {
   }
 
   return result;
+}
+
+function canUseCompactFirstPage(groups, minRows) {
+  if (groups.length < 5 || groups.length > 6) {
+    return false;
+  }
+
+  const gridRows = [groups.slice(0, 3), groups.slice(3, 6)];
+  const rowSum = gridRows.reduce((sum, gridRow) => {
+    const largestGroup = Math.max(
+      ...gridRow.map((group) => Math.max(minRows, group.students.length))
+    );
+
+    return sum + largestGroup;
+  }, 0);
+
+  return rowSum <= COMPACT_PAGE_MAX_ROW_SUM;
 }
 
 function renderMainHeader(meta) {
