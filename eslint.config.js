@@ -1,5 +1,6 @@
 const browserGlobals = {
   Blob: "readonly",
+  DOMParser: "readonly",
   DOMException: "readonly",
   Event: "readonly",
   FileReader: "readonly",
@@ -9,6 +10,7 @@ const browserGlobals = {
   URL: "readonly",
   crypto: "readonly",
   document: "readonly",
+  getComputedStyle: "readonly",
   localStorage: "readonly",
   window: "readonly"
 };
