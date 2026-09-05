@@ -17,5 +17,8 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 12px;
+  --radius-document: 8px;
+  --radius-document-print: 2.5mm;
+  --spacing-section: 8mm;
   --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
