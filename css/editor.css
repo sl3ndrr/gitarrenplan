@@ -246,3 +246,22 @@
 .modal-footer .button {
   min-width: 88px;
 }
+
+/* Native disclosures retain keyboard and screen-reader behaviour. */
+details.editor-box { padding: 0; }
+.editor-box > summary, .danger-zone > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.editor-box > summary { padding: 10px 12px; }
+.editor-box > summary::-webkit-details-marker, .danger-zone > summary::-webkit-details-marker { display: none; }
+.editor-box > summary::after, .danger-zone > summary::after { content: "+"; font-size: 20px; }
+.editor-box[open] > summary::after, .danger-zone[open] > summary::after { content: "−"; }
+.editor-box > summary h3, .danger-zone > summary h3 { margin: 0; }
+.editor-section-content { padding: 12px; border-top: 1px solid var(--border); }
+.editor-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.utility-actions { margin: 0 0 14px; }

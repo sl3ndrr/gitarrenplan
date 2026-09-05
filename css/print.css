@@ -26,7 +26,26 @@
   }
 
   .preview-region {
+    --preview-scale: 1 !important;
     gap: 0;
+  }
+
+  .workspace-layout,
+  .preview-workspace {
+    display: block;
+    width: 210mm;
+  }
+
+  .page-frame {
+    width: 210mm !important;
+    height: auto !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .page-frame:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   .no-print,
@@ -43,6 +62,7 @@
   }
 
   .page {
+    transform: none !important;
     --footer-offset: 6mm;
     --footer-height: 7mm;
     width: 210mm;
@@ -319,4 +339,16 @@
   .continuation-page .continuation-header {
     flex: 0 0 auto;
   }
+}
+
+@media print {
+  .slot-row { grid-template-rows: auto minmax(0, 1fr); }
+  .day-heading-group.print-only { display: grid !important; }
+  .single-centered > .timeslot, .single-centered > .day-heading-group {
+    grid-column: 1 / -1;
+    width: calc((100% - var(--spacing-section)) / 2);
+    justify-self: center;
+  }
+  .single-centered .day-heading { grid-column: 1 / -1; }
+  .student-table .empty-row td { height: 20px; padding: 2px 6px; border-bottom-color: #f1f5f9; }
 }

@@ -445,3 +445,63 @@ input[type="text"].inline-editor {
   background: #ffffff;
   color: var(--text-main);
 }
+
+/* The palette stays readable without colour; day labels always carry the meaning. */
+[data-weekday] { --day-accent: #475569; --day-tint: #f1f5f9; }
+[data-weekday="montag"] { --day-accent: #1e40af; --day-tint: #eff6ff; }
+[data-weekday="dienstag"] { --day-accent: #115e59; --day-tint: #f0fdfa; }
+[data-weekday="mittwoch"] { --day-accent: #6b21a8; --day-tint: #faf5ff; }
+[data-weekday="donnerstag"] { --day-accent: #92400e; --day-tint: #fffbeb; }
+[data-weekday="freitag"] { --day-accent: #9d174d; --day-tint: #fdf2f8; }
+[data-weekday="samstag"] { --day-accent: #166534; --day-tint: #f0fdf4; }
+[data-weekday="sonntag"] { --day-accent: #9a3412; --day-tint: #fff7ed; }
+
+.slot-row {
+  grid-column: 1 / -1;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px var(--spacing-section);
+}
+.day-heading-group {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-section);
+}
+.day-heading {
+  margin: 0;
+  padding: 0 4px 4px;
+  color: var(--day-accent);
+  border-bottom: 2px solid var(--day-accent);
+  font-size: 13px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.shared-day > .day-heading { grid-column: 1 / -1; }
+.timeslot-header {
+  background: var(--day-tint);
+  color: var(--day-accent);
+  border-left: 4px solid var(--day-accent);
+}
+.group-header-left input.day-badge.inline-editor,
+.continuation-marker,
+.day-badge {
+  color: var(--day-accent);
+  background: rgba(255, 255, 255, 0.65);
+  border-color: currentColor;
+}
+.group-occupancy {
+  flex-basis: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.student-table td { border-bottom-color: #e2e8f0; }
+.student-table .empty-row td {
+  height: 20px;
+  padding: 2px 7px;
+  border-bottom-color: #f1f5f9;
+}
+.document-summary { font-weight: 600; }

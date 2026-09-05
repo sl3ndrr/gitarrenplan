@@ -21,85 +21,9 @@
         <p>Pläne verwalten, als JSON sichern und als sichtbares Dokument drucken.</p>
       </header>
 
+      <div class="workspace-layout">
       <section class="editor-panel no-print" aria-labelledby="editor-title">
         <h2 id="editor-title">Plan bearbeiten</h2>
-
-        <div class="editor-grid">
-          <section class="editor-box full-width" aria-labelledby="plan-management-title">
-            <h3 id="plan-management-title">Planverwaltung</h3>
-            <div class="plan-row">
-              <div>
-                <label for="planSelect">Aktiver Plan</label>
-                <select id="planSelect" aria-label="Aktiven Plan wählen"></select>
-              </div>
-              <div>
-                <label for="planName">Planname</label>
-                <input id="planName" type="text" placeholder="z. B. Gitarrenunterricht Montag" aria-label="Name des aktiven Plans">
-              </div>
-            </div>
-            <div class="button-row">
-              <button class="button btn-primary" id="newPlanBtn" type="button">Neuer Plan</button>
-              <button class="button btn-secondary" id="duplicatePlanBtn" type="button">Plan duplizieren</button>
-              <button class="button btn-danger" id="deletePlanBtn" type="button">Plan löschen</button>
-            </div>
-          </section>
-
-          <section class="editor-box full-width" aria-labelledby="general-information-title">
-            <h3 id="general-information-title">Allgemeine Informationen</h3>
-
-            <label for="metaTitle">Titel</label>
-            <input id="metaTitle" type="text" placeholder="z. B. Gitarrenunterricht">
-
-            <label for="metaTeacher">Lehrkraft</label>
-            <input id="metaTeacher" type="text" placeholder="Name der Lehrkraft">
-
-            <label for="metaLocation">Ort</label>
-            <input id="metaLocation" type="text" placeholder="z. B. Lernwerkstatt">
-
-            <label for="metaTerm">Schuljahr / Halbjahr</label>
-            <input id="metaTerm" type="text" placeholder="z. B. 2. Halbjahr 2025/2026">
-
-            <label for="minRows">Mindest-Zeilen pro Gruppe</label>
-            <input id="minRows" type="number" min="0" max="20" value="6" aria-label="Mindestanzahl leerer Zeilen pro Gruppe">
-          </section>
-
-          <section class="editor-box" aria-labelledby="new-group-title">
-            <h3 id="new-group-title">Neue Gruppe hinzufügen</h3>
-
-            <label for="newGroupDay">Wochentag</label>
-            <select id="newGroupDay" aria-label="Wochentag für neue Gruppe">
-              <option value="">Kein Wochentag</option>
-              <option value="Montag" selected>Montag</option>
-              <option value="Dienstag">Dienstag</option>
-              <option value="Mittwoch">Mittwoch</option>
-              <option value="Donnerstag">Donnerstag</option>
-              <option value="Freitag">Freitag</option>
-              <option value="Samstag">Samstag</option>
-              <option value="Sonntag">Sonntag</option>
-            </select>
-
-            <label for="newGroupTime">Zeit / Gruppenname</label>
-            <input id="newGroupTime" type="text" placeholder="z. B. 15:45 – 16:15 Uhr" aria-label="Uhrzeit oder Name der neuen Gruppe">
-
-            <button class="button btn-primary" id="addGroupBtn" type="button">Gruppe hinzufügen</button>
-          </section>
-
-          <fieldset class="editor-box editor-fieldset" id="studentForm" aria-describedby="studentFormHint">
-            <legend id="new-student-title">Neuen Schüler hinzufügen</legend>
-
-            <label for="groupSelect">Gruppe auswählen</label>
-            <select id="groupSelect" aria-label="Zielgruppe für neuen Schüler"></select>
-
-            <label for="studentName">Name</label>
-            <input id="studentName" type="text" placeholder="Name des Schülers">
-
-            <label for="studentClass">Klasse</label>
-            <input id="studentClass" type="text" placeholder="z. B. Klasse 2 b">
-
-            <button class="button btn-success" id="addStudentBtn" type="button">Schüler hinzufügen</button>
-            <p id="studentFormHint" class="form-hint hidden">Lege zuerst eine Gruppe an, um Schüler hinzuzufügen.</p>
-          </fieldset>
-        </div>
 
         <div class="utility-actions" aria-label="Weitere Aktionen">
           <section class="action-group" aria-labelledby="editing-actions-title">
@@ -119,15 +43,100 @@
           </section>
         </div>
 
+        <div class="editor-grid">
+          <details open class="editor-box full-width" aria-labelledby="plan-management-title">
+            <summary aria-label="Planverwaltung"><h3 id="plan-management-title">Planverwaltung</h3></summary>
+            <div class="editor-section-content">
+            <div class="plan-row">
+              <div>
+                <label for="planSelect">Aktiver Plan</label>
+                <select id="planSelect" aria-label="Aktiven Plan wählen"></select>
+              </div>
+              <div>
+                <label for="planName">Planname</label>
+                <input id="planName" type="text" placeholder="z. B. Gitarrenunterricht Montag" aria-label="Name des aktiven Plans">
+              </div>
+            </div>
+            <div class="button-row">
+              <button class="button btn-primary" id="newPlanBtn" type="button">Neuer Plan</button>
+              <button class="button btn-secondary" id="duplicatePlanBtn" type="button">Plan duplizieren</button>
+              <button class="button btn-danger" id="deletePlanBtn" type="button">Plan löschen</button>
+            </div>
+          </div></details>
+
+          <details open class="editor-box full-width" aria-labelledby="general-information-title">
+            <summary aria-label="Allgemeine Informationen"><h3 id="general-information-title">Allgemeine Informationen</h3></summary>
+            <div class="editor-section-content">
+
+            <label for="metaTitle">Titel</label>
+            <input id="metaTitle" type="text" placeholder="z. B. Gitarrenunterricht">
+
+            <label for="metaTeacher">Lehrkraft</label>
+            <input id="metaTeacher" type="text" placeholder="Name der Lehrkraft">
+
+            <label for="metaLocation">Ort</label>
+            <input id="metaLocation" type="text" placeholder="z. B. Lernwerkstatt">
+
+            <label for="metaTerm">Schuljahr / Halbjahr</label>
+            <input id="metaTerm" type="text" placeholder="z. B. 2. Halbjahr 2025/2026">
+
+            <label for="minRows">Mindest-Zeilen pro Gruppe</label>
+            <input id="minRows" type="number" min="0" max="20" value="6" aria-label="Mindestanzahl der Zeilen pro Gruppe">
+          </div></details>
+
+          <details open class="editor-box" aria-labelledby="new-group-title">
+            <summary aria-label="Gruppenformular"><h3 id="new-group-title">Neue Gruppe hinzufügen</h3></summary>
+            <div class="editor-section-content">
+
+            <label for="newGroupDay">Wochentag</label>
+            <select id="newGroupDay" aria-label="Wochentag für neue Gruppe">
+              <option value="">Kein Wochentag</option>
+              <option value="Montag" selected>Montag</option>
+              <option value="Dienstag">Dienstag</option>
+              <option value="Mittwoch">Mittwoch</option>
+              <option value="Donnerstag">Donnerstag</option>
+              <option value="Freitag">Freitag</option>
+              <option value="Samstag">Samstag</option>
+              <option value="Sonntag">Sonntag</option>
+            </select>
+
+            <label for="newGroupTime">Zeit / Gruppenname</label>
+            <input id="newGroupTime" type="text" placeholder="z. B. 15:45 – 16:15 Uhr" aria-label="Uhrzeit oder Name der neuen Gruppe">
+
+            <button class="button btn-primary" id="addGroupBtn" type="button">Gruppe hinzufügen</button>
+          </div></details>
+
+          <details class="editor-box" open aria-labelledby="new-student-title">
+            <summary aria-label="Schülerformular"><h3 id="new-student-title">Neuen Schüler hinzufügen</h3></summary>
+            <div class="editor-section-content">
+          <fieldset class="editor-fieldset" id="studentForm" aria-describedby="studentFormHint">
+            <legend class="visually-hidden">Neuen Schüler hinzufügen</legend>
+
+            <label for="groupSelect">Gruppe auswählen</label>
+            <select id="groupSelect" aria-label="Zielgruppe für neuen Schüler"></select>
+
+            <label for="studentName">Name</label>
+            <input id="studentName" type="text" placeholder="Name des Schülers">
+
+            <label for="studentClass">Klasse</label>
+            <input id="studentClass" type="text" placeholder="z. B. Klasse 2 b">
+
+            <button class="button btn-success" id="addStudentBtn" type="button">Schüler hinzufügen</button>
+            <p id="studentFormHint" class="form-hint hidden">Lege zuerst eine Gruppe an, um Schüler hinzuzufügen.</p>
+          </fieldset>
+            </div>
+          </details>
+        </div>
+
         <input id="importFile" type="file" accept="application/json,.json" hidden aria-hidden="true">
 
-        <section class="danger-zone" aria-label="Gefährliche Aktionen">
-          <h3 class="danger-zone-label"><span aria-hidden="true">⚠</span> Gefährliche Aktionen</h3>
+        <details class="danger-zone" aria-label="Gefährliche Aktionen">
+          <summary><h3 class="danger-zone-label"><span aria-hidden="true">⚠</span> Gefährliche Aktionen</h3></summary>
           <div class="button-row danger-actions">
             <button class="button btn-danger" id="clearPlanBtn" type="button">Plan vollständig leeren</button>
             <button class="button btn-danger" id="resetBtn" type="button">Ursprünglichen Plan wiederherstellen</button>
           </div>
-        </section>
+        </details>
 
         <p class="small-note">
           Änderungen werden automatisch lokal in diesem Browser gespeichert und sind nur auf diesem Gerät verfügbar.<br>
@@ -137,8 +146,11 @@
         </p>
       </section>
 
+      <section class="preview-workspace" aria-labelledby="preview-title">
       <h2 id="preview-title" class="section-heading no-print">Druckvorschau</h2>
-      <section id="pages" class="preview-region" aria-labelledby="preview-title"></section>
+      <div id="pages" class="preview-region"></div>
+      </section>
+      </div>
     </main>
 
     <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message" tabindex="-1">

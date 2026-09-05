@@ -7,6 +7,7 @@ import {
 import { initialiseLifecycle } from "./features/lifecycle.js";
 import { initialisePlanActions } from "./features/plan-actions.js";
 import { initialiseScheduleActions } from "./features/schedule-actions.js";
+import { initialiseWorkspace } from "./features/workspace.js";
 import {
   disposeRenderScheduler,
   flushRender,
@@ -95,6 +96,7 @@ export function bootstrap() {
   ];
 
   render();
+  cleanups.push(initialiseWorkspace());
   updateUndoButton();
 
   cleanupApp = () => {
@@ -124,4 +126,3 @@ if (document.readyState === "loading") {
 } else {
   bootstrap();
 }
-

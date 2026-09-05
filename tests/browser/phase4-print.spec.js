@@ -186,6 +186,7 @@ test("Drucken speichert und rendert offene Eingaben synchron", async ({ page }) 
     } });
   });
 
+  await page.locator('[aria-labelledby="general-information-title"] > summary').click();
   await page.locator("#metaTitle").focus();
   await page.locator("#metaTitle").fill("Synchron vor dem PDF");
   await page.locator("#printBtn").click();

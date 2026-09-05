@@ -110,6 +110,9 @@ function performRender(scope) {
 
 function captureInlineFocus() {
   const element = document.activeElement;
+  if (element?.dataset?.focusKey) {
+    return { focusKey: element.dataset.focusKey };
+  }
   if (!element?.dataset?.inlineKey) {
     return null;
   }
@@ -122,6 +125,11 @@ function captureInlineFocus() {
 
 function restoreInlineFocus(snapshot, container) {
   if (!snapshot) {
+    return;
+  }
+  if (snapshot.focusKey) {
+    [...container.querySelectorAll("[data-focus-key]")]
+      .find((item) => item.dataset.focusKey === snapshot.focusKey)?.focus({ preventScroll: true });
     return;
   }
   const element = [...container.querySelectorAll("[data-inline-key]")]
@@ -148,6 +156,10 @@ function renderPages() {
   const pagination = paginateGroups(plan.groups, minRows);
   const totalPages = pagination.pages.length;
   const printDate = formatDate(new Date());
+  const studentCounts = new Map(plan.groups.map((group) => [group.id, group.students.length]));
+  const totalStudents = plan.groups.reduce((sum, group) => sum + group.students.length, 0);
+  const summary = plan.groups.length + (plan.groups.length === 1 ? " Gruppe" : " Gruppen")
+    + " · " + totalStudents + " Schüler:innen gesamt";
 
   pagination.pages.forEach((segmentsForPage, pageIndex) => {
     const pageNumber = pageIndex + 1;
@@ -164,15 +176,19 @@ function renderPages() {
       '<div class="page-content">',
       isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta),
       '<div class="slots ' + pagination.layout.gridClass + (segmentsForPage.length ? "" : " has-empty-state") + '">',
-      segmentsForPage.length ? segmentsForPage.map(renderGroup).join("") : renderEmptyState(),
+      segmentsForPage.length ? renderSlotRows(segmentsForPage, studentCounts, minRows) : renderEmptyState(),
       "</div>",
       "</div>",
       '<footer class="page-footer">',
+      '<span class="document-summary">' + summary + "</span> · ",
       totalPages > 1 ? "Seite " + pageNumber + " von " + totalPages + " · " : "",
       "Stand: " + printDate,
       "</footer>"
     ].join("");
-    fragment.appendChild(page);
+    const frame = document.createElement("div");
+    frame.className = "page-frame";
+    frame.appendChild(page);
+    fragment.appendChild(frame);
   });
 
   container.replaceChildren(fragment);
@@ -222,7 +238,35 @@ function renderContinuationHeader(meta) {
   ].join("");
 }
 
-function renderGroup(segment) {
+function weekdayKey(day) {
+  const days = ["montag", "dienstag", "mittwoch", "donnerstag", "freitag", "samstag", "sonntag"];
+  const key = (day || "").trim().toLocaleLowerCase("de");
+  return days.includes(key) ? key : "neutral";
+}
+
+// Keep the user's group order; only adjacent slots on the same row share a heading.
+function renderSlotRows(segments, studentCounts, minRows) {
+  const rows = [];
+  for (let index = 0; index < segments.length; index += 2) {
+    const pair = segments.slice(index, index + 2);
+    const sharedDay = pair.length === 2 && pair[0].day.trim()
+      && pair[0].day.trim() === pair[1].day.trim();
+    const headings = sharedDay ? [pair[0]] : pair;
+    rows.push(
+      '<div class="slot-row' + (index > 0 && pair.length === 1 ? " single-centered" : "") + '">',
+      '<div class="day-heading-group print-only' + (sharedDay ? " shared-day" : "") + '">',
+      ...headings.map((segment) => '<h4 class="day-heading" data-weekday="' + weekdayKey(segment.day)
+        + '">' + escapeHtml(segment.day || "Ohne Wochentag") + '</h4>'),
+      '</div>',
+      ...pair.map((segment) => renderGroup(segment, studentCounts.get(segment.groupId), minRows)),
+      '</div>'
+    );
+  }
+  return rows.join("");
+}
+
+function renderGroup(segment, studentCount, minRows) {
+
   const groupId = escapeHtml(segment.groupId);
   const dayText = segment.day || "Wochentag";
   const dayClass = segment.day ? "day-badge" : "day-badge empty-day";
@@ -248,22 +292,21 @@ function renderGroup(segment) {
     : "";
 
   return [
-    '<section class="timeslot" data-group-id="' + groupId + '" data-segment-part="' + segment.part + '" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
+    '<section class="timeslot" data-weekday="' + weekdayKey(segment.day) + '" data-group-id="' + groupId + '" data-segment-part="' + segment.part + '" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
     '<div class="timeslot-header">',
     '<div class="group-header-left">',
-    '<span class="' + dayClass + ' print-only">' + escapeHtml(dayText) + "</span>",
     '<span class="time-text print-only">' + escapeHtml(segment.time) + "</span>",
     editableHeader,
     continuationMarker,
+    '<span class="group-occupancy" title="Belegung / mindestens vorgesehene Zeilen">'
+      + studentCount + " / " + Math.max(studentCount, minRows) + " Plätze</span>",
     "</div>",
-    segment.continuation ? "" : '<div class="slot-actions no-print">',
-    segment.continuation ? "" : [
-    '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span></button>',
-    '<button class="button icon-button" aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '"><span aria-hidden="true">↓</span></button>',
-    '<button class="button icon-button" aria-label="Schüler alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span></button>',
+    segment.continuation ? "" : renderActionMenu([
+    '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
+    '<button class="button icon-button" aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '"><span aria-hidden="true">↓</span><span>Nach unten</span></button>',
+    '<button class="button icon-button" aria-label="Schüler alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span><span>Alphabetisch sortieren</span></button>',
     '<button class="button remove-group-button" aria-label="Gruppe entfernen" title="Gruppe entfernen" data-action="remove-group" data-group-id="' + groupId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
-    "</div>"
-    ].join(""),
+    ].join(""), "Gruppenaktionen", "group-actions:" + segment.groupId, "slot-actions"),
     "</div>",
     '<table class="student-table">',
     '<caption class="visually-hidden">Schüler in Gruppe ' + escapeHtml(accessibleLabel) + "</caption>",
@@ -273,6 +316,14 @@ function renderGroup(segment) {
     emptyRows.join(""),
     "</tbody></table></section>"
   ].join("");
+}
+
+function renderActionMenu(content, label, focusKey, className) {
+  return '<details class="action-menu no-print"><summary class="button actions-toggle" data-focus-key="'
+    + escapeHtml(focusKey) + '" aria-label="' + escapeHtml(label) + ' öffnen" title="'
+    + escapeHtml(label) + '"><span aria-hidden="true">⋮</span></summary>'
+    + '<div class="action-menu-items ' + className + '" role="group" aria-label="'
+    + escapeHtml(label) + '">' + content + '</div></details>';
 }
 
 function renderStudentRow(student, groupId, index) {
@@ -288,10 +339,12 @@ function renderStudentRow(student, groupId, index) {
     '<td class="student-class"><span class="class-badge print-only">' + escapeHtml(student.className) + "</span>",
     '<input type="text" class="class-badge editable inline-editor no-print" value="' + escapeHtml(student.className) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + classKey + '" data-inline-type="student" data-field="className" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Schüler ' + (index + 1) + ' bearbeiten"></td>',
     '<td class="student-actions no-print">',
-    '<button class="button icon-button" aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↑</span></button>',
-    '<button class="button icon-button" aria-label="' + labelName + ' nach unten" title="Nach unten" data-action="student-down" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↓</span></button>',
-    '<button class="button icon-button" aria-label="' + labelName + ' in andere Gruppe verschieben" title="In andere Gruppe verschieben" data-action="move-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">⇄</span></button>',
-    '<button class="button icon-button" aria-label="' + labelName + ' entfernen" title="Entfernen" data-action="remove-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">✕</span></button>',
+    renderActionMenu([
+    '<button class="button icon-button" aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
+    '<button class="button icon-button" aria-label="' + labelName + ' nach unten" title="Nach unten" data-action="student-down" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↓</span><span>Nach unten</span></button>',
+    '<button class="button icon-button" aria-label="' + labelName + ' in andere Gruppe verschieben" title="In andere Gruppe verschieben" data-action="move-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">⇄</span><span>Gruppe wechseln</span></button>',
+    '<button class="button icon-button" aria-label="' + labelName + ' entfernen" title="Entfernen" data-action="remove-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
+    ].join(""), "Aktionen für " + student.name, "student-actions:" + student.id, "student-action-list"),
     "</td></tr>"
   ].join("");
 }
