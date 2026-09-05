@@ -40,7 +40,7 @@ body {
 }
 
 .wrapper {
-  width: min(210mm, 100%);
+  width: min(1440px, 100%);
   min-width: 0;
 }
 
@@ -80,6 +80,10 @@ body {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 0;
   border-radius: var(--radius-sm);
   padding: 9px 12px;
@@ -124,7 +128,7 @@ body {
   margin-top: 10px;
 }
 
-#app-shell :where(.button, input, select, a, .inline-editor):focus-visible,
+#app-shell :where(.button, input, select, a, summary, .inline-editor):focus-visible,
 .modal-overlay :where(.button, input, select, a):focus-visible {
   outline: 0;
   box-shadow:
@@ -139,6 +143,9 @@ body {
   text-underline-offset: 0.15em;
 }
 
-.print-only {
-  display: none;
+/* Visibility is a media contract, independent of component display rules. */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
 }

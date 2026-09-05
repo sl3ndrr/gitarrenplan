@@ -183,8 +183,17 @@ function handlePageClick(event) {
   }
 
   const action = button.dataset.action;
+  const menu = button.closest(".action-menu");
+  if (menu) {
+    menu.open = false;
+    menu.querySelector("summary")?.focus({ preventScroll: true });
+  }
   if (action === "focus-group-form") {
     const groupInput = document.getElementById("newGroupTime");
+    const section = groupInput?.closest("details");
+    if (section) {
+      section.open = true;
+    }
     groupInput?.scrollIntoView?.({ block: "center" });
     groupInput?.focus({ preventScroll: true });
     return;
@@ -323,6 +332,23 @@ export function initialiseScheduleActions() {
     }
   });
   listen(document, "keydown", handleUndoShortcut);
+  listen(document, "keydown", (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+    const menu = event.target.closest?.(".action-menu[open]");
+    if (menu) {
+      menu.open = false;
+      menu.querySelector("summary")?.focus({ preventScroll: true });
+    }
+  });
+  listen(document, "click", (event) => {
+    pages.querySelectorAll(".action-menu[open]").forEach((menu) => {
+      if (!menu.contains(event.target)) {
+        menu.open = false;
+      }
+    });
+  });
   listen(pages, "click", handlePageClick);
   listen(pages, "focusin", inlineFocusIn);
   listen(pages, "input", inlineInput);
