@@ -154,14 +154,6 @@
     gap: var(--spacing-section);
   }
 
-  .slots.grid-2x2 > .timeslot:nth-child(3):last-child {
-    transform: translateX(calc(50% + 4mm));
-  }
-
-  .slots.grid-2x3 > .timeslot:nth-child(5):last-child {
-    transform: translateX(calc(50% + 2mm));
-  }
-
   .timeslot {
     min-width: 0;
     min-height: 0;
@@ -356,11 +348,5 @@
   .slot-row { grid-template-rows: auto minmax(0, 1fr); }
   .slot-row.no-day-heading { grid-template-rows: minmax(0, 1fr); }
   .day-heading-group.print-only { display: grid !important; }
-  .single-centered > .timeslot, .single-centered > .day-heading-group {
-    grid-column: 1 / -1;
-    width: calc((100% - var(--spacing-section)) / 2);
-    justify-self: center;
-  }
-  .single-centered .day-heading { grid-column: 1 / -1; }
   .student-table .empty-row td { height: 20px; padding: 2px 6px; border-bottom-color: #f1f5f9; }
 }
