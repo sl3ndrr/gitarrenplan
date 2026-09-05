@@ -49,8 +49,8 @@ describe("Druckübersicht", () => {
     show(["Montag", "Dienstag", "Mittwoch"]);
 
     const lastRow = document.querySelectorAll(".slot-row")[1];
-    expect(lastRow).not.toHaveClass("single-centered");
-    expect(lastRow.querySelector(".day-heading")).toHaveClass("day-heading-column-1");
+    expect(lastRow.classList.contains("single-centered")).toBe(false);
+    expect(lastRow.querySelector(".day-heading").classList.contains("day-heading-column-1")).toBe(true);
   });
 
   it("zeigt Mindestplätze, echte Belegung und keine negativen freien Plätze", () => {
