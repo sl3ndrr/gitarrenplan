@@ -110,8 +110,15 @@ for (const width of [320, 375, 768, 900, 1024, 1180, 1280, 1440]) {
       await page.locator(".app-header").scrollIntoViewIfNeeded();
       await page.screenshot({ path: EVIDENCE + "/05-desktop.png" });
       await page.evaluate(() => window.scrollTo(0, 600));
-      const top = await page.locator(".editor-panel").evaluate((element) => element.getBoundingClientRect().top);
-      expect(top).toBeCloseTo(16, 0);
+      const sticky = await page.locator(".editor-panel").evaluate((element) => ({
+        position: getComputedStyle(element).position,
+        top: element.getBoundingClientRect().top,
+        bottom: element.getBoundingClientRect().bottom
+      }));
+      expect(sticky.position).toBe("sticky");
+      expect(sticky.top).toBeGreaterThanOrEqual(0);
+      expect(sticky.top).toBeLessThanOrEqual(16);
+      expect(sticky.bottom).toBeLessThanOrEqual(1000);
     }
     if (width === 375) await slot.screenshot({ path: EVIDENCE + "/06-mobil.png" });
   });

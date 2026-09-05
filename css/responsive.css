@@ -48,7 +48,7 @@
   .actions-toggle { list-style: none; padding: 4px; font-size: 22px; }
   .actions-toggle::-webkit-details-marker { display: none; }
   .timeslot-header .actions-toggle { background: rgba(255, 255, 255, 0.2); color: inherit; border: 1px solid currentColor; }
-  .student-actions .actions-toggle { background: var(--surface-muted); color: var(--text-main); }
+  .student-actions .actions-toggle { background: var(--surface-muted); color: var(--text-main); font-size: 22px; padding: 4px; }
   .action-menu-items {
     position: absolute;
     top: calc(100% + 4px);
