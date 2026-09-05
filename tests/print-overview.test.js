@@ -38,6 +38,13 @@ describe("Druckübersicht", () => {
     expect(document.querySelectorAll(".slot-row")[1].querySelector(".day-heading-group")).toBeNull();
   });
 
+  it("beginnt eine neue Überschrift nach einem tatsächlichen Tageswechsel", () => {
+    show(["Montag", "Dienstag", "Montag"]);
+
+    expect([...document.querySelectorAll(".day-heading")].map((node) => node.textContent))
+      .toEqual(["Montag", "Dienstag", "Montag"]);
+  });
+
   it("zeigt Mindestplätze, echte Belegung und keine negativen freien Plätze", () => {
     show(["Montag", "Dienstag", "Freitag"], [0, 3, 8]);
     expect([...document.querySelectorAll(".group-occupancy")].map((node) => node.textContent))
