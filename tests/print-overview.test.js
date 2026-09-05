@@ -45,6 +45,14 @@ describe("Druckübersicht", () => {
       .toEqual(["Montag", "Dienstag", "Montag"]);
   });
 
+  it("lässt eine einzelne letzte Gruppenbox in der linken Spalte", () => {
+    show(["Montag", "Dienstag", "Mittwoch"]);
+
+    const lastRow = document.querySelectorAll(".slot-row")[1];
+    expect(lastRow).not.toHaveClass("single-centered");
+    expect(lastRow.querySelector(".day-heading")).toHaveClass("day-heading-column-1");
+  });
+
   it("zeigt Mindestplätze, echte Belegung und keine negativen freien Plätze", () => {
     show(["Montag", "Dienstag", "Freitag"], [0, 3, 8]);
     expect([...document.querySelectorAll(".group-occupancy")].map((node) => node.textContent))
