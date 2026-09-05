@@ -4,13 +4,13 @@
   --title-box-padding-y-mobile: 16px;
   --title-box-padding-y-compact: 9px;
 
-  --primary-base: hsl(224 64% 33%);
+  --primary-base: hsl(224 78% 29%);
   --primary-neutral: hsl(224 0% 38%);
   --primary: color-mix(in hsl, var(--primary-base) var(--color-intensity), var(--primary-neutral));
-  --primary-light-base: hsl(214 95% 93%);
+  --primary-light-base: hsl(214 100% 88%);
   --primary-light-neutral: hsl(214 0% 96%);
   --primary-light: color-mix(in hsl, var(--primary-light-base) var(--color-intensity), var(--primary-light-neutral));
-  --accent-base: hsl(38 92% 50%);
+  --accent-base: hsl(38 100% 50%);
   --accent-neutral: hsl(38 0% 40%);
   --accent: color-mix(in hsl, var(--accent-base) var(--color-intensity), var(--accent-neutral));
   --danger: #b91c1c;
@@ -22,13 +22,13 @@
   --surface-muted: #f8fafc;
   --page-background: #f1f5f9;
   --border: #e2e8f0;
-  --focus-ring-base: hsl(224 76% 48%);
+  --focus-ring-base: hsl(224 90% 42%);
   --focus-ring-neutral: hsl(224 0% 46%);
   --focus-ring: color-mix(in hsl, var(--focus-ring-base) var(--color-intensity), var(--focus-ring-neutral));
   --focus-halo: #ffffff;
-  --bg-gradient-start-base: hsl(220 55% 23%);
+  --bg-gradient-start-base: hsl(224 78% 20%);
   --bg-gradient-start-neutral: hsl(220 0% 30%);
-  --bg-gradient-end-base: hsl(214 49% 34%);
+  --bg-gradient-end-base: hsl(214 74% 36%);
   --bg-gradient-end-neutral: hsl(214 0% 43%);
   --bg-gradient: linear-gradient(
     135deg,
