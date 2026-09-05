@@ -159,13 +159,17 @@ test("lange Inhalte umbrechen ohne Slot- oder Footer-Overflow", async ({ page })
     group: parseFloat(getComputedStyle(document.querySelector(".time-text.print-only")).fontSize),
     badge: parseFloat(getComputedStyle(document.querySelector(".class-badge.print-only")).fontSize),
     title: parseFloat(getComputedStyle(document.querySelector(".preview-document-title")).fontSize),
-    actions: getComputedStyle(document.querySelector(".student-actions")).display
+    actions: getComputedStyle(document.querySelector(".student-actions")).display,
+    headerRadius: getComputedStyle(document.querySelector(".header-inner")).borderTopLeftRadius,
+    headerShadow: getComputedStyle(document.querySelector(".header-inner")).boxShadow
   }));
   expect(typography.student).toBeGreaterThanOrEqual(12.6);
   expect(typography.group).toBeGreaterThanOrEqual(14);
   expect(typography.badge).toBeGreaterThanOrEqual(12);
   expect(typography.title).toBeGreaterThanOrEqual(22);
   expect(typography.actions).toBe("none");
+  expect(typography.headerRadius).toBe("0px");
+  expect(typography.headerShadow).toBe("none");
 });
 
 test("Drucken speichert und rendert offene Eingaben synchron", async ({ page }) => {

@@ -23,6 +23,10 @@ jobs:
         run: npm install --ignore-scripts
       - name: Chromium installieren
         run: npx playwright install --with-deps chromium
+      - name: PDF-Werkzeuge installieren
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
       - name: JavaScript linten
         run: npm run lint
       - name: Unit- und DOM-Tests ausführen
