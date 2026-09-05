@@ -9,7 +9,9 @@ Eine browserbasierte, druckfreundliche Übersicht für Gitarrenunterricht. Plän
 - Bis zu zehn Änderungen rückgängig machen
 - Alle Pläne mit einem Klick als bearbeitbare JSON-Sicherung exportieren und wieder importieren
 - A4-optimierte Druckansicht mit automatischem Seitenumbruch
-- Responsive Bearbeitungsansicht für kleinere Bildschirme
+- Zweispaltiger Desktop-Arbeitsbereich mit aufklappbaren Editorbereichen; gestapelte Tablet-/Mobilansicht
+- Tastaturbedienbare Aktionsmenüs und mindestens 44 px große Bildschirmziele
+- Tagesfarben, gemeinsame Tagesüberschriften, Gruppenbelegung und Gesamtzahlen im Druck
 
 ## Projektstruktur
 
@@ -43,7 +45,8 @@ gitarrenplan/
 │       ├── history.js          # Undo-Verlauf
 │       ├── lifecycle.js        # Print/Pagehide/Storage-Listener
 │       ├── plan-actions.js     # Plan-Dialoge und Commands
-│       └── schedule-actions.js # Gruppen-, Schüler- und Inline-Events
+│       ├── schedule-actions.js # Gruppen-, Schüler- und Inline-Events
+│       └── workspace.js        # Bildschirm-Skalierung und Editorbereiche
 ├── scripts/                    # Prüfung und Rendering der Beispiel-PDFs
 ├── tests/                      # Vitest-/jsdom-, Browser- und PDF-Regressionstests
 └── docs/                       # Datenvertrag und Architektur
@@ -91,7 +94,15 @@ Die Druckausgabe verwendet echtes A4-Porträtformat. Pläne mit bis zu vier logi
 
 Passt der Inhalt einer Gruppe nicht lesbar in einen Slot, teilt die Anwendung die echten Schülerdaten auf weitere, gleich große Slots auf. Diese tragen denselben Gruppennamen und den Zusatz **Fortsetzung** und zählen wie jede andere Gruppe als belegter Rasterplatz. Konfigurierte Leerzeilen werden zuerst reduziert; vorhandene Schülernamen werden weder ausgeblendet noch für ein Ein-Seiten-Ergebnis unlesbar verkleinert.
 
-Vor dem Öffnen des Druckdialogs speichert und rendert **Drucken / PDF** alle noch offenen Texteingaben synchron. Editorflächen, Aktionsbuttons, Empty States, Schatten und Rundungen werden nicht in das PDF übernommen.
+Vor dem Öffnen des Druckdialogs speichert und rendert **Drucken / PDF** alle noch offenen Texteingaben synchron. Editorflächen, Aktionsbuttons, Empty States und Schatten werden nicht in das PDF übernommen. Die Druckseite bleibt 210 × 297 mm groß; die dezente Dokumentrundung bleibt erhalten.
+
+Benachbarte Slots desselben Tages erhalten eine gemeinsame Tagesüberschrift. Bei gemischten Tagen bleiben beide Beschriftungen erhalten; die manuelle Gruppenreihenfolge wird nicht geändert. Tagesfarben haben auch bei freien Tagesnamen eine neutrale Rückfallfarbe.
+
+Die Belegung zeigt `Schülerzahl / max(Schülerzahl, Mindest-Zeilen) Plätze`. Mindest-Zeilen sind keine Obergrenze. Die Kennzahlen zählen logische Gruppen und Schüler jeweils einmal, unabhängig von Fortsetzungssegmenten.
+
+Ab 1180 px stehen ein 400 px breiter, bei Bedarf separat scrollbar haftender Editor und die Vorschau nebeneinander. Über 900 px bleibt die Vorschauseite 210 mm breit und wird bei Platzmangel nur für den Bildschirm skaliert. Unterhalb davon fließt die Vorschau wie bisher einspaltig. Alle Druckregeln setzen die Skalierung und die Rahmenmaße ausdrücklich zurück.
+
+`tests/browser/workspace.spec.js` schreibt Vorher-/Nachher-Belege nach `output/evidence`. Der Vorher-Stand stammt aus Commit `d6898a3`; für diesen Test muss die Git-Historie verfügbar sein (bei einem flachen Clone zuerst `git fetch --unshallow`).
 
 `npm run test:pdf` erzeugt zwölf repräsentative PDF-Dateien unter `output/pdf`, kontrolliert Seitenzahl und A4-Abmessungen mit Poppler und rendert jede Seite zusätzlich als PNG zur visuellen Abnahme. Dafür müssen `pdfinfo`, `pdftotext` und `pdftoppm` verfügbar sein.
 

@@ -75,3 +75,32 @@ Features dürfen nur `dispatch()` verwenden.
 `updateEditorValues()` bleiben synchrone Einstiegspunkte. Auch der bisherige
 Aufruf `render(preferredGroupId)` wird weiterhin akzeptiert. Datenmigration
 und Importformate sind in `DATENFORMAT.md` beschrieben.
+
+## Bildschirm und Druck trennen
+
+`js/features/workspace.js` beobachtet die verfügbare Breite und die Seitenhöhen.
+Jede `.page` liegt in einem `.page-frame`, der den skalierten Platz im normalen
+Dokumentfluss reserviert. Der eigentliche Seitenknoten bleibt 210 mm breit;
+`@media print` hebt sowohl Transform als auch Bildschirm-Rahmenmaße auf.
+Die 44-px-Mindestziele werden invers zur Bildschirm-Skalierung bemessen.
+Observer und Listener werden beim App-Cleanup entfernt.
+
+`.print-only` wird ausschließlich im Bildschirmmedium zentral mit
+`display: none !important` versteckt. Komponenten dürfen ihre natürliche
+Display-Art behalten; im Druck setzen explizite Regeln die sichtbare Form.
+Das gilt auch für die neuen als Grid angeordneten Tagesüberschriften.
+
+Je zwei aufeinanderfolgende Drucksegmente bilden eine `.slot-row`. Gleiche
+nicht leere Tagesnamen teilen eine Überschrift; gemischte Tage behalten ihre
+Zuordnung. Die reine Paginierung und die fachliche Reihenfolge bleiben erhalten.
+Kennzahlen verwenden die vollständigen logischen Gruppen statt der Segmente.
+
+Native `details`/`summary` tragen Editorbereiche und Aktionsmenüs. Die Menüs
+lassen sich mit Tab bedienen und mit Escape schließen; Außenklick schließt sie
+ebenfalls. Aktionen fokussieren zuerst den Auslöser. Dessen stabiler
+`data-focus-key` stellt den Fokus nach dem Rendern wieder her. Die vorhandene
+Inline-Fokus- und Textauswahlwiederherstellung bleibt unverändert.
+
+Globales Rückgängig wird weiterhin über den vorhandenen Undo-Stack unterstützt.
+Eine globale Redo-Funktion war im Ausgangsstand nicht implementiert; native
+Tastenkombinationen in Texteingaben bleiben dem Browser überlassen.
