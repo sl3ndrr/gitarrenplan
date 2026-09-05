@@ -279,11 +279,11 @@ function renderDayHeading(segment, column, sharedDay) {
     + '">' + escapeHtml(segment.day || "Ohne Wochentag") + "</h4>";
 }
 
-// Preserve group order. A day heading appears only when that day was not
-// already present in the preceding visual row.
+// Preserve group order. The next row continues a day only when its first
+// group matches the last group in the preceding visual row.
 function renderSlotRows(segments, studentCounts, minRows, appearance) {
   const rows = [];
-  let previousRowDays = new Set();
+  let previousRowLastDay = null;
 
   for (let index = 0; index < segments.length; index += 2) {
     const pair = segments.slice(index, index + 2);
@@ -291,10 +291,12 @@ function renderSlotRows(segments, studentCounts, minRows, appearance) {
     const sharedDay = pair.length === 2
       && Boolean(dayKeys[0])
       && dayKeys[0] === dayKeys[1];
+    const firstDayContinuesPreviousRow = index > 0
+      && dayKeys[0] === previousRowLastDay;
     const headings = sharedDay
-      ? (previousRowDays.has(dayKeys[0]) ? [] : [renderDayHeading(pair[0], 0, true)])
+      ? (firstDayContinuesPreviousRow ? [] : [renderDayHeading(pair[0], 0, true)])
       : pair.map((segment, column) => (
-        previousRowDays.has(dayKeys[column])
+        column === 0 && firstDayContinuesPreviousRow
           ? ""
           : renderDayHeading(segment, column, false)
       )).filter(Boolean);
@@ -317,7 +319,7 @@ function renderSlotRows(segments, studentCounts, minRows, appearance) {
       )),
       "</div>"
     );
-    previousRowDays = new Set(dayKeys);
+    previousRowLastDay = dayKeys[dayKeys.length - 1];
   }
   return rows.join("");
 }
