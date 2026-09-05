@@ -177,14 +177,6 @@
   gap: var(--spacing-section);
 }
 
-.slots.grid-2x2 > .timeslot:nth-child(3):last-child {
-  transform: translateX(calc(50% + 4mm));
-}
-
-.slots.grid-2x3 > .timeslot:nth-child(5):last-child {
-  transform: translateX(calc(50% + 2mm));
-}
-
 .slots.has-empty-state .empty-state {
   grid-column: 1 / -1;
   grid-row: 1 / -1;
@@ -458,45 +450,45 @@ input[type="text"].inline-editor {
   --day-tint: color-mix(in hsl, var(--day-tint-base) var(--color-intensity), var(--day-tint-neutral));
 }
 [data-weekday="montag"] {
-  --day-accent-base: hsl(226 71% 40%);
+  --day-accent-base: hsl(226 86% 37%);
   --day-accent-neutral: hsl(226 0% 38%);
-  --day-tint-base: hsl(214 100% 97%);
+  --day-tint-base: hsl(214 100% 92%);
   --day-tint-neutral: hsl(214 0% 98%);
 }
 [data-weekday="dienstag"] {
-  --day-accent-base: hsl(176 69% 22%);
+  --day-accent-base: hsl(176 78% 20%);
   --day-accent-neutral: hsl(176 0% 30%);
-  --day-tint-base: hsl(166 76% 97%);
+  --day-tint-base: hsl(166 86% 92%);
   --day-tint-neutral: hsl(166 0% 98%);
 }
 [data-weekday="mittwoch"] {
-  --day-accent-base: hsl(273 67% 39%);
+  --day-accent-base: hsl(273 80% 37%);
   --day-accent-neutral: hsl(273 0% 38%);
-  --day-tint-base: hsl(270 100% 98%);
+  --day-tint-base: hsl(270 100% 94%);
   --day-tint-neutral: hsl(270 0% 98%);
 }
 [data-weekday="donnerstag"] {
-  --day-accent-base: hsl(23 83% 31%);
+  --day-accent-base: hsl(23 89% 30%);
   --day-accent-neutral: hsl(23 0% 34%);
-  --day-tint-base: hsl(48 100% 96%);
+  --day-tint-base: hsl(48 100% 91%);
   --day-tint-neutral: hsl(48 0% 97%);
 }
 [data-weekday="freitag"] {
-  --day-accent-base: hsl(336 74% 35%);
+  --day-accent-base: hsl(336 85% 33%);
   --day-accent-neutral: hsl(336 0% 35%);
-  --day-tint-base: hsl(327 73% 97%);
+  --day-tint-base: hsl(327 88% 93%);
   --day-tint-neutral: hsl(327 0% 98%);
 }
 [data-weekday="samstag"] {
-  --day-accent-base: hsl(143 64% 24%);
+  --day-accent-base: hsl(143 72% 22%);
   --day-accent-neutral: hsl(143 0% 30%);
-  --day-tint-base: hsl(138 76% 97%);
+  --day-tint-base: hsl(138 88% 92%);
   --day-tint-neutral: hsl(138 0% 98%);
 }
 [data-weekday="sonntag"] {
-  --day-accent-base: hsl(15 79% 34%);
+  --day-accent-base: hsl(15 84% 32%);
   --day-accent-neutral: hsl(15 0% 35%);
-  --day-tint-base: hsl(33 100% 96%);
+  --day-tint-base: hsl(33 100% 91%);
   --day-tint-neutral: hsl(33 0% 97%);
 }
 
