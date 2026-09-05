@@ -79,8 +79,13 @@ export async function seedState(page, state) {
 }
 
 export async function replaceState(page, state) {
-  await page.evaluate(({ key, value }) => {
+  await page.evaluate(async ({ key, value }) => {
+    const [{ initialiseState }, { render }] = await Promise.all([
+      import("/js/state.js"),
+      import("/js/render.js")
+    ]);
     localStorage.setItem(key, JSON.stringify(value));
+    initialiseState(value);
+    render();
   }, { key: STORAGE_KEY, value: state });
-  await page.reload();
 }

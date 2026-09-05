@@ -18,7 +18,7 @@ export const PRINT_LAYOUTS = Object.freeze({
     nameCharactersPerLine: 31,
     classCharactersPerLine: 16,
     dayCharactersPerLine: 18,
-    timeCharactersPerLine: 28
+    timeCharactersPerLine: 32
   }),
   compact: Object.freeze({
     id: "2x3",
@@ -31,7 +31,7 @@ export const PRINT_LAYOUTS = Object.freeze({
     nameCharactersPerLine: 31,
     classCharactersPerLine: 16,
     dayCharactersPerLine: 18,
-    timeCharactersPerLine: 28
+    timeCharactersPerLine: 32
   })
 });
 
