@@ -43,6 +43,8 @@
   }
 
   .page {
+    --footer-offset: 6mm;
+    --footer-height: 7mm;
     width: 210mm;
     min-width: 210mm;
     max-width: 210mm;
@@ -51,7 +53,7 @@
     max-height: 297mm;
     margin: 0;
     padding: 10mm;
-    padding-bottom: 18mm;
+    padding-bottom: calc(var(--footer-offset) + var(--footer-height) + var(--spacing-section));
     overflow: visible;
     background: #ffffff;
     border-radius: 0;
@@ -81,15 +83,26 @@
   .info-box,
   .continuation-header,
   .timeslot,
+  .empty-state {
+    border-radius: var(--radius-document-print);
+  }
+
   .timeslot-header {
-    border-radius: 0;
+    border-radius: calc(var(--radius-document-print) - 0.25mm) calc(var(--radius-document-print) - 0.25mm) 0 0;
+  }
+
+  .day-badge,
+  .time-text,
+  .continuation-marker,
+  .class-badge {
+    border-radius: var(--radius-document-print);
   }
 
   .page-footer {
     right: 10mm;
-    bottom: 6mm;
+    bottom: var(--footer-offset);
     left: 10mm;
-    max-height: 7mm;
+    height: var(--footer-height);
     padding-top: 1.5mm;
     overflow-wrap: anywhere;
     font-size: 11px;
@@ -107,12 +120,12 @@
 
   .slots.grid-2x2 {
     grid-template-rows: repeat(2, minmax(0, 1fr));
-    gap: 8mm;
+    gap: var(--spacing-section);
   }
 
   .slots.grid-2x3 {
     grid-template-rows: repeat(3, minmax(0, 1fr));
-    gap: 4mm;
+    gap: var(--spacing-section);
   }
 
   .slots.grid-2x2 > .timeslot:nth-child(3):last-child {
@@ -127,7 +140,7 @@
     min-width: 0;
     min-height: 0;
     height: 100%;
-    overflow: visible;
+    overflow: hidden;
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -136,7 +149,6 @@
     flex: 0 0 auto;
     padding: 8px 10px;
     gap: 6px;
-    border-radius: 0;
   }
 
   .group-header-left {
@@ -241,7 +253,7 @@
   .compact-page .info-grid,
   .compact-page .info-grid.has-term {
     gap: 4mm;
-    margin-bottom: 2mm;
+    margin-bottom: var(--spacing-section);
   }
 
   .compact-page .info-box {
@@ -261,7 +273,7 @@
   }
 
   .compact-page .continuation-header {
-    margin-bottom: 4mm;
+    margin-bottom: var(--spacing-section);
     padding: 7px 9px;
   }
 
