@@ -160,7 +160,7 @@ test("lange Inhalte umbrechen ohne Slot- oder Footer-Overflow", async ({ page })
     badge: parseFloat(getComputedStyle(document.querySelector(".class-badge.print-only")).fontSize),
     title: parseFloat(getComputedStyle(document.querySelector(".preview-document-title")).fontSize),
     actions: getComputedStyle(document.querySelector(".student-actions")).display,
-    headerRadius: getComputedStyle(document.querySelector(".header-inner")).borderTopLeftRadius,
+    headerRadius: parseFloat(getComputedStyle(document.querySelector(".header-inner")).borderTopLeftRadius),
     headerShadow: getComputedStyle(document.querySelector(".header-inner")).boxShadow
   }));
   expect(typography.student).toBeGreaterThanOrEqual(12.6);
@@ -168,7 +168,8 @@ test("lange Inhalte umbrechen ohne Slot- oder Footer-Overflow", async ({ page })
   expect(typography.badge).toBeGreaterThanOrEqual(12);
   expect(typography.title).toBeGreaterThanOrEqual(22);
   expect(typography.actions).toBe("none");
-  expect(typography.headerRadius).toBe("0px");
+  expect(typography.headerRadius).toBeGreaterThanOrEqual(7);
+  expect(typography.headerRadius).toBeLessThanOrEqual(12);
   expect(typography.headerShadow).toBe("none");
 });
 
