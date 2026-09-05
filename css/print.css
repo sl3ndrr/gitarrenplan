@@ -72,6 +72,19 @@
     flex-direction: column;
   }
 
+  .page * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .header-inner,
+  .info-box,
+  .continuation-header,
+  .timeslot,
+  .timeslot-header {
+    border-radius: 0;
+  }
+
   .page-footer {
     right: 10mm;
     bottom: 6mm;
@@ -115,8 +128,6 @@
     min-height: 0;
     height: 100%;
     overflow: visible;
-    border-radius: 0;
-    box-shadow: none;
     break-inside: avoid;
     page-break-inside: avoid;
   }

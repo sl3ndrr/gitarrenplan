@@ -14,6 +14,12 @@ const results = [];
 
 mkdirSync(renderedDirectory, { recursive: true });
 
+function hasCompletePng(file) {
+  const bytes = readFileSync(file);
+  const trailer = bytes.subarray(Math.max(0, bytes.length - 12)).toString("hex");
+  return trailer === "0000000049454e44ae426082";
+}
+
 for (const sample of manifest.samples) {
   const pdfPath = path.join(outputDirectory, sample.file);
   const info = execFileSync("pdfinfo", [pdfPath], { encoding: "utf8" });
@@ -42,7 +48,8 @@ for (const sample of manifest.samples) {
       pdfPath,
       "-"
     ], { encoding: "utf8" });
-    if (!pageText.includes("Gitarrenunterricht") || !pageText.includes("Stand:")) {
+    if (!pageText.toLocaleLowerCase("de").includes("gitarrenunterricht")
+      || !pageText.includes("Stand:")) {
       throw new Error(sample.file + ": Seite " + pageNumber + " enthält nicht alle Pflichttexte.");
     }
     if (pageCount > 1 && !pageText.includes("Seite " + pageNumber + " von " + pageCount)) {
@@ -58,7 +65,25 @@ for (const sample of manifest.samples) {
   }
 
   const outputPrefix = path.join(renderedDirectory, path.basename(sample.file, ".pdf") + "-page");
-  execFileSync("pdftoppm", ["-png", "-r", "110", pdfPath, outputPrefix]);
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+    const pagePrefix = outputPrefix + "-" + pageNumber;
+    const pngPath = pagePrefix + ".png";
+    execFileSync("pdftoppm", [
+      "-f",
+      String(pageNumber),
+      "-l",
+      String(pageNumber),
+      "-singlefile",
+      "-png",
+      "-r",
+      "110",
+      pdfPath,
+      pagePrefix
+    ]);
+    if (!hasCompletePng(pngPath)) {
+      throw new Error(sample.file + ": PNG-Seite " + pageNumber + " wurde unvollständig gerendert.");
+    }
+  }
   const renderedPages = readdirSync(renderedDirectory).filter((file) => (
     file.startsWith(path.basename(outputPrefix) + "-") && file.endsWith(".png")
   )).length;
