@@ -209,11 +209,11 @@
   }
 
   .compact-page .preview-header {
-    margin-bottom: 3mm;
+    margin-bottom: 2mm;
   }
 
   .compact-page .header-inner {
-    padding: 10px 16px;
+    padding: 9px 16px;
   }
 
   .compact-page .preview-document-title {
@@ -230,12 +230,12 @@
   .compact-page .info-grid,
   .compact-page .info-grid.has-term {
     gap: 4mm;
-    margin-bottom: 3mm;
+    margin-bottom: 2mm;
   }
 
   .compact-page .info-box {
     min-width: 0;
-    padding: 6px 9px;
+    padding: 5px 9px;
     overflow-wrap: anywhere;
   }
 
