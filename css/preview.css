@@ -10,7 +10,7 @@
   height: 297mm;
   padding: 15mm;
   padding-bottom: 22mm;
-  overflow: hidden;
+  overflow: visible;
   background: var(--surface);
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -25,6 +25,9 @@
 
 .page-content {
   height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .preview-header {
@@ -149,13 +152,37 @@
 }
 
 .slots {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.slots.grid-2x2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 8mm;
 }
 
-.slots.has-empty-state {
-  grid-template-columns: 1fr;
+.slots.grid-2x3 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 4mm;
+}
+
+.slots.grid-2x2 > .timeslot:nth-child(3):last-child {
+  transform: translateX(calc(50% + 4mm));
+}
+
+.slots.grid-2x3 > .timeslot:nth-child(5):last-child {
+  transform: translateX(calc(50% + 2mm));
+}
+
+.slots.has-empty-state .empty-state {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  align-self: start;
+  justify-self: center;
 }
 
 .empty-state {
@@ -182,7 +209,9 @@
 
 .timeslot {
   min-width: 0;
-  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -200,6 +229,7 @@
   gap: 8px;
   background: var(--bg-gradient);
   color: #ffffff;
+  border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0;
 }
 
 .group-header-left {
@@ -219,7 +249,8 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  white-space: nowrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .day-badge.empty-day {
@@ -232,6 +263,19 @@
   overflow-wrap: anywhere;
   font-size: 14px;
   font-weight: 700;
+}
+
+.continuation-marker {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .slot-actions {
@@ -251,6 +295,8 @@
 }
 
 .student-table {
+  flex: 1;
+  min-height: 0;
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;

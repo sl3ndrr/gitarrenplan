@@ -1,44 +1,5 @@
 import { expect, test } from "playwright/test";
-
-const STORAGE_KEY = "gitarrenunterricht_state_v3";
-
-function createState(groupCount = 2) {
-  const longName = "Sehr langer Schülername mit mehreren Bestandteilen und zusätzlicher Bezeichnung";
-  const groups = Array.from({ length: groupCount }, (_, groupIndex) => ({
-    id: "group-" + (groupIndex + 1),
-    day: groupIndex % 2 ? "Dienstag" : "Montag",
-    time: 15 + groupIndex + ":00 Uhr – fortlaufender Kurs",
-    students: [
-      { id: "student-" + groupIndex + "-1", name: longName, className: "Klasse 2 b" },
-      { id: "student-" + groupIndex + "-2", name: "Ada Beispiel", className: "Klasse 3 a" }
-    ]
-  }));
-
-  return {
-    version: 3,
-    revision: 7,
-    updatedAt: "2026-09-04T08:00:00.000Z",
-    activePlanId: "plan-1",
-    minRows: 3,
-    plans: [{
-      id: "plan-1",
-      name: "Responsiver Testplan",
-      meta: {
-        title: "Gitarrenunterricht mit einem langen Titel",
-        teacher: "Lehrkraft mit langem Namen",
-        location: "Musikraum im zweiten Obergeschoss",
-        term: "Schuljahr 2026/2027"
-      },
-      groups
-    }]
-  };
-}
-
-async function seedState(page, state) {
-  await page.addInitScript(({ key, value }) => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, { key: STORAGE_KEY, value: state });
-}
+import { createState, seedState } from "./test-data.js";
 
 for (const width of [320, 375, 768, 1024]) {
   test(`kein horizontaler Overflow bei ${width}px`, async ({ page }) => {
@@ -163,7 +124,7 @@ test("Druckansicht behält das zweispaltige A4-Raster für bis zu vier Gruppen",
       pageHeight: parseFloat(getComputedStyle(pageElement).height),
       pagePadding: parseFloat(getComputedStyle(pageElement).paddingTop),
       columns: getComputedStyle(slots).gridTemplateColumns.split(" ").filter(Boolean).length,
-      compact: pageElement.classList.contains("compact-first-page"),
+      grid: pageElement.dataset.grid,
       editorDisplay: getComputedStyle(document.querySelector(".editor-panel")).display,
       inputDisplay: getComputedStyle(inlineInput).display
     };
@@ -173,7 +134,7 @@ test("Druckansicht behält das zweispaltige A4-Raster für bis zu vier Gruppen",
   expect(layout.pageHeight).toBeCloseTo(297 * 96 / 25.4, 0);
   expect(layout.pagePadding).toBeCloseTo(10 * 96 / 25.4, 0);
   expect(layout.columns).toBe(2);
-  expect(layout.compact).toBe(false);
+  expect(layout.grid).toBe("2x2");
   expect(layout.editorDisplay).toBe("none");
   expect(layout.inputDisplay).toBe("none");
 });

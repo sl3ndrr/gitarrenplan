@@ -23,7 +23,19 @@ jobs:
         run: npm install --ignore-scripts
       - name: Chromium installieren
         run: npx playwright install --with-deps chromium
+      - name: JavaScript linten
+        run: npm run lint
       - name: Unit- und DOM-Tests ausführen
         run: npm run test:unit
       - name: Browser-Tests ausführen
         run: npm run test:browser
+      - name: A4-PDFs erzeugen und prüfen
+        run: npm run test:pdf
+      - name: PDF-Prüfartefakte bereitstellen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-4-pdf-samples
+          path: output/pdf
+          if-no-files-found: error
+          retention-days: 14

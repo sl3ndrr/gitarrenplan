@@ -4,15 +4,25 @@
 }
 
 @media print {
+  html,
   body {
-    display: block;
+    width: 210mm;
+    min-width: 210mm;
+    max-width: 210mm;
+    margin: 0;
     padding: 0;
     background: #ffffff;
   }
 
+  body {
+    min-height: 0;
+    display: block;
+  }
+
   .wrapper {
     width: 210mm;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
   }
 
   .preview-region {
@@ -34,26 +44,151 @@
 
   .page {
     width: 210mm;
+    min-width: 210mm;
+    max-width: 210mm;
     height: 297mm;
+    min-height: 297mm;
+    max-height: 297mm;
     margin: 0;
     padding: 10mm;
     padding-bottom: 18mm;
+    overflow: visible;
+    background: #ffffff;
     border-radius: 0;
     box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .page-content {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .page-footer {
     right: 10mm;
     bottom: 6mm;
     left: 10mm;
+    max-height: 7mm;
+    padding-top: 1.5mm;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .slots,
+  .slots.grid-2x2,
+  .slots.grid-2x3 {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .slots.grid-2x2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 8mm;
+  }
+
+  .slots.grid-2x3 {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 4mm;
+  }
+
+  .slots.grid-2x2 > .timeslot:nth-child(3):last-child {
+    transform: translateX(calc(50% + 4mm));
+  }
+
+  .slots.grid-2x3 > .timeslot:nth-child(5):last-child {
+    transform: translateX(calc(50% + 2mm));
+  }
+
+  .timeslot {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: visible;
+    border-radius: 0;
+    box-shadow: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .timeslot-header {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    gap: 6px;
+    border-radius: 0;
+  }
+
+  .group-header-left {
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .day-badge,
+  .continuation-marker {
+    padding: 2px 6px;
+    overflow: visible;
+    font-size: 12px;
+    line-height: 1.2;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .time-text {
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
   }
 
   .student-table {
-    table-layout: auto;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    table-layout: fixed;
   }
 
   .student-table td {
-    height: 38px;
+    height: 34px;
+    padding: 5px 7px;
+    font-size: 13px;
+    line-height: 1.2;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .student-name,
+  .student-name .print-only {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .student-class {
+    width: 32%;
+    min-width: 0;
+    text-align: right;
+  }
+
+  .class-badge {
+    max-width: 100%;
+    padding: 2px 5px;
+    overflow: visible;
+    font-size: 12px;
+    line-height: 1.2;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .timeslot .student-table tr:last-child td {
@@ -69,148 +204,96 @@
     cursor: default;
   }
 
-  .student-table td.student-name.editable {
-    padding: 10px 12px !important;
-    vertical-align: middle;
-  }
-
-  .time-text.editable {
-    padding: 0 !important;
-  }
-
-  .class-badge.editable {
-    padding: 3px 8px !important;
-    background: var(--primary-light) !important;
-  }
-
   .empty-day {
     display: none !important;
   }
 
-  .day-badge.editable {
-    padding: 3px 8px !important;
-    background: rgba(255, 255, 255, 0.18) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  }
-
-  .compact-first-page .page-content {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .compact-first-page .preview-header {
+  .compact-page .preview-header {
     margin-bottom: 4mm;
   }
 
-  .compact-first-page .header-inner {
-    padding: 10px 14px;
+  .compact-page .header-inner {
+    padding: 12px 16px;
   }
 
-  .compact-first-page .preview-document-title {
-    font-size: 22px;
+  .compact-page .preview-document-title {
+    font-size: 24px;
+    line-height: 1.15;
   }
 
-  .compact-first-page .guitar-bg {
+  .compact-page .guitar-bg {
     right: -12px;
-    bottom: -14px;
-    font-size: 64px;
+    bottom: -16px;
+    font-size: 76px;
   }
 
-  .compact-first-page .info-grid,
-  .compact-first-page .info-grid.has-term {
+  .compact-page .info-grid,
+  .compact-page .info-grid.has-term {
     gap: 4mm;
     margin-bottom: 4mm;
   }
 
-  .compact-first-page .info-box {
+  .compact-page .info-box {
     min-width: 0;
-    padding: 6px 8px;
+    padding: 7px 9px;
     overflow-wrap: anywhere;
   }
 
-  .compact-first-page .info-label {
+  .compact-page .info-label {
     margin-bottom: 0;
-    font-size: 9px;
+    font-size: 10px;
   }
 
-  .compact-first-page .info-value {
-    font-size: 11px;
-  }
-
-  /*
-   * Das bestehende Druckbudget bleibt für 5–6 Gruppen unverändert:
-   * höchstens 30 Tabellenzeilen über drei Rasterreihen.
-   */
-  .compact-first-page .slots {
-    flex: 1;
-    min-height: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(3, minmax(min-content, 1fr));
-    gap: 4mm;
-  }
-
-  .compact-first-page .slots > .timeslot:nth-child(5):last-child {
-    grid-column: 1 / -1;
-    width: calc((100% - 4mm) / 2);
-    justify-self: center;
-  }
-
-  .compact-first-page .timeslot {
-    min-height: 0;
-  }
-
-  .compact-first-page .student-table {
-    flex: 1;
-  }
-
-  .compact-first-page .timeslot-header {
-    padding: 5px 8px;
-    gap: 5px;
-    flex-wrap: wrap;
-  }
-
-  .compact-first-page .group-header-left {
-    min-width: 0;
-    gap: 5px;
-  }
-
-  .compact-first-page .day-badge {
-    padding: 2px 5px;
-    font-size: 9px;
-  }
-
-  .compact-first-page .time-text {
-    font-size: 11px;
-  }
-
-  .compact-first-page .student-table td {
-    height: 24px;
-    padding: 3px 6px;
-    font-size: 11px;
+  .compact-page .info-value {
+    font-size: 12px;
     line-height: 1.2;
-    vertical-align: middle;
   }
 
-  .compact-first-page .student-table td.student-name.editable {
-    padding: 3px 6px !important;
+  .compact-page .continuation-header {
+    margin-bottom: 4mm;
+    padding: 7px 9px;
   }
 
-  .compact-first-page .student-class {
-    width: 80px;
+  .compact-page .continuation-title strong {
+    font-size: 15px;
   }
 
-  .compact-first-page .class-badge.editable {
-    padding: 2px 5px !important;
-    font-size: 9px;
+  .compact-page .continuation-meta,
+  .compact-page .continuation-title span {
+    font-size: 11px;
   }
 
-  .compact-first-page .student-actions {
-    width: 90px;
-    padding-left: 0;
+  .compact-page .timeslot-header {
+    padding: 6px 8px;
+    gap: 5px;
   }
 
-  .compact-first-page .day-badge.editable {
-    padding: 2px 5px !important;
+  .compact-page .group-header-left {
+    gap: 5px;
+  }
+
+  .compact-page .day-badge,
+  .compact-page .continuation-marker {
+    padding: 2px 5px;
+    font-size: 12px;
+  }
+
+  .compact-page .time-text {
+    font-size: 14px;
+  }
+
+  .compact-page .student-table td {
+    height: 31px;
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+
+  .compact-page .class-badge {
+    padding: 2px 5px;
+    font-size: 12px;
+  }
+
+  .continuation-page .continuation-header {
+    flex: 0 0 auto;
   }
 }
