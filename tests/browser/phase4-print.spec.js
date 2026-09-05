@@ -153,6 +153,7 @@ test("lange Inhalte umbrechen ohne Slot- oder Footer-Overflow", async ({ page })
 
   const layout = await printLayout(page);
   expect(layout.every((item) => item.grid === "2x3")).toBe(true);
+  await page.locator(".page").first().screenshot({ path: "output/evidence/08-druck-lang.png" });
   expectNoOverflow(layout);
   const typography = await page.evaluate(() => ({
     student: parseFloat(getComputedStyle(document.querySelector(".student-table td")).fontSize),
