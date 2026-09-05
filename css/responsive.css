@@ -113,8 +113,6 @@
   .editor-grid, .utility-actions, .slots, .slots.grid-2x2, .slots.grid-2x3,
   .info-grid, .info-grid.has-term, .plan-row { grid-template-columns: minmax(0, 1fr); }
   .slots.grid-2x2, .slots.grid-2x3 { grid-template-rows: none; }
-  .slots.grid-2x2 > .timeslot:nth-child(3):last-child,
-  .slots.grid-2x3 > .timeslot:nth-child(5):last-child { transform: none; }
   .editor-box.full-width { grid-column: auto; }
   .preview-header { margin-bottom: 24px; }
   .info-grid, .info-grid.has-term { gap: 12px; margin-bottom: 24px; }
@@ -170,13 +168,6 @@
   .button:active:not(:disabled), .guitar-bg { transform: none; }
 }
 
-@media screen and (min-width: 901px) {
-  .single-centered > .timeslot {
-    grid-column: 1 / -1;
-    width: calc((100% - var(--spacing-section)) / 2);
-    justify-self: center;
-  }
-}
 @media screen and (max-width: 900px) {
   .slot-row { grid-template-columns: minmax(0, 1fr); gap: var(--spacing-section); }
 }
