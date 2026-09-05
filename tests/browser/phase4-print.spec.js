@@ -169,21 +169,21 @@ test("lange Inhalte umbrechen ohne Slot- oder Footer-Overflow", async ({ page })
 });
 
 test("Drucken speichert und rendert offene Eingaben synchron", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.print = () => {
+  await seedState(page, createState(1));
+  await page.goto("/");
+  await page.evaluate(() => {
+    Object.defineProperty(window, "print", { configurable: true, value: () => {
       const stored = JSON.parse(localStorage.getItem("gitarrenunterricht_state_v3"));
       window.__printSnapshot = {
         renderedTitle: document.querySelector(".preview-document-title")?.textContent,
         storedTitle: stored?.plans?.[0]?.meta?.title
       };
-    };
+    } });
   });
-  await seedState(page, createState(1));
-  await page.goto("/");
 
   await page.locator("#metaTitle").focus();
   await page.locator("#metaTitle").fill("Synchron vor dem PDF");
-  await page.getByRole("button", { name: "Drucken / PDF" }).click();
+  await page.locator("#printBtn").click();
 
   expect(await page.evaluate(() => window.__printSnapshot)).toEqual({
     renderedTitle: "Synchron vor dem PDF",
