@@ -94,6 +94,7 @@ const undoableCommands = [
   ["Planname", { type: "plan/nameSet", payload: { name: "Neuer Name" } }],
   ["Metadaten", { type: "meta/set", payload: { field: "title", value: "Neu" } }],
   ["Mindestzeilen", { type: "minRows/set", payload: { value: 9 } }],
+  ["Gestaltung", { type: "appearance/set", payload: { field: "colorIntensity", value: 40 } }],
   ["Gruppe hinzufügen", { type: "group/add", payload: { day: "Freitag", time: "18:00" } }],
   ["Gruppe verschieben", { type: "group/move", payload: { groupId: "group-2", offset: -1 } }],
   ["Gruppe sortieren", { type: "group/sort", payload: { groupId: "group-1" } }],
