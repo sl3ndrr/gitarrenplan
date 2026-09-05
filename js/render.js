@@ -1,10 +1,8 @@
 import { DATA_LIMITS } from "./config.js";
+import { paginateGroups } from "./pagination.js";
 import { getActivePlan, getActivePlanId, getMinRows, getPlans } from "./state.js";
 import { escapeHtml, formatDate } from "./utils.js";
 
-const FIRST_PAGE_MAX = 4;
-const FOLLOW_PAGE_MAX = 6;
-const COMPACT_PAGE_MAX_ROW_SUM = 30;
 const ALL_RENDER_SCOPES = Object.freeze({
   pages: true,
   planSelect: true,
@@ -147,24 +145,26 @@ function renderPages() {
   const focusSnapshot = captureInlineFocus();
   const fragment = document.createDocumentFragment();
   const minRows = getMinRows();
-  const pageGroups = getPageGroups(plan.groups, minRows);
-  const totalPages = pageGroups.length;
+  const pagination = paginateGroups(plan.groups, minRows);
+  const totalPages = pagination.pages.length;
   const printDate = formatDate(new Date());
 
-  pageGroups.forEach((groupsForPage, pageIndex) => {
+  pagination.pages.forEach((segmentsForPage, pageIndex) => {
     const pageNumber = pageIndex + 1;
     const isFirstPage = pageIndex === 0;
-    const isCompactFirstPage = isFirstPage && groupsForPage.length > FIRST_PAGE_MAX;
     const page = document.createElement("article");
-    page.className = isFirstPage
-      ? "page" + (isCompactFirstPage ? " compact-first-page" : "")
-      : "page continuation-page";
+    page.className = [
+      "page",
+      pagination.layout.id === "2x3" ? "compact-page" : "regular-page",
+      isFirstPage ? "first-page" : "continuation-page"
+    ].join(" ");
+    page.dataset.grid = pagination.layout.id;
     page.setAttribute("aria-label", "Druckseite " + pageNumber + " von " + totalPages);
     page.innerHTML = [
       '<div class="page-content">',
       isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta),
-      '<div class="slots' + (groupsForPage.length ? "" : " has-empty-state") + '">',
-      groupsForPage.length ? groupsForPage.map(renderGroup).join("") : renderEmptyState(),
+      '<div class="slots ' + pagination.layout.gridClass + (segmentsForPage.length ? "" : " has-empty-state") + '">',
+      segmentsForPage.length ? segmentsForPage.map(renderGroup).join("") : renderEmptyState(),
       "</div>",
       "</div>",
       '<footer class="page-footer">',
@@ -177,34 +177,6 @@ function renderPages() {
 
   container.replaceChildren(fragment);
   restoreInlineFocus(focusSnapshot, container);
-}
-
-function getPageGroups(groups, minRows) {
-  if (groups.length === 0) {
-    return [[]];
-  }
-  if (canUseCompactFirstPage(groups, minRows)) {
-    return [groups];
-  }
-  const result = [groups.slice(0, FIRST_PAGE_MAX)];
-  for (let index = FIRST_PAGE_MAX; index < groups.length; index += FOLLOW_PAGE_MAX) {
-    result.push(groups.slice(index, index + FOLLOW_PAGE_MAX));
-  }
-  return result;
-}
-
-function canUseCompactFirstPage(groups, minRows) {
-  if (groups.length < 5 || groups.length > 6) {
-    return false;
-  }
-  const gridRows = [groups.slice(0, 2), groups.slice(2, 4), groups.slice(4, 6)];
-  const rowSum = gridRows.reduce((sum, gridRow) => {
-    const largestGroup = Math.max(
-      ...gridRow.map((group) => Math.max(minRows, group.students.length))
-    );
-    return sum + largestGroup;
-  }, 0);
-  return rowSum <= COMPACT_PAGE_MAX_ROW_SUM;
 }
 
 function renderMainHeader(meta) {
@@ -250,36 +222,51 @@ function renderContinuationHeader(meta) {
   ].join("");
 }
 
-function renderGroup(group) {
-  const groupId = escapeHtml(group.id);
-  const dayText = group.day || "Wochentag";
-  const dayClass = group.day ? "day-badge" : "day-badge empty-day";
-  const emptyCount = Math.max(0, getMinRows() - group.students.length);
-  const studentRows = group.students.map((student, index) => (
-    renderStudentRow(student, groupId, index)
+function renderGroup(segment) {
+  const groupId = escapeHtml(segment.groupId);
+  const dayText = segment.day || "Wochentag";
+  const dayClass = segment.day ? "day-badge" : "day-badge empty-day";
+  const studentRows = segment.students.map((student, index) => (
+    renderStudentRow(student, groupId, segment.studentOffset + index)
   ));
-  const emptyRows = Array.from({ length: emptyCount }, renderEmptyRow);
-  const dayKey = escapeHtml("group:" + group.id + ":day");
-  const timeKey = escapeHtml("group:" + group.id + ":time");
-  const groupLabel = group.day ? group.day + " · " + group.time : group.time;
+  const emptyRows = Array.from({ length: segment.emptyRows }, renderEmptyRow);
+  const dayKey = escapeHtml("group:" + segment.groupId + ":day");
+  const timeKey = escapeHtml("group:" + segment.groupId + ":time");
+  const groupLabel = segment.day ? segment.day + " · " + segment.time : segment.time;
+  const accessibleLabel = groupLabel + (segment.continuation ? " · Fortsetzung" : "");
+  const editableHeader = segment.continuation
+    ? [
+      '<span class="' + dayClass + ' no-print">' + escapeHtml(dayText) + "</span>",
+      '<span class="time-text no-print">' + escapeHtml(segment.time) + "</span>"
+    ].join("")
+    : [
+      '<input type="text" class="' + dayClass + ' editable inline-editor no-print" value="' + escapeHtml(segment.day) + '" placeholder="Wochentag" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + dayKey + '" data-inline-type="group" data-field="day" data-group-id="' + groupId + '" aria-label="Wochentag dieser Gruppe bearbeiten">',
+      '<input type="text" class="time-text editable inline-editor no-print" value="' + escapeHtml(segment.time) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + timeKey + '" data-inline-type="group" data-field="time" data-group-id="' + groupId + '" aria-label="Zeit oder Gruppenname bearbeiten">'
+    ].join("");
+  const continuationMarker = segment.continuation
+    ? '<span class="continuation-marker">Fortsetzung</span>'
+    : "";
 
   return [
-    '<section class="timeslot" aria-label="Gruppe ' + escapeHtml(groupLabel) + '">',
+    '<section class="timeslot" data-group-id="' + groupId + '" data-segment-part="' + segment.part + '" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
     '<div class="timeslot-header">',
     '<div class="group-header-left">',
     '<span class="' + dayClass + ' print-only">' + escapeHtml(dayText) + "</span>",
-    '<input type="text" class="' + dayClass + ' editable inline-editor no-print" value="' + escapeHtml(group.day) + '" placeholder="Wochentag" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + dayKey + '" data-inline-type="group" data-field="day" data-group-id="' + groupId + '" aria-label="Wochentag dieser Gruppe bearbeiten">',
-    '<span class="time-text print-only">' + escapeHtml(group.time) + "</span>",
-    '<input type="text" class="time-text editable inline-editor no-print" value="' + escapeHtml(group.time) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + timeKey + '" data-inline-type="group" data-field="time" data-group-id="' + groupId + '" aria-label="Zeit oder Gruppenname bearbeiten">',
+    '<span class="time-text print-only">' + escapeHtml(segment.time) + "</span>",
+    editableHeader,
+    continuationMarker,
     "</div>",
-    '<div class="slot-actions no-print">',
+    segment.continuation ? "" : '<div class="slot-actions no-print">',
+    segment.continuation ? "" : [
     '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span></button>',
     '<button class="button icon-button" aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '"><span aria-hidden="true">↓</span></button>',
     '<button class="button icon-button" aria-label="Schüler alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span></button>',
     '<button class="button remove-group-button" aria-label="Gruppe entfernen" title="Gruppe entfernen" data-action="remove-group" data-group-id="' + groupId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
-    "</div></div>",
+    "</div>"
+    ].join(""),
+    "</div>",
     '<table class="student-table">',
-    '<caption class="visually-hidden">Schüler in Gruppe ' + escapeHtml(groupLabel) + "</caption>",
+    '<caption class="visually-hidden">Schüler in Gruppe ' + escapeHtml(accessibleLabel) + "</caption>",
     '<thead class="visually-hidden"><tr><th scope="col">Name</th><th scope="col">Klasse</th><th scope="col">Aktionen</th></tr></thead>',
     "<tbody>",
     studentRows.join(""),

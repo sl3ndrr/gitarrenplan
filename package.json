@@ -7,10 +7,13 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "test:browser": "playwright test",
-    "test:all": "npm run test:unit && npm run test:browser"
+    "lint": "eslint .",
+    "test:browser": "playwright test --grep-invert @pdf",
+    "test:pdf": "playwright test tests/browser/pdf-samples.spec.js && node scripts/verify-pdf-samples.mjs",
+    "test:all": "npm run lint && npm run test:unit && npm run test:browser && npm run test:pdf"
   },
   "devDependencies": {
+    "eslint": "^9.39.1",
     "jsdom": "^26.1.0",
     "playwright": "^1.62.0",
     "vitest": "^3.2.4"

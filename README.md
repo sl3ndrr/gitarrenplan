@@ -31,6 +31,7 @@ gitarrenplan/
 │   ├── storage.js              # Migration und Phase-1-Adapter
 │   ├── persistence.js          # Fehlerisolierte V3-Lese-/Schreiboperationen
 │   ├── normalization.js        # Zentrale Validierung des Datenvertrags
+│   ├── pagination.js           # Reine 2×2-/2×3-Paginierung für A4
 │   ├── utils.js                # Reine Hilfsfunktionen
 │   ├── render.js               # Erzeugt die Druckvorschau und Auswahlfelder
 │   ├── ui/
@@ -43,7 +44,8 @@ gitarrenplan/
 │       ├── lifecycle.js        # Print/Pagehide/Storage-Listener
 │       ├── plan-actions.js     # Plan-Dialoge und Commands
 │       └── schedule-actions.js # Gruppen-, Schüler- und Inline-Events
-├── tests/                      # Vitest-/jsdom- und Browser-Regressionstests
+├── scripts/                    # Prüfung und Rendering der Beispiel-PDFs
+├── tests/                      # Vitest-/jsdom-, Browser- und PDF-Regressionstests
 └── docs/                       # Datenvertrag und Architektur
 ~~~
 
@@ -69,8 +71,12 @@ Qualitätssicherung nutzt ausschließlich Dev-Abhängigkeiten:
 
 ~~~bash
 npm install
-npm test
+npm run lint
+npm run test:unit
 npm run test:browser
+npm run test:pdf
+# oder vollständig:
+npm run test:all
 ~~~
 
 ## Daten und Datenschutz
@@ -78,6 +84,16 @@ npm run test:browser
 Die eingegebenen Namen werden im Browser gespeichert. **Exportieren** lädt immer sämtliche Pläne inklusive Formatversion und Exportzeitpunkt als Datei `gitarrenplan_sicherung_YYYY-MM-DD.json` herunter. Diese JSON-Datei ist die bearbeitbare Datensicherung für einen Browserwechsel oder das Löschen von Browserdaten; **Importieren** fügt sie wieder lokal hinzu. Historische Einzelplan- und Gesamtplan-Exporte bleiben importierbar.
 
 **Drucken / PDF** ist davon getrennt: Diese Aktion erzeugt das aktuell sichtbare Dokument über den Druckdialog des Browsers. Eine PDF-Datei ist eine Darstellung zum Lesen und Drucken, keine Datensicherung zum erneuten Bearbeiten.
+
+## A4-Drucklayout und Fortsetzungen
+
+Die Druckausgabe verwendet echtes A4-Porträtformat. Pläne mit bis zu vier logischen Gruppen werden auf jeder Seite in einem festen 2×2-Raster dargestellt. Ab fünf logischen Gruppen gilt auf allen Seiten ein festes 2×3-Raster mit höchstens sechs gleich großen Slots. Unbelegte Slots bleiben frei; eine einzelne letzte Gruppe wird harmonisch zentriert, aber niemals auf volle Breite gestreckt.
+
+Passt der Inhalt einer Gruppe nicht lesbar in einen Slot, teilt die Anwendung die echten Schülerdaten auf weitere, gleich große Slots auf. Diese tragen denselben Gruppennamen und den Zusatz **Fortsetzung** und zählen wie jede andere Gruppe als belegter Rasterplatz. Konfigurierte Leerzeilen werden zuerst reduziert; vorhandene Schülernamen werden weder ausgeblendet noch für ein Ein-Seiten-Ergebnis unlesbar verkleinert.
+
+Vor dem Öffnen des Druckdialogs speichert und rendert **Drucken / PDF** alle noch offenen Texteingaben synchron. Editorflächen, Aktionsbuttons, Empty States, Schatten und Rundungen werden nicht in das PDF übernommen.
+
+`npm run test:pdf` erzeugt zwölf repräsentative PDF-Dateien unter `output/pdf`, kontrolliert Seitenzahl und A4-Abmessungen mit Poppler und rendert jede Seite zusätzlich als PNG zur visuellen Abnahme. Dafür müssen `pdfinfo`, `pdftotext` und `pdftoppm` verfügbar sein.
 
 ## Auf GitHub veröffentlichen
 
