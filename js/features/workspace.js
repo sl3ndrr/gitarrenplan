@@ -28,14 +28,14 @@ export function initialiseWorkspace() {
       frame.style.height = page.offsetHeight * scale + "px";
     });
   };
-  const observer = typeof ResizeObserver === "function" ? new ResizeObserver(resize) : null;
+  const observer = typeof window.ResizeObserver === "function" ? new window.ResizeObserver(resize) : null;
   const observePages = () => {
     observer?.disconnect();
     observer?.observe(pages);
     pages.querySelectorAll(".page").forEach((page) => observer?.observe(page));
     resize();
   };
-  const mutations = new MutationObserver(observePages);
+  const mutations = new window.MutationObserver(observePages);
   mutations.observe(pages, { childList: true });
   window.addEventListener("resize", resize);
   observePages();
