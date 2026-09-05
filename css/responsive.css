@@ -26,7 +26,7 @@
   .slots.grid-2x3 { grid-template-rows: repeat(3, minmax(min-content, 1fr)); }
   .timeslot { height: auto; overflow: visible; }
   .timeslot-header { align-items: flex-start; }
-  .group-header-left { flex: 1; display: grid; gap: 4px; }
+  .group-header-left { flex: 1; display: grid; gap: 4px; text-align: left; }
   .group-header-left input.day-badge.inline-editor,
   .group-header-left input.time-text.inline-editor { width: 100%; }
   .student-table td { height: var(--target-size); padding: 4px 7px; }
@@ -39,7 +39,7 @@
     min-height: var(--target-size, 44px);
     touch-action: manipulation;
   }
-  .editor-panel :where(input[type="text"], input[type="number"], select),
+  .editor-panel :where(input[type="text"], input[type="number"], input[type="range"], select),
   .modal :where(input[type="text"], select),
   .inline-editor { min-height: var(--target-size, 44px); }
 
@@ -125,7 +125,7 @@
 @media screen and (max-width: 600px) {
   .app-header { margin-bottom: 12px; }
   .editor-panel { padding: 12px; }
-  .header-inner { padding: 16px 12px; }
+  .header-inner { padding: var(--title-box-padding-y-mobile) 12px; }
   .preview-document-title { font-size: clamp(20px, 8vw, 26px); }
   .continuation-header { align-items: flex-start; flex-direction: column; }
   .continuation-meta { text-align: left; }
@@ -142,7 +142,10 @@
   .student-name { grid-area: name; }
   .student-class { grid-area: class; text-align: left; }
   .student-actions { grid-area: actions; }
-  .student-class input.class-badge.inline-editor { width: 100%; text-align: left; }
+  .class-badge,
+  .group-occupancy,
+  .student-class input.class-badge.inline-editor { text-align: left; }
+  .student-class input.class-badge.inline-editor { width: 100%; }
   .student-table .empty-row { display: none; }
   .empty-state { padding: 22px 16px; }
 }

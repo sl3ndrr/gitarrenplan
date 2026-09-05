@@ -29,6 +29,15 @@ describe("Druckübersicht", () => {
     expect(document.querySelectorAll('input[data-field="day"]')).toHaveLength(4);
   });
 
+  it("wiederholt eine Tagesüberschrift nicht in der direkt folgenden Zeile", () => {
+    show(["Montag", "Montag", "Montag", "Montag"]);
+
+    expect([...document.querySelectorAll(".day-heading")].map((node) => node.textContent))
+      .toEqual(["Montag"]);
+    expect(document.querySelectorAll(".slot-row")).toHaveLength(2);
+    expect(document.querySelectorAll(".slot-row")[1].querySelector(".day-heading-group")).toBeNull();
+  });
+
   it("zeigt Mindestplätze, echte Belegung und keine negativen freien Plätze", () => {
     show(["Montag", "Dienstag", "Freitag"], [0, 3, 8]);
     expect([...document.querySelectorAll(".group-occupancy")].map((node) => node.textContent))

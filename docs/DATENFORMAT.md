@@ -25,6 +25,27 @@ erkannt. Valide neuere Zustände aus dem `storage`-Event werden automatisch
 übernommen, solange keine lokale Texteingabe offen ist; andernfalls wird eine
 explizite Konfliktentscheidung verlangt.
 
+## Plan-Gestaltung
+
+Jeder Plan kann zusätzlich zur `meta`-Struktur eine planweite
+`appearance`-Struktur enthalten:
+
+```json
+{
+  "colorIntensity": 100,
+  "showOccupancy": true,
+  "titleBoxPadding": 20
+}
+```
+
+- `colorIntensity` ist ein ganzzahliger Prozentwert von 0 bis 100.
+- `showOccupancy` steuert die Belegungsanzeige in sämtlichen Gruppen des Plans.
+- `titleBoxPadding` ist der vertikale Innenabstand der Titel-Farbbox in Pixeln
+  und liegt zwischen 0 und 48.
+
+Fehlende Gestaltungswerte werden beim Laden alter Daten mit den Standardwerten
+ergänzt; dadurch bleiben bestehende Sicherungen ohne Migration nutzbar.
+
 ## Harte Grenzen
 
 | Bereich | Höchstwert |

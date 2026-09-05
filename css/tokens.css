@@ -1,7 +1,18 @@
 :root {
-  --primary: #1e3a8a;
-  --primary-light: #dbeafe;
-  --accent: #f59e0b;
+  --color-intensity: 100%;
+  --title-box-padding-y: 20px;
+  --title-box-padding-y-mobile: 16px;
+  --title-box-padding-y-compact: 9px;
+
+  --primary-base: hsl(224 64% 33%);
+  --primary-neutral: hsl(224 0% 38%);
+  --primary: color-mix(in hsl, var(--primary-base) var(--color-intensity), var(--primary-neutral));
+  --primary-light-base: hsl(214 95% 93%);
+  --primary-light-neutral: hsl(214 0% 96%);
+  --primary-light: color-mix(in hsl, var(--primary-light-base) var(--color-intensity), var(--primary-light-neutral));
+  --accent-base: hsl(38 92% 50%);
+  --accent-neutral: hsl(38 0% 40%);
+  --accent: color-mix(in hsl, var(--accent-base) var(--color-intensity), var(--accent-neutral));
   --danger: #b91c1c;
   --danger-light: #fee2e2;
   --success: #166534;
@@ -11,9 +22,19 @@
   --surface-muted: #f8fafc;
   --page-background: #f1f5f9;
   --border: #e2e8f0;
-  --focus-ring: #1d4ed8;
+  --focus-ring-base: hsl(224 76% 48%);
+  --focus-ring-neutral: hsl(224 0% 46%);
+  --focus-ring: color-mix(in hsl, var(--focus-ring-base) var(--color-intensity), var(--focus-ring-neutral));
   --focus-halo: #ffffff;
-  --bg-gradient: linear-gradient(135deg, #1a2f5a 0%, #2d5282 100%);
+  --bg-gradient-start-base: hsl(220 55% 23%);
+  --bg-gradient-start-neutral: hsl(220 0% 30%);
+  --bg-gradient-end-base: hsl(214 49% 34%);
+  --bg-gradient-end-neutral: hsl(214 0% 43%);
+  --bg-gradient: linear-gradient(
+    135deg,
+    color-mix(in hsl, var(--bg-gradient-start-base) var(--color-intensity), var(--bg-gradient-start-neutral)) 0%,
+    color-mix(in hsl, var(--bg-gradient-end-base) var(--color-intensity), var(--bg-gradient-end-neutral)) 100%
+  );
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 12px;

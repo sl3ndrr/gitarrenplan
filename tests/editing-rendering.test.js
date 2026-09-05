@@ -115,6 +115,41 @@ describe("abgeschlossene Texteingaben", () => {
   });
 });
 
+describe("planweite Gestaltungsoptionen", () => {
+  it("rendert Intensität, Titelbox-Höhe und Belegungsanzeige aus den Editor-Einstellungen", () => {
+    cleanups.push(initialiseEditor());
+
+    const colorIntensity = document.getElementById("colorIntensity");
+    colorIntensity.focus();
+    colorIntensity.value = "40";
+    colorIntensity.dispatchEvent(new Event("input", { bubbles: true }));
+    vi.advanceTimersByTime(300);
+    colorIntensity.dispatchEvent(new Event("change", { bubbles: true }));
+    flushRender();
+
+    expect(getActivePlan().appearance.colorIntensity).toBe(40);
+    expect(document.querySelector(".page").style.getPropertyValue("--color-intensity")).toBe("40%");
+    expect(document.getElementById("colorIntensityValue").textContent).toBe("40 %");
+
+    const titleBoxPadding = document.getElementById("titleBoxPadding");
+    titleBoxPadding.value = "28";
+    titleBoxPadding.dispatchEvent(new Event("input", { bubbles: true }));
+    vi.advanceTimersByTime(300);
+    titleBoxPadding.dispatchEvent(new Event("change", { bubbles: true }));
+    flushRender();
+
+    expect(document.querySelector(".page").style.getPropertyValue("--title-box-padding-y")).toBe("28px");
+
+    const showOccupancy = document.getElementById("showOccupancy");
+    showOccupancy.checked = false;
+    showOccupancy.dispatchEvent(new Event("change", { bubbles: true }));
+    flushRender();
+
+    expect(getActivePlan().appearance.showOccupancy).toBe(false);
+    expect(document.querySelector(".group-occupancy")).toBeNull();
+  });
+});
+
 describe("native Inline-Bearbeitung", () => {
   it("verwendet Inputs mit stabilen IDs und reine Drucktexte", () => {
     expect(document.querySelector("[contenteditable]")).toBeNull();

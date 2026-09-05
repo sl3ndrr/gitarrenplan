@@ -1,6 +1,8 @@
 import {
   APP_STATE_VERSION,
+  APPEARANCE_LIMITS,
   DATA_LIMITS,
+  DEFAULT_APPEARANCE,
   DEFAULT_META,
   DEFAULT_MIN_ROWS,
   SUPPORTED_EXPORT_VERSIONS
@@ -167,6 +169,41 @@ function normalizeMeta(meta) {
   };
 }
 
+function normalizeAppearanceNumber(value, {
+  fallback,
+  min,
+  max,
+  step
+}) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  const clamped = Math.max(min, Math.min(max, parsed));
+  return min + Math.round((clamped - min) / step) * step;
+}
+
+export function normalizeAppearance(appearance) {
+  const source = appearance === undefined
+    ? {}
+    : requirePlainObject(appearance, "Die Plan-Gestaltung");
+
+  return {
+    colorIntensity: normalizeAppearanceNumber(source.colorIntensity, {
+      fallback: DEFAULT_APPEARANCE.colorIntensity,
+      ...APPEARANCE_LIMITS.colorIntensity
+    }),
+    showOccupancy: typeof source.showOccupancy === "boolean"
+      ? source.showOccupancy
+      : DEFAULT_APPEARANCE.showOccupancy,
+    titleBoxPadding: normalizeAppearanceNumber(source.titleBoxPadding, {
+      fallback: DEFAULT_APPEARANCE.titleBoxPadding,
+      ...APPEARANCE_LIMITS.titleBoxPadding
+    })
+  };
+}
+
 function normalizePlanWithContext(plan, context, regeneratePlanId = false) {
   const source = requirePlainObject(plan, "Ein Plan");
   const groups = source.groups === undefined
@@ -186,6 +223,7 @@ function normalizePlanWithContext(plan, context, regeneratePlanId = false) {
       maxLength: DATA_LIMITS.planNameLength
     }),
     meta: normalizeMeta(source.meta),
+    appearance: normalizeAppearance(source.appearance),
     groups: groups.map((group) => normalizeGroup(
       group,
       context.groupIds,
@@ -249,6 +287,7 @@ export function createDefaultPlan(name = "Gitarrenunterricht") {
     id: createPlanId(),
     name,
     meta: DEFAULT_META,
+    appearance: DEFAULT_APPEARANCE,
     groups: []
   });
 }

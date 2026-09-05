@@ -78,6 +78,53 @@
   width: 80px;
 }
 
+.appearance-control {
+  margin-bottom: 14px;
+}
+
+.appearance-control-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.appearance-control-heading label {
+  margin: 0;
+}
+
+.appearance-control output {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.editor-panel input[type="range"] {
+  width: 100%;
+  margin: 4px 0 0;
+  accent-color: var(--primary);
+}
+
+.toggle-control {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px !important;
+  color: var(--text-main) !important;
+  cursor: pointer;
+}
+
+.toggle-control input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.toggle-control span {
+  font-size: 13px;
+}
+
 .plan-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

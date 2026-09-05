@@ -13,6 +13,22 @@ export const SUPPORTED_EXPORT_VERSIONS = Object.freeze([1, 2]);
 export const MAX_UNDO_STEPS = 10;
 export const DEFAULT_MIN_ROWS = 6;
 
+export const APPEARANCE_LIMITS = Object.freeze({
+  colorIntensity: Object.freeze({ min: 0, max: 100, step: 1 }),
+  titleBoxPadding: Object.freeze({ min: 0, max: 48, step: 1 })
+});
+
+export const APPEARANCE_LAYOUT_SCALES = Object.freeze({
+  titleBoxPaddingMobile: 0.8,
+  titleBoxPaddingCompactPrint: 0.45
+});
+
+export const DEFAULT_APPEARANCE = Object.freeze({
+  colorIntensity: APPEARANCE_LIMITS.colorIntensity.max,
+  showOccupancy: true,
+  titleBoxPadding: 20
+});
+
 // These limits are part of the persisted/imported data contract. Keep the
 // matching documentation in docs/DATENFORMAT.md in sync when changing them.
 export const DATA_LIMITS = Object.freeze({

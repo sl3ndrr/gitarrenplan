@@ -8,6 +8,11 @@ export function mountAppFixture() {
     <input id="metaLocation" type="text">
     <input id="metaTerm" type="text">
     <input id="minRows" type="number">
+    <input id="colorIntensity" type="range">
+    <output id="colorIntensityValue"></output>
+    <input id="showOccupancy" type="checkbox">
+    <input id="titleBoxPadding" type="range">
+    <output id="titleBoxPaddingValue"></output>
     <button id="newPlanBtn" type="button">Neu</button>
     <button id="duplicatePlanBtn" type="button">Duplizieren</button>
     <button id="deletePlanBtn" type="button">Löschen</button>

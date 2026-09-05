@@ -84,6 +84,34 @@
             <input id="minRows" type="number" min="0" max="20" value="6" aria-label="Mindestanzahl der Zeilen pro Gruppe">
           </div></details>
 
+          <details open class="editor-box full-width" aria-labelledby="appearance-title">
+            <summary aria-label="Gestaltung"><h3 id="appearance-title">Gestaltung</h3></summary>
+            <div class="editor-section-content">
+              <div class="appearance-control">
+                <div class="appearance-control-heading">
+                  <label for="colorIntensity">Farbintensität</label>
+                  <output id="colorIntensityValue" for="colorIntensity">100 %</output>
+                </div>
+                <input id="colorIntensity" type="range" aria-describedby="colorIntensityHint">
+                <p id="colorIntensityHint" class="form-hint">Passt Sättigung und Helligkeit der Akzent- und Hintergrundfarben an.</p>
+              </div>
+
+              <label class="toggle-control" for="showOccupancy">
+                <input id="showOccupancy" type="checkbox">
+                <span>Schüleranzahl in allen Gruppen anzeigen</span>
+              </label>
+
+              <div class="appearance-control">
+                <div class="appearance-control-heading">
+                  <label for="titleBoxPadding">Höhe der Titel-Farbbox</label>
+                  <output id="titleBoxPaddingValue" for="titleBoxPadding">20 px</output>
+                </div>
+                <input id="titleBoxPadding" type="range" aria-describedby="titleBoxPaddingHint">
+                <p id="titleBoxPaddingHint" class="form-hint">Steuert den vertikalen Innenabstand ober- und unterhalb des Dokumenttitels.</p>
+              </div>
+            </div>
+          </details>
+
           <details open class="editor-box" aria-labelledby="new-group-title">
             <summary aria-label="Gruppenformular"><h3 id="new-group-title">Neue Gruppe hinzufügen</h3></summary>
             <div class="editor-section-content">

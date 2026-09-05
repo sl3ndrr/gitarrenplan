@@ -1,4 +1,8 @@
-import { DATA_LIMITS } from "./config.js";
+import {
+  APPEARANCE_LAYOUT_SCALES,
+  APPEARANCE_LIMITS,
+  DATA_LIMITS
+} from "./config.js";
 import { paginateGroups } from "./pagination.js";
 import { getActivePlan, getActivePlanId, getMinRows, getPlans } from "./state.js";
 import { escapeHtml, formatDate } from "./utils.js";
@@ -147,8 +151,23 @@ function restoreInlineFocus(snapshot, container) {
   }
 }
 
+function applyAppearanceVariables(page, appearance) {
+  const titleBoxPadding = appearance.titleBoxPadding;
+  page.style.setProperty("--color-intensity", appearance.colorIntensity + "%");
+  page.style.setProperty("--title-box-padding-y", titleBoxPadding + "px");
+  page.style.setProperty(
+    "--title-box-padding-y-mobile",
+    Math.round(titleBoxPadding * APPEARANCE_LAYOUT_SCALES.titleBoxPaddingMobile) + "px"
+  );
+  page.style.setProperty(
+    "--title-box-padding-y-compact",
+    Math.round(titleBoxPadding * APPEARANCE_LAYOUT_SCALES.titleBoxPaddingCompactPrint) + "px"
+  );
+}
+
 function renderPages() {
   const plan = getActivePlan();
+  const appearance = plan.appearance;
   const container = document.getElementById("pages");
   const focusSnapshot = captureInlineFocus();
   const fragment = document.createDocumentFragment();
@@ -171,12 +190,16 @@ function renderPages() {
       isFirstPage ? "first-page" : "continuation-page"
     ].join(" ");
     page.dataset.grid = pagination.layout.id;
+    page.dataset.colorIntensity = String(appearance.colorIntensity);
+    applyAppearanceVariables(page, appearance);
     page.setAttribute("aria-label", "Druckseite " + pageNumber + " von " + totalPages);
     page.innerHTML = [
       '<div class="page-content">',
       isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta),
       '<div class="slots ' + pagination.layout.gridClass + (segmentsForPage.length ? "" : " has-empty-state") + '">',
-      segmentsForPage.length ? renderSlotRows(segmentsForPage, studentCounts, minRows) : renderEmptyState(),
+      segmentsForPage.length
+        ? renderSlotRows(segmentsForPage, studentCounts, minRows, appearance)
+        : renderEmptyState(),
       "</div>",
       "</div>",
       '<footer class="page-footer">',
@@ -244,28 +267,62 @@ function weekdayKey(day) {
   return days.includes(key) ? key : "neutral";
 }
 
-// Keep the user's group order; only adjacent slots on the same row share a heading.
-function renderSlotRows(segments, studentCounts, minRows) {
+function headingDayKey(day) {
+  return (day || "").trim().toLocaleLowerCase("de");
+}
+
+function renderDayHeading(segment, column, sharedDay) {
+  const layoutClass = sharedDay
+    ? " day-heading-shared"
+    : " day-heading-column-" + (column + 1);
+  return '<h4 class="day-heading' + layoutClass + '" data-weekday="' + weekdayKey(segment.day)
+    + '">' + escapeHtml(segment.day || "Ohne Wochentag") + "</h4>";
+}
+
+// Preserve group order. A day heading appears only when that day was not
+// already present in the preceding visual row.
+function renderSlotRows(segments, studentCounts, minRows, appearance) {
   const rows = [];
+  let previousRowDays = new Set();
+
   for (let index = 0; index < segments.length; index += 2) {
     const pair = segments.slice(index, index + 2);
-    const sharedDay = pair.length === 2 && pair[0].day.trim()
-      && pair[0].day.trim() === pair[1].day.trim();
-    const headings = sharedDay ? [pair[0]] : pair;
+    const dayKeys = pair.map((segment) => headingDayKey(segment.day));
+    const sharedDay = pair.length === 2
+      && Boolean(dayKeys[0])
+      && dayKeys[0] === dayKeys[1];
+    const headings = sharedDay
+      ? (previousRowDays.has(dayKeys[0]) ? [] : [renderDayHeading(pair[0], 0, true)])
+      : pair.map((segment, column) => (
+        previousRowDays.has(dayKeys[column])
+          ? ""
+          : renderDayHeading(segment, column, false)
+      )).filter(Boolean);
+    const headingMarkup = headings.length
+      ? '<div class="day-heading-group print-only' + (sharedDay ? " shared-day" : "") + '">'
+        + headings.join("") + "</div>"
+      : "";
+
+    const rowClass = "slot-row"
+      + (index > 0 && pair.length === 1 ? " single-centered" : "")
+      + (headings.length ? "" : " no-day-heading");
     rows.push(
-      '<div class="slot-row' + (index > 0 && pair.length === 1 ? " single-centered" : "") + '">',
-      '<div class="day-heading-group print-only' + (sharedDay ? " shared-day" : "") + '">',
-      ...headings.map((segment) => '<h4 class="day-heading" data-weekday="' + weekdayKey(segment.day)
-        + '">' + escapeHtml(segment.day || "Ohne Wochentag") + '</h4>'),
-      '</div>',
-      ...pair.map((segment) => renderGroup(segment, studentCounts.get(segment.groupId), minRows)),
-      '</div>'
+      '<div class="' + rowClass + '">',
+      headingMarkup,
+      ...pair.map((segment) => renderGroup(
+        segment,
+        studentCounts.get(segment.groupId),
+        minRows,
+        appearance
+      )),
+      "</div>"
     );
+    previousRowDays = new Set(dayKeys);
   }
   return rows.join("");
 }
 
-function renderGroup(segment, studentCount, minRows) {
+function renderGroup(segment, studentCount, minRows, appearance) {
 
   const groupId = escapeHtml(segment.groupId);
   const dayText = segment.day || "Wochentag";
@@ -290,6 +347,10 @@ function renderGroup(segment, studentCount, minRows) {
   const continuationMarker = segment.continuation
     ? '<span class="continuation-marker">Fortsetzung</span>'
     : "";
+  const occupancy = appearance.showOccupancy
+    ? '<span class="group-occupancy" title="Belegung / mindestens vorgesehene Zeilen">'
+      + studentCount + " / " + Math.max(studentCount, minRows) + " Plätze</span>"
+    : "";
 
   return [
     '<section class="timeslot" data-weekday="' + weekdayKey(segment.day) + '" data-group-id="' + groupId + '" data-segment-part="' + segment.part + '" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
@@ -298,8 +359,7 @@ function renderGroup(segment, studentCount, minRows) {
     '<span class="time-text print-only">' + escapeHtml(segment.time) + "</span>",
     editableHeader,
     continuationMarker,
-    '<span class="group-occupancy" title="Belegung / mindestens vorgesehene Zeilen">'
-      + studentCount + " / " + Math.max(studentCount, minRows) + " Plätze</span>",
+    occupancy,
     "</div>",
     segment.continuation ? "" : renderActionMenu([
     '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
@@ -407,12 +467,47 @@ export function renderGroupSelect(preferredGroupId = document.getElementById("gr
   studentFormHint?.classList.toggle("hidden", hasGroups);
 }
 
+function updateAppearanceRangeControl(elementId, outputId, value, limits, suffix) {
+  const input = document.getElementById(elementId);
+  const output = document.getElementById(outputId);
+  if (!input) {
+    return;
+  }
+
+  input.min = String(limits.min);
+  input.max = String(limits.max);
+  input.step = String(limits.step);
+  input.value = String(value);
+  if (output) {
+    output.textContent = value + suffix;
+  }
+}
+
 export function updateEditorValues() {
   const plan = getActivePlan();
+  const appearance = plan.appearance;
   document.getElementById("planName").value = plan.name;
   document.getElementById("metaTitle").value = plan.meta.title;
   document.getElementById("metaTeacher").value = plan.meta.teacher;
   document.getElementById("metaLocation").value = plan.meta.location;
   document.getElementById("metaTerm").value = plan.meta.term;
   document.getElementById("minRows").value = getMinRows();
+  updateAppearanceRangeControl(
+    "colorIntensity",
+    "colorIntensityValue",
+    appearance.colorIntensity,
+    APPEARANCE_LIMITS.colorIntensity,
+    " %"
+  );
+  updateAppearanceRangeControl(
+    "titleBoxPadding",
+    "titleBoxPaddingValue",
+    appearance.titleBoxPadding,
+    APPEARANCE_LIMITS.titleBoxPadding,
+    " px"
+  );
+  const occupancyToggle = document.getElementById("showOccupancy");
+  if (occupancyToggle) {
+    occupancyToggle.checked = appearance.showOccupancy;
+  }
 }
