@@ -1,0 +1,21 @@
+:root {
+  --primary: #1e3a8a;
+  --primary-light: #dbeafe;
+  --accent: #f59e0b;
+  --danger: #b91c1c;
+  --danger-light: #fee2e2;
+  --success: #166534;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --page-background: #f1f5f9;
+  --border: #e2e8f0;
+  --focus-ring: #1d4ed8;
+  --focus-halo: #ffffff;
+  --bg-gradient: linear-gradient(135deg, #1a2f5a 0%, #2d5282 100%);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}

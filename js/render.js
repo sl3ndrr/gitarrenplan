@@ -159,11 +159,12 @@ function renderPages() {
     page.className = isFirstPage
       ? "page" + (isCompactFirstPage ? " compact-first-page" : "")
       : "page continuation-page";
+    page.setAttribute("aria-label", "Druckseite " + pageNumber + " von " + totalPages);
     page.innerHTML = [
       '<div class="page-content">',
       isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta),
-      '<div class="slots">',
-      groupsForPage.map(renderGroup).join(""),
+      '<div class="slots' + (groupsForPage.length ? "" : " has-empty-state") + '">',
+      groupsForPage.length ? groupsForPage.map(renderGroup).join("") : renderEmptyState(),
       "</div>",
       "</div>",
       '<footer class="page-footer">',
@@ -209,9 +210,9 @@ function canUseCompactFirstPage(groups, minRows) {
 function renderMainHeader(meta) {
   const hasTerm = Boolean(meta.term && meta.term.trim());
   return [
-    "<header>",
+    '<header class="preview-header">',
     '<div class="header-inner">',
-    "<h1>" + escapeHtml(meta.title) + "</h1>",
+    '<h3 class="preview-document-title">' + escapeHtml(meta.title) + "</h3>",
     '<div class="guitar-bg" aria-hidden="true">🎸</div>',
     "</div>",
     "</header>",
@@ -224,6 +225,16 @@ function renderMainHeader(meta) {
       ? '<div class="info-box"><span class="info-label">Schuljahr / Halbjahr</span><span class="info-value">' + escapeHtml(meta.term) + "</span></div>"
       : "",
     "</div>"
+  ].join("");
+}
+
+function renderEmptyState() {
+  return [
+    '<section class="empty-state no-print" aria-labelledby="empty-state-title">',
+    '<h3 id="empty-state-title">Noch keine Gruppen</h3>',
+    '<p>Lege zuerst eine Unterrichtsgruppe an. Danach kannst du Schüler hinzufügen.</p>',
+    '<button class="button btn-primary" type="button" data-action="focus-group-form">Erste Gruppe anlegen</button>',
+    "</section>"
   ].join("");
 }
 
@@ -250,9 +261,10 @@ function renderGroup(group) {
   const emptyRows = Array.from({ length: emptyCount }, renderEmptyRow);
   const dayKey = escapeHtml("group:" + group.id + ":day");
   const timeKey = escapeHtml("group:" + group.id + ":time");
+  const groupLabel = group.day ? group.day + " · " + group.time : group.time;
 
   return [
-    '<section class="timeslot">',
+    '<section class="timeslot" aria-label="Gruppe ' + escapeHtml(groupLabel) + '">',
     '<div class="timeslot-header">',
     '<div class="group-header-left">',
     '<span class="' + dayClass + ' print-only">' + escapeHtml(dayText) + "</span>",
@@ -260,13 +272,16 @@ function renderGroup(group) {
     '<span class="time-text print-only">' + escapeHtml(group.time) + "</span>",
     '<input type="text" class="time-text editable inline-editor no-print" value="' + escapeHtml(group.time) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + timeKey + '" data-inline-type="group" data-field="time" data-group-id="' + groupId + '" aria-label="Zeit oder Gruppenname bearbeiten">',
     "</div>",
-    '<span class="slot-actions no-print" role="group" aria-label="Aktionen für diese Gruppe">',
-    '<button aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '">↑</button>',
-    '<button aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '">↓</button>',
-    '<button aria-label="Schüler alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '">A–Z</button>',
-    '<button aria-label="Gruppe entfernen" title="Gruppe entfernen" data-action="remove-group" data-group-id="' + groupId + '">✕ Entfernen</button>',
-    "</span></div>",
-    "<table><tbody>",
+    '<div class="slot-actions no-print">',
+    '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span></button>',
+    '<button class="button icon-button" aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '"><span aria-hidden="true">↓</span></button>',
+    '<button class="button icon-button" aria-label="Schüler alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span></button>',
+    '<button class="button remove-group-button" aria-label="Gruppe entfernen" title="Gruppe entfernen" data-action="remove-group" data-group-id="' + groupId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
+    "</div></div>",
+    '<table class="student-table">',
+    '<caption class="visually-hidden">Schüler in Gruppe ' + escapeHtml(groupLabel) + "</caption>",
+    '<thead class="visually-hidden"><tr><th scope="col">Name</th><th scope="col">Klasse</th><th scope="col">Aktionen</th></tr></thead>',
+    "<tbody>",
     studentRows.join(""),
     emptyRows.join(""),
     "</tbody></table></section>"
@@ -286,16 +301,16 @@ function renderStudentRow(student, groupId, index) {
     '<td class="student-class"><span class="class-badge print-only">' + escapeHtml(student.className) + "</span>",
     '<input type="text" class="class-badge editable inline-editor no-print" value="' + escapeHtml(student.className) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + classKey + '" data-inline-type="student" data-field="className" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Schüler ' + (index + 1) + ' bearbeiten"></td>',
     '<td class="student-actions no-print">',
-    '<button aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '">↑</button>',
-    '<button aria-label="' + labelName + ' nach unten" title="Nach unten" data-action="student-down" data-group-id="' + groupId + '" data-student-id="' + studentId + '">↓</button>',
-    '<button aria-label="' + labelName + ' in andere Gruppe verschieben" title="In andere Gruppe verschieben" data-action="move-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '">⇄</button>',
-    '<button aria-label="' + labelName + ' entfernen" title="Entfernen" data-action="remove-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '">✕</button>',
+    '<button class="button icon-button" aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↑</span></button>',
+    '<button class="button icon-button" aria-label="' + labelName + ' nach unten" title="Nach unten" data-action="student-down" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↓</span></button>',
+    '<button class="button icon-button" aria-label="' + labelName + ' in andere Gruppe verschieben" title="In andere Gruppe verschieben" data-action="move-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">⇄</span></button>',
+    '<button class="button icon-button" aria-label="' + labelName + ' entfernen" title="Entfernen" data-action="remove-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">✕</span></button>',
     "</td></tr>"
   ].join("");
 }
 
 function renderEmptyRow() {
-  return '<tr class="empty-row"><td></td><td></td><td class="student-actions no-print"></td></tr>';
+  return '<tr class="empty-row" aria-hidden="true"><td></td><td></td><td class="student-actions no-print"></td></tr>';
 }
 
 function optionsSignature(items) {
@@ -331,6 +346,8 @@ export function renderPlanSelect() {
 export function renderGroupSelect(preferredGroupId = document.getElementById("groupSelect")?.value) {
   const select = document.getElementById("groupSelect");
   const addStudentButton = document.getElementById("addStudentBtn");
+  const studentForm = document.getElementById("studentForm");
+  const studentFormHint = document.getElementById("studentFormHint");
   const plan = getActivePlan();
   const items = plan.groups.map((group) => ({
     value: group.id,
@@ -344,6 +361,10 @@ export function renderGroupSelect(preferredGroupId = document.getElementById("gr
     : plan.groups[0]?.id || "";
   select.disabled = !hasGroups;
   addStudentButton.disabled = !hasGroups;
+  if (studentForm) {
+    studentForm.disabled = !hasGroups;
+  }
+  studentFormHint?.classList.toggle("hidden", hasGroups);
 }
 
 export function updateEditorValues() {
@@ -355,4 +376,3 @@ export function updateEditorValues() {
   document.getElementById("metaTerm").value = plan.meta.term;
   document.getElementById("minRows").value = getMinRows();
 }
-

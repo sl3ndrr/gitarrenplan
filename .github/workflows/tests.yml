@@ -21,5 +21,9 @@ jobs:
           node-version: 22
       - name: Dev-Abhängigkeiten installieren
         run: npm install --ignore-scripts
-      - name: Tests ausführen
-        run: npm test
+      - name: Chromium installieren
+        run: npx playwright install --with-deps chromium
+      - name: Unit- und DOM-Tests ausführen
+        run: npm run test:unit
+      - name: Browser-Tests ausführen
+        run: npm run test:browser

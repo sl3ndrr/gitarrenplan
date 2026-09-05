@@ -1,0 +1,216 @@
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  body {
+    display: block;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .wrapper {
+    width: 210mm;
+    margin: 0 auto;
+  }
+
+  .preview-region {
+    gap: 0;
+  }
+
+  .no-print,
+  .editor-panel,
+  .slot-actions,
+  .student-actions,
+  #toast-container,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  .print-only {
+    display: inline-block !important;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 10mm;
+    padding-bottom: 18mm;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .page-footer {
+    right: 10mm;
+    bottom: 6mm;
+    left: 10mm;
+  }
+
+  .student-table {
+    table-layout: auto;
+  }
+
+  .student-table td {
+    height: 38px;
+  }
+
+  .timeslot .student-table tr:last-child td {
+    border-bottom: 0 !important;
+  }
+
+  .editable,
+  .editable:hover,
+  .editable:focus {
+    background: transparent !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    cursor: default;
+  }
+
+  .student-table td.student-name.editable {
+    padding: 10px 12px !important;
+    vertical-align: middle;
+  }
+
+  .time-text.editable {
+    padding: 0 !important;
+  }
+
+  .class-badge.editable {
+    padding: 3px 8px !important;
+    background: var(--primary-light) !important;
+  }
+
+  .empty-day {
+    display: none !important;
+  }
+
+  .day-badge.editable {
+    padding: 3px 8px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  }
+
+  .compact-first-page .page-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .compact-first-page .preview-header {
+    margin-bottom: 4mm;
+  }
+
+  .compact-first-page .header-inner {
+    padding: 10px 14px;
+  }
+
+  .compact-first-page .preview-document-title {
+    font-size: 22px;
+  }
+
+  .compact-first-page .guitar-bg {
+    right: -12px;
+    bottom: -14px;
+    font-size: 64px;
+  }
+
+  .compact-first-page .info-grid,
+  .compact-first-page .info-grid.has-term {
+    gap: 4mm;
+    margin-bottom: 4mm;
+  }
+
+  .compact-first-page .info-box {
+    min-width: 0;
+    padding: 6px 8px;
+    overflow-wrap: anywhere;
+  }
+
+  .compact-first-page .info-label {
+    margin-bottom: 0;
+    font-size: 9px;
+  }
+
+  .compact-first-page .info-value {
+    font-size: 11px;
+  }
+
+  /*
+   * Das bestehende Druckbudget bleibt für 5–6 Gruppen unverändert:
+   * höchstens 30 Tabellenzeilen über drei Rasterreihen.
+   */
+  .compact-first-page .slots {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(min-content, 1fr));
+    gap: 4mm;
+  }
+
+  .compact-first-page .slots > .timeslot:nth-child(5):last-child {
+    grid-column: 1 / -1;
+    width: calc((100% - 4mm) / 2);
+    justify-self: center;
+  }
+
+  .compact-first-page .timeslot {
+    min-height: 0;
+  }
+
+  .compact-first-page .student-table {
+    flex: 1;
+  }
+
+  .compact-first-page .timeslot-header {
+    padding: 5px 8px;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .compact-first-page .group-header-left {
+    min-width: 0;
+    gap: 5px;
+  }
+
+  .compact-first-page .day-badge {
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+
+  .compact-first-page .time-text {
+    font-size: 11px;
+  }
+
+  .compact-first-page .student-table td {
+    height: 24px;
+    padding: 3px 6px;
+    font-size: 11px;
+    line-height: 1.2;
+    vertical-align: middle;
+  }
+
+  .compact-first-page .student-table td.student-name.editable {
+    padding: 3px 6px !important;
+  }
+
+  .compact-first-page .student-class {
+    width: 80px;
+  }
+
+  .compact-first-page .class-badge.editable {
+    padding: 2px 5px !important;
+    font-size: 9px;
+  }
+
+  .compact-first-page .student-actions {
+    width: 90px;
+    padding-left: 0;
+  }
+
+  .compact-first-page .day-badge.editable {
+    padding: 2px 5px !important;
+  }
+}

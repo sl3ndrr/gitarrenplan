@@ -1,13 +1,13 @@
 # Gitarrenplan
 
-Eine browserbasierte, druckfreundliche Übersicht für Gitarrenunterricht. Pläne, Gruppen und Schüler werden ausschließlich im Local Storage des jeweiligen Browsers gespeichert. Es gibt keinen Server und keine externen Abhängigkeiten.
+Eine browserbasierte, druckfreundliche Übersicht für Gitarrenunterricht. Pläne, Gruppen und Schüler werden ausschließlich im Local Storage des jeweiligen Browsers gespeichert. Es gibt keinen Server und keine Runtime-Abhängigkeiten.
 
 ## Funktionen
 
 - Mehrere Pläne anlegen, duplizieren, löschen, leeren und zurücksetzen
 - Gruppen und Schüler verwalten, verschieben, sortieren und direkt in der Vorschau bearbeiten
 - Bis zu zehn Änderungen rückgängig machen
-- Einzelne oder alle Pläne als JSON exportieren und wieder importieren
+- Alle Pläne mit einem Klick als bearbeitbare JSON-Sicherung exportieren und wieder importieren
 - A4-optimierte Druckansicht mit automatischem Seitenumbruch
 - Responsive Bearbeitungsansicht für kleinere Bildschirme
 
@@ -17,7 +17,12 @@ Eine browserbasierte, druckfreundliche Übersicht für Gitarrenunterricht. Plän
 gitarrenplan/
 ├── index.html                  # Semantisches Dokument und Einstiegspunkt
 ├── css/
-│   └── styles.css              # Layout, Komponenten, Druck- und Mobile-Stile
+│   ├── tokens.css              # Farben, Abstände und gemeinsame Designwerte
+│   ├── base.css                # Reset, Dokumentbasis, Fokus und Buttons
+│   ├── editor.css              # Editor, Aktionen, Dialog und Toasts
+│   ├── preview.css             # Semantische Bildschirm-/Dokumentvorschau
+│   ├── print.css               # Ausschließliches A4-Drucklayout
+│   └── responsive.css          # Bildschirm-Breakpoints und reduzierte Bewegung
 ├── js/
 │   ├── app.js                  # Initialisierung und Zusammensetzen der Anwendung
 │   ├── config.js               # Konfiguration und Standardwerte
@@ -38,7 +43,7 @@ gitarrenplan/
 │       ├── lifecycle.js        # Print/Pagehide/Storage-Listener
 │       ├── plan-actions.js     # Plan-Dialoge und Commands
 │       └── schedule-actions.js # Gruppen-, Schüler- und Inline-Events
-├── tests/                      # Vitest-/jsdom-Regressionstests
+├── tests/                      # Vitest-/jsdom- und Browser-Regressionstests
 └── docs/                       # Datenvertrag und Architektur
 ~~~
 
@@ -65,11 +70,14 @@ Qualitätssicherung nutzt ausschließlich Dev-Abhängigkeiten:
 ~~~bash
 npm install
 npm test
+npm run test:browser
 ~~~
 
 ## Daten und Datenschutz
 
-Die eingegebenen Namen werden im Browser gespeichert. Nutze Exportieren, um vor einem Browserwechsel oder dem Löschen von Browserdaten eine JSON-Sicherung anzulegen. Importieren fügt diese Daten wieder lokal hinzu.
+Die eingegebenen Namen werden im Browser gespeichert. **Exportieren** lädt immer sämtliche Pläne inklusive Formatversion und Exportzeitpunkt als Datei `gitarrenplan_sicherung_YYYY-MM-DD.json` herunter. Diese JSON-Datei ist die bearbeitbare Datensicherung für einen Browserwechsel oder das Löschen von Browserdaten; **Importieren** fügt sie wieder lokal hinzu. Historische Einzelplan- und Gesamtplan-Exporte bleiben importierbar.
+
+**Drucken / PDF** ist davon getrennt: Diese Aktion erzeugt das aktuell sichtbare Dokument über den Druckdialog des Browsers. Eine PDF-Datei ist eine Darstellung zum Lesen und Drucken, keine Datensicherung zum erneuten Bearbeiten.
 
 ## Auf GitHub veröffentlichen
 

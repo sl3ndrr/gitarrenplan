@@ -71,7 +71,7 @@ describe("sofortiges Flush", () => {
 
     expect(print).toHaveBeenCalledOnce();
     expect(getActivePlan().meta.title).toBe("Vor dem Druck");
-    expect(document.querySelector(".page h1").textContent).toBe("Vor dem Druck");
+    expect(document.querySelector(".preview-document-title").textContent).toBe("Vor dem Druck");
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.state));
     expect(stored.plans[0].meta.title).toBe("Vor dem Druck");
   });

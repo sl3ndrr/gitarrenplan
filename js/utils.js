@@ -39,14 +39,6 @@ export function formatDate(date) {
   });
 }
 
-export function sanitizeFilename(name) {
-  return String(name)
-    .trim()
-    .replace(/[\\/:*?"<>|]+/g, "-")
-    .replace(/\s+/g, "_")
-    .slice(0, 80) || "gitarrenunterricht";
-}
-
 export function moveItem(array, from, to) {
   if (from < 0 || to < 0 || from >= array.length || to >= array.length) {
     return false;

@@ -1,7 +1,7 @@
 let lastSaveErrorAt = 0;
 const SAVE_ERROR_THROTTLE_MS = 5000;
 const feedbackTimers = new Set();
-let activeModalCleanup = null;
+let activeDialog = null;
 
 function schedule(callback, delay) {
   const timer = globalThis.setTimeout(() => {
@@ -27,7 +27,14 @@ export function showToast(message, type = "success") {
   }
   const toast = document.createElement("div");
   toast.className = "toast toast-" + type;
-  toast.textContent = message;
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+  const symbol = document.createElement("span");
+  symbol.className = "toast-symbol";
+  symbol.setAttribute("aria-hidden", "true");
+  symbol.textContent = type === "error" ? "⚠" : "✓";
+  const text = document.createElement("span");
+  text.textContent = message;
+  toast.append(symbol, text);
   container.appendChild(toast);
   schedule(() => toast.remove(), 2200);
 }
@@ -60,7 +67,8 @@ export function showModal({
   onConfirm = null,
   onCancel = null
 } = {}) {
-  activeModalCleanup?.();
+  const inheritedOrigin = activeDialog?.origin || null;
+  activeDialog?.close({ restoreFocus: false });
 
   const overlay = document.getElementById("modal-overlay");
   const titleElement = document.getElementById("modal-title");
@@ -69,13 +77,21 @@ export function showModal({
   const selectElement = document.getElementById("modal-select");
   const cancelButton = document.getElementById("modal-cancel");
   const confirmButton = document.getElementById("modal-confirm");
+  const appShell = document.getElementById("app-shell");
+  const activeElement = document.activeElement;
+  const origin = inheritedOrigin || (
+    activeElement instanceof HTMLElement && !overlay.contains(activeElement)
+      ? activeElement
+      : null
+  );
+  const appWasInert = appShell?.hasAttribute("inert") || false;
   let closed = false;
   let focusTimer = null;
 
   titleElement.textContent = title;
   messageElement.textContent = message;
   confirmButton.textContent = confirmLabel;
-  confirmButton.className = confirmClass;
+  confirmButton.className = "button " + confirmClass;
   cancelButton.textContent = cancelLabel;
   inputElement.classList.add("hidden");
   selectElement.classList.add("hidden");
@@ -97,8 +113,9 @@ export function showModal({
     });
   }
   overlay.classList.remove("hidden");
+  appShell?.setAttribute("inert", "");
 
-  function cleanup() {
+  function cleanup({ restoreFocus = true } = {}) {
     if (closed) {
       return;
     }
@@ -111,8 +128,14 @@ export function showModal({
     document.removeEventListener("keydown", onDocumentKey);
     cancelScheduled(focusTimer);
     focusTimer = null;
-    if (activeModalCleanup === cleanup) {
-      activeModalCleanup = null;
+    if (appShell && !appWasInert) {
+      appShell.removeAttribute("inert");
+    }
+    if (activeDialog?.close === cleanup) {
+      activeDialog = null;
+    }
+    if (restoreFocus && origin?.isConnected) {
+      origin.focus({ preventScroll: true });
     }
   }
 
@@ -151,6 +174,31 @@ export function showModal({
     if (event.key === "Escape") {
       event.preventDefault();
       onCancelClick();
+      return;
+    }
+    if (event.key !== "Tab") {
+      return;
+    }
+
+    const focusable = [inputElement, selectElement, cancelButton, confirmButton]
+      .filter((element) => (
+        !element.disabled
+        && !element.classList.contains("hidden")
+        && element.style.display !== "none"
+      ));
+    if (focusable.length === 0) {
+      event.preventDefault();
+      overlay.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (event.shiftKey && (document.activeElement === first || !overlay.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !overlay.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
     }
   }
 
@@ -159,11 +207,12 @@ export function showModal({
   overlay.addEventListener("click", onOverlayClick);
   inputElement.addEventListener("keydown", onInputKey);
   document.addEventListener("keydown", onDocumentKey);
-  activeModalCleanup = cleanup;
+  activeDialog = { close: cleanup, origin };
 
   focusTimer = schedule(() => {
     focusTimer = null;
     if (type === "prompt") {
+      inputElement.focus();
       inputElement.select();
     } else if (type === "select") {
       selectElement.focus();
@@ -174,11 +223,10 @@ export function showModal({
 }
 
 export function disposeFeedback() {
-  activeModalCleanup?.();
-  activeModalCleanup = null;
+  activeDialog?.close();
+  activeDialog = null;
   feedbackTimers.forEach((timer) => globalThis.clearTimeout(timer));
   feedbackTimers.clear();
   document.getElementById("toast-container")?.replaceChildren();
   lastSaveErrorAt = 0;
 }
-

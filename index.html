@@ -6,10 +6,21 @@
     <meta name="description" content="Verwaltung und Druckansicht für Gitarrenunterrichtspläne.">
     <title>Gitarrenunterricht Übersicht</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8E%B8%3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/editor.css">
+    <link rel="stylesheet" href="css/preview.css">
+    <link rel="stylesheet" href="css/print.css">
+    <link rel="stylesheet" href="css/responsive.css">
   </head>
   <body>
-    <main class="wrapper">
+    <main id="app-shell" class="wrapper">
+      <header class="app-header no-print">
+        <p class="app-eyebrow">Unterrichtsplanung</p>
+        <h1>Gitarrenplan</h1>
+        <p>Pläne verwalten, als JSON sichern und als sichtbares Dokument drucken.</p>
+      </header>
+
       <section class="editor-panel no-print" aria-labelledby="editor-title">
         <h2 id="editor-title">Plan bearbeiten</h2>
 
@@ -27,9 +38,9 @@
               </div>
             </div>
             <div class="button-row">
-              <button class="btn-primary" id="newPlanBtn" type="button">Neuer Plan</button>
-              <button class="btn-secondary" id="duplicatePlanBtn" type="button">Plan duplizieren</button>
-              <button class="btn-danger" id="deletePlanBtn" type="button">Plan löschen</button>
+              <button class="button btn-primary" id="newPlanBtn" type="button">Neuer Plan</button>
+              <button class="button btn-secondary" id="duplicatePlanBtn" type="button">Plan duplizieren</button>
+              <button class="button btn-danger" id="deletePlanBtn" type="button">Plan löschen</button>
             </div>
           </section>
 
@@ -70,11 +81,11 @@
             <label for="newGroupTime">Zeit / Gruppenname</label>
             <input id="newGroupTime" type="text" placeholder="z. B. 15:45 – 16:15 Uhr" aria-label="Uhrzeit oder Name der neuen Gruppe">
 
-            <button class="btn-primary" id="addGroupBtn" type="button">Gruppe hinzufügen</button>
+            <button class="button btn-primary" id="addGroupBtn" type="button">Gruppe hinzufügen</button>
           </section>
 
-          <section class="editor-box" aria-labelledby="new-student-title">
-            <h3 id="new-student-title">Neuen Schüler hinzufügen</h3>
+          <fieldset class="editor-box editor-fieldset" id="studentForm" aria-describedby="studentFormHint">
+            <legend id="new-student-title">Neuen Schüler hinzufügen</legend>
 
             <label for="groupSelect">Gruppe auswählen</label>
             <select id="groupSelect" aria-label="Zielgruppe für neuen Schüler"></select>
@@ -85,47 +96,60 @@
             <label for="studentClass">Klasse</label>
             <input id="studentClass" type="text" placeholder="z. B. Klasse 2 b">
 
-            <button class="btn-success" id="addStudentBtn" type="button">Schüler hinzufügen</button>
-          </section>
+            <button class="button btn-success" id="addStudentBtn" type="button">Schüler hinzufügen</button>
+            <p id="studentFormHint" class="form-hint hidden">Lege zuerst eine Gruppe an, um Schüler hinzuzufügen.</p>
+          </fieldset>
         </div>
 
-        <div class="button-row">
-          <button class="btn-secondary" id="printBtn" type="button" aria-label="Plan drucken">🖨 Drucken</button>
-          <button class="btn-secondary" id="exportBtn" type="button" aria-label="Aktiven Plan exportieren">⬇ Exportieren</button>
-          <button class="btn-secondary" id="exportAllBtn" type="button" aria-label="Alle Pläne exportieren">⬇ Alle exportieren</button>
-          <button class="btn-secondary" id="importBtn" type="button" aria-label="Plan importieren">⬆ Importieren</button>
-          <button class="btn-secondary" id="undoBtn" type="button" disabled aria-label="Letzte Änderung rückgängig machen (Strg+Z)">↩ Rückgängig</button>
+        <div class="utility-actions" aria-label="Weitere Aktionen">
+          <section class="action-group" aria-labelledby="editing-actions-title">
+            <h3 id="editing-actions-title">Bearbeitung</h3>
+            <button class="button btn-secondary" id="undoBtn" type="button" disabled aria-label="Letzte Änderung rückgängig machen (Strg+Z)"><span aria-hidden="true">↩</span> Rückgängig</button>
+          </section>
+          <section class="action-group" aria-labelledby="backup-actions-title">
+            <h3 id="backup-actions-title">Datensicherung</h3>
+            <div class="button-row">
+              <button class="button btn-secondary" id="exportBtn" type="button" aria-label="Alle Pläne als JSON-Sicherung exportieren"><span aria-hidden="true">⬇</span> Exportieren</button>
+              <button class="button btn-secondary" id="importBtn" type="button" aria-label="JSON-Sicherung importieren"><span aria-hidden="true">⬆</span> Importieren</button>
+            </div>
+          </section>
+          <section class="action-group" aria-labelledby="document-actions-title">
+            <h3 id="document-actions-title">Dokument</h3>
+            <button class="button btn-primary" id="printBtn" type="button" aria-label="Sichtbaren Plan drucken oder als PDF speichern"><span aria-hidden="true">🖨</span> Drucken / PDF</button>
+          </section>
         </div>
 
         <input id="importFile" type="file" accept="application/json,.json" hidden aria-hidden="true">
 
         <section class="danger-zone" aria-label="Gefährliche Aktionen">
-          <div class="danger-zone-label" aria-hidden="true">⚠ Gefährliche Aktionen</div>
+          <h3 class="danger-zone-label"><span aria-hidden="true">⚠</span> Gefährliche Aktionen</h3>
           <div class="button-row danger-actions">
-            <button class="btn-danger" id="clearPlanBtn" type="button">Plan vollständig leeren</button>
-            <button class="btn-danger" id="resetBtn" type="button">Ursprünglichen Plan wiederherstellen</button>
+            <button class="button btn-danger" id="clearPlanBtn" type="button">Plan vollständig leeren</button>
+            <button class="button btn-danger" id="resetBtn" type="button">Ursprünglichen Plan wiederherstellen</button>
           </div>
         </section>
 
         <p class="small-note">
           Änderungen werden automatisch lokal in diesem Browser gespeichert und sind nur auf diesem Gerät verfügbar.<br>
-          Die Daten werden nicht an einen Server übertragen. Beim Export entsteht eine JSON-Datei mit den eingetragenen Namen.<br>
+          <strong>Exportieren</strong> sichert alle bearbeitbaren Pläne als JSON-Datei. <strong>Drucken / PDF</strong> erzeugt das sichtbare Dokument.<br>
+          Die Daten werden nicht an einen Server übertragen. Die JSON-Sicherung enthält die eingetragenen Namen.<br>
           Gruppenzeiten, Wochentage, Schülernamen und Klassen sind direkt im Plan per Klick bearbeitbar. Rückgängig: Strg+Z.
         </p>
       </section>
 
-      <section id="pages" aria-label="Druckvorschau"></section>
+      <h2 id="preview-title" class="section-heading no-print">Druckvorschau</h2>
+      <section id="pages" class="preview-region" aria-labelledby="preview-title"></section>
     </main>
 
-    <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div class="modal">
+    <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message" tabindex="-1">
+      <div class="modal" aria-live="off">
         <h3 id="modal-title"></h3>
         <p id="modal-message"></p>
         <input id="modal-input" type="text" class="hidden" aria-label="Eingabefeld">
         <select id="modal-select" class="hidden" aria-label="Auswahl"></select>
         <div class="modal-footer">
-          <button id="modal-cancel" class="btn-secondary" type="button">Abbrechen</button>
-          <button id="modal-confirm" class="btn-primary" type="button">OK</button>
+          <button id="modal-cancel" class="button btn-secondary" type="button">Abbrechen</button>
+          <button id="modal-confirm" class="button btn-primary" type="button">OK</button>
         </div>
       </div>
     </div>

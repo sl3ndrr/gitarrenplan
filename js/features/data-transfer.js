@@ -1,29 +1,27 @@
 import { DATA_LIMITS, EXPORT_VERSION } from "../config.js";
 import { normalizeImportPayload, DataValidationError } from "../normalization.js";
-import { dispatch, getActivePlan, getPlans } from "../state.js";
-import { downloadJson, formatDate, sanitizeFilename } from "../utils.js";
+import { dispatch, getPlans } from "../state.js";
+import { downloadJson } from "../utils.js";
 import { showModal, showToast } from "../ui/feedback.js";
 
-function exportActivePlan() {
-  const plan = getActivePlan();
-  downloadJson({
-    type: "gitarrenunterricht-plan",
-    version: EXPORT_VERSION,
-    exportedAt: new Date().toISOString(),
-    plan
-  }, sanitizeFilename(plan.name) + ".json");
-  showToast("Plan exportiert ✓");
+export function buildBackupExport(date = new Date()) {
+  const exportedAt = date.toISOString();
+  return {
+    data: {
+      type: "gitarrenunterricht-plans",
+      version: EXPORT_VERSION,
+      exportedAt,
+      plans: getPlans()
+    },
+    filename: "gitarrenplan_sicherung_" + exportedAt.slice(0, 10) + ".json"
+  };
 }
 
-function exportAllPlans() {
-  const date = formatDate(new Date()).replace(/\./g, "-");
-  downloadJson({
-    type: "gitarrenunterricht-plans",
-    version: EXPORT_VERSION,
-    exportedAt: new Date().toISOString(),
-    plans: getPlans()
-  }, "alle_plaene_" + date + ".json");
-  showToast("Alle Pläne exportiert ✓");
+export function exportAllPlans(date = new Date()) {
+  const backup = buildBackupExport(date);
+  downloadJson(backup.data, backup.filename);
+  showToast("JSON-Sicherung aller Pläne erstellt.");
+  return backup;
 }
 
 function byteLength(text) {
@@ -102,19 +100,17 @@ function importPlans(event) {
 
 export function initialiseDataTransfer() {
   const exportButton = document.getElementById("exportBtn");
-  const exportAllButton = document.getElementById("exportAllBtn");
   const importButton = document.getElementById("importBtn");
   const importInput = document.getElementById("importFile");
+  const exportBackup = () => exportAllPlans();
   const openImport = () => importInput.click();
 
-  exportButton.addEventListener("click", exportActivePlan);
-  exportAllButton.addEventListener("click", exportAllPlans);
+  exportButton.addEventListener("click", exportBackup);
   importButton.addEventListener("click", openImport);
   importInput.addEventListener("change", importPlans);
 
   return () => {
-    exportButton.removeEventListener("click", exportActivePlan);
-    exportAllButton.removeEventListener("click", exportAllPlans);
+    exportButton.removeEventListener("click", exportBackup);
     importButton.removeEventListener("click", openImport);
     importInput.removeEventListener("change", importPlans);
   };

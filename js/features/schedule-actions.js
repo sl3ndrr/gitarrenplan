@@ -182,13 +182,20 @@ function handlePageClick(event) {
     return;
   }
 
+  const action = button.dataset.action;
+  if (action === "focus-group-form") {
+    const groupInput = document.getElementById("newGroupTime");
+    groupInput?.scrollIntoView?.({ block: "center" });
+    groupInput?.focus({ preventScroll: true });
+    return;
+  }
+
   const plan = getActivePlan();
   const group = plan.groups.find((item) => item.id === button.dataset.groupId);
   if (!group) {
     return;
   }
 
-  const action = button.dataset.action;
   if (action === "group-up" || action === "group-down") {
     dispatch({
       type: "group/move",
@@ -325,4 +332,3 @@ export function initialiseScheduleActions() {
 
   return () => bindings.splice(0).reverse().forEach((cleanup) => cleanup());
 }
-
