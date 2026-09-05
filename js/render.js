@@ -305,9 +305,7 @@ function renderSlotRows(segments, studentCounts, minRows, appearance) {
         + headings.join("") + "</div>"
       : "";
 
-    const rowClass = "slot-row"
-      + (index > 0 && pair.length === 1 ? " single-centered" : "")
-      + (headings.length ? "" : " no-day-heading");
+    const rowClass = "slot-row" + (headings.length ? "" : " no-day-heading");
     rows.push(
       '<div class="' + rowClass + '">',
       headingMarkup,
