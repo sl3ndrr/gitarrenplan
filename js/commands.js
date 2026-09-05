@@ -1,5 +1,9 @@
-import { DATA_LIMITS, DEFAULT_META } from "./config.js";
-import { createDefaultPlan, normalizeSingleLineText } from "./normalization.js";
+import { DATA_LIMITS, DEFAULT_APPEARANCE, DEFAULT_META } from "./config.js";
+import {
+  createDefaultPlan,
+  normalizeAppearance,
+  normalizeSingleLineText
+} from "./normalization.js";
 import {
   clone,
   createGroupId,
@@ -128,6 +132,7 @@ export const COMMAND_HANDLERS = Object.freeze({
     const plan = findPlan(draft, payload?.planId || draft.activePlanId);
     plan.name = "Gitarrenunterricht";
     plan.meta = clone(DEFAULT_META);
+    plan.appearance = clone(DEFAULT_APPEARANCE);
     plan.groups = [];
     return { render: RENDER_ALL, notification: notice("Plan zurückgesetzt") };
   }),
@@ -162,6 +167,20 @@ export const COMMAND_HANDLERS = Object.freeze({
 
   "minRows/set": define("Mindestzeilen ändern", (draft, payload) => {
     draft.minRows = payload?.value;
+    return { render: RENDER_PAGES };
+  }),
+
+  "appearance/set": define("Gestaltung ändern", (draft, payload) => {
+    const field = payload?.field;
+    if (!["colorIntensity", "showOccupancy", "titleBoxPadding"].includes(field)) {
+      throw new CommandValidationError("Unbekannte Gestaltungsoption.");
+    }
+
+    const plan = activePlan(draft);
+    plan.appearance = normalizeAppearance({
+      ...plan.appearance,
+      [field]: payload?.value
+    });
     return { render: RENDER_PAGES };
   }),
 

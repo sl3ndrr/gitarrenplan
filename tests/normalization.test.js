@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { APP_STATE_VERSION, DATA_LIMITS, DEFAULT_META } from "../js/config.js";
+import {
+  APP_STATE_VERSION,
+  DATA_LIMITS,
+  DEFAULT_APPEARANCE,
+  DEFAULT_META
+} from "../js/config.js";
 import {
   DataValidationError,
   normalizeAppState,
@@ -35,6 +40,27 @@ describe("zentrale Normalisierung", () => {
     expect(plan.groups[0].day).toBe("Montag Dienstag");
     expect(plan.groups[0].time).toBe("1530");
     expect(plan.groups[0].students[0]).toMatchObject({ name: "123", className: "Klasse" });
+  });
+
+  it("normalisiert planweite Gestaltungsoptionen und ergänzt fehlende Werte", () => {
+    const plan = normalizePlan({
+      id: "plan-appearance",
+      name: "Gestaltung",
+      appearance: {
+        colorIntensity: 240,
+        showOccupancy: "nein",
+        titleBoxPadding: -8
+      },
+      groups: []
+    });
+
+    expect(plan.appearance).toEqual({
+      colorIntensity: 100,
+      showOccupancy: true,
+      titleBoxPadding: 0
+    });
+    expect(normalizePlan({ id: "plan-default", groups: [] }).appearance)
+      .toEqual(DEFAULT_APPEARANCE);
   });
 
   it("repariert fehlende und doppelte IDs über den gesamten Zustand", () => {
