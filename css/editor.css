@@ -1,0 +1,248 @@
+.editor-panel {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.editor-panel > h2 {
+  margin: 0 0 14px;
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.editor-box {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.editor-box.full-width {
+  grid-column: 1 / -1;
+}
+
+.editor-box h3,
+.editor-box legend {
+  margin: 0 0 10px;
+  padding: 0;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.editor-fieldset:disabled {
+  background: #f1f5f9;
+}
+
+.editor-panel label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.editor-panel :where(input[type="text"], input[type="number"], select),
+.modal :where(input[type="text"], select) {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 8px;
+  padding: 9px 10px;
+  background: var(--surface);
+  color: var(--text-main);
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.editor-panel :where(input[type="text"], input[type="number"], select):focus,
+.modal :where(input[type="text"], select):focus {
+  border-color: var(--focus-ring);
+}
+
+.editor-panel input[type="number"] {
+  width: 80px;
+}
+
+.plan-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-hint {
+  margin: 8px 0 0;
+  color: var(--text-main);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.utility-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.35fr) minmax(0, 0.85fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.action-group {
+  min-width: 0;
+  padding: 12px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.action-group h3 {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.action-group .button-row {
+  margin-top: 0;
+}
+
+.danger-zone {
+  margin-top: 14px;
+  padding: 12px;
+  background: #fff5f5;
+  border: 1.5px solid #fca5a5;
+  border-radius: var(--radius-md);
+}
+
+.danger-zone-label {
+  margin: 0 0 8px;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.danger-actions {
+  margin-top: 0;
+}
+
+.small-note {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 9999;
+  width: min(max-content, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.toast {
+  max-width: 100%;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e293b;
+  color: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  animation: toast-in 200ms ease, toast-out 300ms ease 1.8s forwards;
+}
+
+.toast-symbol {
+  flex: 0 0 auto;
+  font-weight: 900;
+}
+
+.toast.toast-success {
+  background: var(--success);
+}
+
+.toast.toast-error {
+  background: var(--danger);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8888;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.68);
+}
+
+.modal {
+  width: min(100%, 440px);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 24px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modal h3 {
+  margin: 0 0 10px;
+  color: var(--text-main);
+  font-size: 18px;
+}
+
+.modal p {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.modal :where(input[type="text"], select) {
+  margin-bottom: 16px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modal-footer .button {
+  min-width: 88px;
+}

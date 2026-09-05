@@ -1,0 +1,144 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+html {
+  max-width: 100%;
+}
+
+body {
+  min-width: 0;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  background: var(--page-background);
+  color: var(--text-main);
+  font-family: Inter, Arial, sans-serif;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.visually-hidden:not(:focus):not(:active) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.wrapper {
+  width: min(210mm, 100%);
+  min-width: 0;
+}
+
+.app-header {
+  margin-bottom: 18px;
+  padding: 6px 2px;
+}
+
+.app-header h1 {
+  margin: 0;
+  color: var(--primary);
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+.app-header p {
+  max-width: 62ch;
+  margin: 7px 0 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.app-header .app-eyebrow {
+  margin: 0 0 4px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-heading {
+  margin: 28px 0 10px;
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.button {
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: opacity 150ms ease, transform 100ms ease, box-shadow 150ms ease;
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: saturate(0.55);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.btn-success {
+  background: var(--success);
+  color: #ffffff;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: var(--text-main);
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+#app-shell :where(.button, input, select, a, .inline-editor):focus-visible,
+.modal-overlay :where(.button, input, select, a):focus-visible {
+  outline: 0;
+  box-shadow:
+    0 0 0 2px var(--focus-halo),
+    0 0 0 5px var(--focus-ring);
+  position: relative;
+  z-index: 3;
+}
+
+#app-shell a {
+  color: var(--primary);
+  text-underline-offset: 0.15em;
+}
+
+.print-only {
+  display: none;
+}

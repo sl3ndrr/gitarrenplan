@@ -59,3 +59,11 @@ Der Import akzeptiert weiterhin:
 
 Unbekannte Typen, zukünftige Versionen und strukturell ungültige Daten werden
 vor einer Änderung des App-Zustands abgelehnt.
+
+## Export
+
+Die Oberfläche erzeugt ausschließlich einen Gesamtexport vom Typ
+`gitarrenunterricht-plans`. Er enthält alle Pläne sowie `version` und
+`exportedAt` und wird als `gitarrenplan_sicherung_YYYY-MM-DD.json`
+heruntergeladen. Der frühere Einzelplan-Export wird nicht mehr angeboten; sein
+Format bleibt wie oben beschrieben vollständig importierbar.
