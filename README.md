@@ -109,3 +109,9 @@ Ab 1180 px stehen ein 400 px breiter, bei Bedarf separat scrollbar haftender Edi
 ## Auf GitHub veröffentlichen
 
 Die App ist eine rein statische Website und kann direkt über GitHub Pages ausgeliefert werden. In den Repository-Einstellungen unter Pages den Branch main und den Ordner /(root) wählen.
+
+## Mitwirkende
+
+[<img src="https://avatars.githubusercontent.com/u/267193182?s=64&v=4" width="32" height="32" alt="Codex-Profilbild">](https://github.com/codex)
+
+[Codex](https://github.com/codex) hat zu diesem Projekt beigetragen.
