@@ -45,8 +45,8 @@ export const DATA_LIMITS = Object.freeze({
 
 export const DEFAULT_META = Object.freeze({
   title: "Gitarrenunterricht",
-  teacher: "Lehrkraft",
-  location: "Lernwerkstatt",
+  teacher: "",
+  location: "",
   term: ""
 });
 

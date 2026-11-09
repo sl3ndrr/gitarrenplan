@@ -74,7 +74,7 @@ export function initialiseWorkspace() {
   let proof = false;
   let scale = 1;
   let current = 0;
-  let navigationUntil = 0;
+  let manualPage = false;
   let frames = [];
   const save = () => safeSetItem(VIEW_KEY, JSON.stringify({ zoom, spread }));
 
@@ -115,7 +115,7 @@ export function initialiseWorkspace() {
   const visible = new Map();
   const intersection = typeof window.IntersectionObserver === "function" ? new window.IntersectionObserver((entries) => {
     entries.forEach((entry) => visible.set(entry.target, entry.intersectionRatio));
-    if (Date.now() < navigationUntil) return;
+    if (manualPage) return;
     const maximum = Math.max(0, ...visible.values());
     if (!maximum || visible.get(frames[current]) === maximum) return;
     updateNavigator(frames.findIndex((frame) => visible.get(frame) === maximum));
@@ -196,11 +196,17 @@ export function initialiseWorkspace() {
   });
   listen(get("zoomOut"), "click", () => changeZoom(-1));
   listen(get("zoomIn"), "click", () => changeZoom(1));
-  listen(navigation, "change", () => {
-    navigationUntil = Date.now() + 600;
+  listen(navigation, "input", () => {
+    manualPage = true;
     updateNavigator(Number(navigation.value));
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     frames[current]?.scrollIntoView({ block: "start", inline: "nearest", behavior: reduce ? "instant" : "smooth" });
+  });
+  const resumeTracking = () => { manualPage = false; };
+  listen(window, "wheel", resumeTracking, { passive: true });
+  listen(window, "touchstart", resumeTracking, { passive: true });
+  listen(window, "pointerdown", (event) => {
+    if (!event.target.closest?.(".utility-actions")) resumeTracking();
   });
   listen(pages, "wheel", (event) => {
     if (!(event.ctrlKey || event.metaKey) || inputFocused(event)) return;
@@ -208,6 +214,8 @@ export function initialiseWorkspace() {
     changeZoom(event.deltaY < 0 ? 1 : -1);
   }, { passive: false });
   listen(document, "keydown", (event) => {
+    if (["PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"].includes(event.key)
+      && !inputFocused(event)) resumeTracking();
     if (inputFocused(event) || event.altKey || shell.hasAttribute("inert") || event.defaultPrevented) return;
     const modified = event.ctrlKey || event.metaKey;
     const key = event.key.toLowerCase();

@@ -29,11 +29,11 @@ function safeRemoveItem(key, storage) {
   try {
     storage?.removeItem(key);
   } catch {
-    // Best effort: Der gültige V3-State ist zu diesem Zeitpunkt bereits gespeichert.
+    // Best effort: Der gültige V4-State ist zu diesem Zeitpunkt bereits gespeichert.
   }
 }
 
-function buildMigratedState({ plans, activePlanId, minRows, now }) {
+function buildMigratedState({ plans, activePlanId, minRows, now, discarded }) {
   return normalizeAppState({
     version: 3,
     revision: 0,
@@ -41,7 +41,7 @@ function buildMigratedState({ plans, activePlanId, minRows, now }) {
     plans,
     activePlanId,
     minRows
-  }, { now });
+  }, { now, discarded });
 }
 
 function readV2State(storage, now, report) {
@@ -49,13 +49,16 @@ function readV2State(storage, now, report) {
   if (rawPlans === null) {
     return null;
   }
+  const discarded = { groups: 0, students: 0 };
   try {
-    return buildMigratedState({
+    const migrated = buildMigratedState({
       plans: JSON.parse(rawPlans),
       activePlanId: safeGetItem(STORAGE_KEYS.activePlanV2, storage),
       minRows: safeGetItem(STORAGE_KEYS.minRowsV1, storage) ?? DEFAULT_MIN_ROWS,
-      now
+      now, discarded
     });
+    if (discarded.groups || discarded.students) backupRaw(rawPlans, STORAGE_KEYS.plansV2, storage, now, report, { discarded });
+    return migrated;
   } catch {
     backupRaw(rawPlans, STORAGE_KEYS.plansV2, storage, now, report);
     return null;
@@ -72,16 +75,21 @@ function readV1State(storage, now, report) {
   const meta = rawMeta === null ? {} : parseLegacy(rawMeta, STORAGE_KEYS.legacyMetaV1, {}, storage, now, report);
   const groups = rawGroups === null ? [] : parseLegacy(rawGroups, STORAGE_KEYS.legacyGroupsV1, [], storage, now, report);
 
+  const discarded = { groups: 0, students: 0 };
   try {
     const plan = createDefaultPlan("Gitarrenunterricht Montag");
     plan.meta = meta;
     plan.groups = groups;
-    return buildMigratedState({
+    const migrated = buildMigratedState({
       plans: [plan],
       activePlanId: plan.id,
       minRows: safeGetItem(STORAGE_KEYS.minRowsV1, storage) ?? DEFAULT_MIN_ROWS,
-      now
+      now, discarded
     });
+    if (rawGroups !== null && (discarded.groups || discarded.students)) {
+      backupRaw(rawGroups, STORAGE_KEYS.legacyGroupsV1, storage, now, report, { discarded });
+    }
+    return migrated;
   } catch {
     if (rawMeta !== null) backupRaw(rawMeta, STORAGE_KEYS.legacyMetaV1, storage, now, report);
     if (rawGroups !== null) backupRaw(rawGroups, STORAGE_KEYS.legacyGroupsV1, storage, now, report);
