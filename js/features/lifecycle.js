@@ -1,5 +1,6 @@
 import { flushRender } from "../render.js";
 import { handleStorageEvent } from "../state.js";
+import { showModal } from "../ui/feedback.js";
 import { flushPendingTextEdits } from "../ui/text-edit.js";
 
 export function flushImmediately() {
@@ -10,15 +11,64 @@ export function flushImmediately() {
   return result;
 }
 
+export function measurePrintOverflow() {
+  const stylesheet = document.getElementById("printLayoutStyles");
+  if (!stylesheet) return [];
+  const previousMedia = stylesheet.media;
+  stylesheet.media = "all";
+  try {
+    return [...document.querySelectorAll("#pages .timeslot")]
+      .filter((slot) => slot.clientHeight > 0 && slot.scrollHeight > slot.clientHeight + 1)
+      .map((slot) => ({
+        id: slot.dataset.groupId,
+        label: slot.getAttribute("aria-label")
+      }));
+  } finally {
+    stylesheet.media = previousMedia;
+  }
+}
+
+let approvedPrint = false;
+let nativeOverflow = [];
+
+function invokePrint() {
+  approvedPrint = true;
+  try {
+    window.print();
+  } finally {
+    approvedPrint = false;
+  }
+}
+
+function warnAboutOverflow(groups, afterNativePrint = false) {
+  const labels = [...new Set(groups.map(({ label }) => label))].join(", ");
+  showModal({
+    title: "Inhalt passt nicht auf die Druckseite",
+    message: (afterNativePrint ? "Beim Drucken über das Browsermenü können Inhalte abgeschnitten sein. " : "")
+      + "Betroffen: " + labels + ".",
+    type: "confirm",
+    confirmLabel: "Trotzdem drucken",
+    onConfirm: invokePrint
+  });
+}
+
+export function printPlan() {
+  if (!flushImmediately().ok) return;
+  const groups = measurePrintOverflow();
+  if (groups.length) warnAboutOverflow(groups);
+  else invokePrint();
+}
+
 export function initialiseLifecycle() {
   const printButton = document.getElementById("printBtn");
-  const onPrint = () => {
-    if (flushImmediately().ok) {
-      window.print();
-    }
-  };
   const onBeforePrint = () => {
-    flushImmediately();
+    if (!flushImmediately().ok) return;
+    const groups = measurePrintOverflow();
+    if (!approvedPrint) nativeOverflow = groups;
+  };
+  const onAfterPrint = () => {
+    if (nativeOverflow.length) warnAboutOverflow(nativeOverflow, true);
+    nativeOverflow = [];
   };
   const onVisibilityChange = () => {
     if (document.visibilityState === "hidden") {
@@ -32,15 +82,17 @@ export function initialiseLifecycle() {
     handleStorageEvent(event);
   };
 
-  printButton.addEventListener("click", onPrint);
+  printButton.addEventListener("click", printPlan);
   window.addEventListener("beforeprint", onBeforePrint);
+  window.addEventListener("afterprint", onAfterPrint);
   document.addEventListener("visibilitychange", onVisibilityChange);
   window.addEventListener("pagehide", onPageHide);
   window.addEventListener("storage", onStorage);
 
   return () => {
-    printButton.removeEventListener("click", onPrint);
+    printButton.removeEventListener("click", printPlan);
     window.removeEventListener("beforeprint", onBeforePrint);
+    window.removeEventListener("afterprint", onAfterPrint);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     window.removeEventListener("pagehide", onPageHide);
     window.removeEventListener("storage", onStorage);

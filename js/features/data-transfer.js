@@ -3,6 +3,8 @@ import { normalizeImportPayload, DataValidationError } from "../normalization.js
 import { dispatch, getPlans } from "../state.js";
 import { downloadJson } from "../utils.js";
 import { showModal, showToast } from "../ui/feedback.js";
+import { flushPendingTextEdits } from "../ui/text-edit.js";
+import { markBackup } from "./backup-notices.js";
 
 export function buildBackupExport(date = new Date()) {
   const exportedAt = date.toISOString();
@@ -18,8 +20,10 @@ export function buildBackupExport(date = new Date()) {
 }
 
 export function exportAllPlans(date = new Date()) {
+  if (!flushPendingTextEdits().ok) return null;
   const backup = buildBackupExport(date);
   downloadJson(backup.data, backup.filename);
+  markBackup(date);
   showToast("JSON-Sicherung aller Pläne erstellt.");
   return backup;
 }
@@ -28,37 +32,41 @@ function byteLength(text) {
   return new TextEncoder().encode(text).byteLength;
 }
 
-export function importPlansFromText(text) {
-  let dispatched = false;
+function parseImport(text) {
+  if (typeof text !== "string" || byteLength(text) > DATA_LIMITS.importBytes) {
+    throw new DataValidationError(
+      "Die Importdatei darf höchstens " + DATA_LIMITS.importBytes + " Bytes groß sein."
+    );
+  }
+  let parsed;
   try {
-    if (typeof text !== "string" || byteLength(text) > DATA_LIMITS.importBytes) {
-      throw new DataValidationError(
-        "Die Importdatei darf höchstens " + DATA_LIMITS.importBytes + " Bytes groß sein."
-      );
-    }
+    parsed = JSON.parse(text);
+  } catch {
+    throw new DataValidationError("Die Importdatei enthält kein gültiges JSON.");
+  }
+  return normalizeImportPayload(parsed);
+}
 
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      throw new DataValidationError("Die Importdatei enthält kein gültiges JSON.");
-    }
+function applyImport(imported, replace = false) {
+  if (!flushPendingTextEdits().ok) return { ok: false, changed: false, reported: true };
+  const result = dispatch({
+    type: "import/add",
+    payload: { ...imported, replace }
+  });
+  return {
+    ...result,
+    count: imported.plans.length,
+    kind: imported.kind,
+    planName: imported.plans[0].name,
+    reported: !result.ok
+  };
+}
 
-    const imported = normalizeImportPayload(parsed);
-    dispatched = true;
-    const result = dispatch({
-      type: "import/add",
-      payload: { plans: imported.plans, kind: imported.kind }
-    });
-    return {
-      ...result,
-      count: imported.plans.length,
-      kind: imported.kind,
-      planName: imported.plans[0].name,
-      reported: !result.ok
-    };
+export function importPlansFromText(text) {
+  try {
+    return applyImport(parseImport(text));
   } catch (error) {
-    return { ok: false, changed: false, error, reported: dispatched };
+    return { ok: false, changed: false, error, reported: false };
   }
 }
 
@@ -81,10 +89,25 @@ function importPlans(event) {
 
   const reader = new FileReader();
   reader.onload = () => {
-    const result = importPlansFromText(String(reader.result ?? ""));
     input.value = "";
-    if (!result.ok && !result.reported && result.error?.code === "INVALID_DATA") {
-      showImportError(result.error.message);
+    try {
+      const imported = parseImport(String(reader.result ?? ""));
+      const groups = imported.plans.flatMap((plan) => plan.groups);
+      const count = groups.reduce((sum, group) => sum + group.students.length, 0);
+      const planCount = imported.plans.length;
+      const summary = planCount + (planCount === 1 ? " Plan" : " Pläne")
+        + ", " + groups.length + (groups.length === 1 ? " Gruppe" : " Gruppen")
+        + ", " + count + " Teilnehmende.";
+      showModal({
+        title: "Sicherung importieren",
+        message: summary + " „Alles ersetzen“ entfernt die bisherigen Pläne. Du kannst das rückgängig machen.",
+        type: "confirm",
+        confirmLabel: "Hinzufügen",
+        onConfirm: () => applyImport(imported),
+        alternative: { label: "Alles ersetzen", action: () => applyImport(imported, true) }
+      });
+    } catch (error) {
+      showImportError(error.message);
     }
   };
   reader.onerror = () => {

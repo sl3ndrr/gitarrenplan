@@ -111,11 +111,11 @@
   .page { min-height: 0; padding: clamp(16px, 5vw, 32px); padding-bottom: 70px; }
   .page-content { min-height: 0; }
   .editor-grid, .utility-actions, .slots, .slots.grid-2x2, .slots.grid-2x3,
-  .info-grid, .info-grid.has-term, .plan-row { grid-template-columns: minmax(0, 1fr); }
+  .info-grid, .info-grid[data-info-count="3"], .plan-row { grid-template-columns: minmax(0, 1fr); }
   .slots.grid-2x2, .slots.grid-2x3 { grid-template-rows: none; }
   .editor-box.full-width { grid-column: auto; }
   .preview-header { margin-bottom: 24px; }
-  .info-grid, .info-grid.has-term { gap: 12px; margin-bottom: 24px; }
+  .info-grid, .info-grid[data-info-count="3"] { gap: 12px; margin-bottom: 24px; }
   .continuation-header { margin-bottom: 20px; }
   .page-footer { right: clamp(16px, 5vw, 32px); bottom: 18px; left: clamp(16px, 5vw, 32px); height: auto; }
 }

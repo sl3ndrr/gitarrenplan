@@ -65,6 +65,7 @@ export function showModal({
   confirmClass = "btn-primary",
   cancelLabel = "Abbrechen",
   onConfirm = null,
+  alternative = null,
   onCancel = null
 } = {}) {
   const inheritedOrigin = activeDialog?.origin || null;
@@ -76,6 +77,7 @@ export function showModal({
   const inputElement = document.getElementById("modal-input");
   const selectElement = document.getElementById("modal-select");
   const cancelButton = document.getElementById("modal-cancel");
+  const alternativeButton = document.getElementById("modal-alternative");
   const confirmButton = document.getElementById("modal-confirm");
   const appShell = document.getElementById("app-shell");
   const activeElement = document.activeElement;
@@ -93,6 +95,8 @@ export function showModal({
   confirmButton.textContent = confirmLabel;
   confirmButton.className = "button " + confirmClass;
   cancelButton.textContent = cancelLabel;
+  alternativeButton?.classList.toggle("hidden", !alternative);
+  if (alternativeButton && alternative) alternativeButton.textContent = alternative.label;
   inputElement.classList.add("hidden");
   selectElement.classList.add("hidden");
   cancelButton.style.display = type === "alert" ? "none" : "";
@@ -121,6 +125,7 @@ export function showModal({
     }
     closed = true;
     overlay.classList.add("hidden");
+    alternativeButton?.removeEventListener("click", onAlternativeClick);
     confirmButton.removeEventListener("click", onConfirmClick);
     cancelButton.removeEventListener("click", onCancelClick);
     overlay.removeEventListener("click", onOverlayClick);
@@ -147,6 +152,11 @@ export function showModal({
         : undefined;
     cleanup();
     onConfirm?.(value);
+  }
+
+  function onAlternativeClick() {
+    cleanup();
+    alternative?.action();
   }
 
   function onCancelClick() {
@@ -180,9 +190,9 @@ export function showModal({
       return;
     }
 
-    const focusable = [inputElement, selectElement, cancelButton, confirmButton]
+    const focusable = [inputElement, selectElement, cancelButton, alternativeButton, confirmButton]
       .filter((element) => (
-        !element.disabled
+        element && !element.disabled
         && !element.classList.contains("hidden")
         && element.style.display !== "none"
       ));
@@ -202,6 +212,7 @@ export function showModal({
     }
   }
 
+  alternativeButton?.addEventListener("click", onAlternativeClick);
   confirmButton.addEventListener("click", onConfirmClick);
   cancelButton.addEventListener("click", onCancelClick);
   overlay.addEventListener("click", onOverlayClick);

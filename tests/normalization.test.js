@@ -39,7 +39,7 @@ describe("zentrale Normalisierung", () => {
     expect(plan.meta.location.length).toBeLessThanOrEqual(DATA_LIMITS.metadataLength);
     expect(plan.groups[0].day).toBe("Montag Dienstag");
     expect(plan.groups[0].time).toBe("1530");
-    expect(plan.groups[0].students[0]).toMatchObject({ name: "123", className: "Klasse" });
+    expect(plan.groups[0].students[0]).toMatchObject({ name: "123", className: "" });
   });
 
   it("normalisiert planweite Gestaltungsoptionen und ergänzt fehlende Werte", () => {

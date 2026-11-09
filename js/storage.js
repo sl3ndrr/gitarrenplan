@@ -1,6 +1,5 @@
 import {
   APP_STATE_VERSION,
-  DEFAULT_META,
   DEFAULT_MIN_ROWS,
   STORAGE_KEYS
 } from "./config.js";
@@ -16,7 +15,7 @@ import {
   safeSetItem
 } from "./persistence.js";
 import { runUndoable } from "./state.js";
-import { clone } from "./utils.js";
+import { createPlanId } from "./utils.js";
 
 export {
   getDefaultStorage,
@@ -36,7 +35,7 @@ function safeRemoveItem(key, storage) {
 
 function buildMigratedState({ plans, activePlanId, minRows, now }) {
   return normalizeAppState({
-    version: APP_STATE_VERSION,
+    version: 3,
     revision: 0,
     updatedAt: now,
     plans,
@@ -45,7 +44,7 @@ function buildMigratedState({ plans, activePlanId, minRows, now }) {
   }, { now });
 }
 
-function readV2State(storage, now) {
+function readV2State(storage, now, report) {
   const rawPlans = safeGetItem(STORAGE_KEYS.plansV2, storage);
   if (rawPlans === null) {
     return null;
@@ -58,33 +57,20 @@ function readV2State(storage, now) {
       now
     });
   } catch {
+    backupRaw(rawPlans, STORAGE_KEYS.plansV2, storage, now, report);
     return null;
   }
 }
 
-function readV1State(storage, now) {
+function readV1State(storage, now, report) {
   const rawMeta = safeGetItem(STORAGE_KEYS.legacyMetaV1, storage);
   const rawGroups = safeGetItem(STORAGE_KEYS.legacyGroupsV1, storage);
   if (rawMeta === null && rawGroups === null) {
     return null;
   }
 
-  let meta = clone(DEFAULT_META);
-  let groups = [];
-  try {
-    if (rawMeta !== null) {
-      meta = JSON.parse(rawMeta);
-    }
-  } catch {
-    meta = clone(DEFAULT_META);
-  }
-  try {
-    if (rawGroups !== null) {
-      groups = JSON.parse(rawGroups);
-    }
-  } catch {
-    groups = [];
-  }
+  const meta = rawMeta === null ? {} : parseLegacy(rawMeta, STORAGE_KEYS.legacyMetaV1, {}, storage, now, report);
+  const groups = rawGroups === null ? [] : parseLegacy(rawGroups, STORAGE_KEYS.legacyGroupsV1, [], storage, now, report);
 
   try {
     const plan = createDefaultPlan("Gitarrenunterricht Montag");
@@ -97,6 +83,8 @@ function readV1State(storage, now) {
       now
     });
   } catch {
+    if (rawMeta !== null) backupRaw(rawMeta, STORAGE_KEYS.legacyMetaV1, storage, now, report);
+    if (rawGroups !== null) backupRaw(rawGroups, STORAGE_KEYS.legacyGroupsV1, storage, now, report);
     return null;
   }
 }
@@ -111,28 +99,66 @@ function removeLegacyKeys(storage) {
   ].forEach((key) => safeRemoveItem(key, storage));
 }
 
-export function loadState(storage = getDefaultStorage()) {
+function backupRaw(raw, key, storage, now, report, extra = {}) {
+  const prefix = key + "_defekt_";
+  // Reuse the same copy after reload, including when a newer version is active.
+  let backupKey = safeGetItem(prefix + "letzte", storage);
+  let saved = Boolean(backupKey && safeGetItem(backupKey, storage) === raw);
+  if (!saved) {
+    backupKey = prefix + now + "_" + createPlanId();
+    saved = safeSetItem(backupKey, raw, storage).ok;
+    if (saved) safeSetItem(prefix + "letzte", backupKey, storage);
+  }
+  report({ raw, backupKey, saved, ...extra });
+  return saved;
+}
+
+function parseLegacy(raw, key, fallback, storage, now, report) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    backupRaw(raw, key, storage, now, report);
+    return fallback;
+  }
+}
+
+export function loadState(storage = getDefaultStorage(), onIssue = () => {}) {
   const now = new Date().toISOString();
   const rawState = safeGetItem(STORAGE_KEYS.state, storage);
+  let protectedData = false;
+  const report = (issue) => {
+    protectedData ||= !issue.saved;
+    onIssue(issue);
+  };
 
   if (rawState !== null) {
+    let recovered;
+    const discarded = { groups: 0, students: 0 };
     try {
-      const state = normalizeAppState(JSON.parse(rawState), { now });
-      const canonical = JSON.stringify(state);
-      if (canonical !== rawState) {
+      const parsed = JSON.parse(rawState);
+      if (Number(parsed?.version) > APP_STATE_VERSION) {
+        backupRaw(rawState, STORAGE_KEYS.state, storage, now, report, { future: true });
+        return createDefaultAppState({ now });
+      }
+      recovered = normalizeAppState(parsed, { now, discarded });
+    } catch {
+      backupRaw(rawState, STORAGE_KEYS.state, storage, now, report);
+    }
+    if (recovered) {
+      if (discarded.groups || discarded.students) {
+        backupRaw(rawState, STORAGE_KEYS.state, storage, now, report, { discarded });
+      }
+      const canonical = JSON.stringify(recovered);
+      if (!protectedData && canonical !== rawState) {
         safeSetItem(STORAGE_KEYS.state, canonical, storage);
       }
-      return state;
-    } catch {
-      // Ein beschädigter V3-Wert darf die Migration aus älteren Keys nicht blockieren.
+      return recovered;
     }
   }
 
-  const migratedState = readV2State(storage, now) || readV1State(storage, now);
+  const migratedState = readV2State(storage, now, report) || readV1State(storage, now, report);
   const state = migratedState || createDefaultAppState({ now });
-  const persisted = persistState(state, storage);
-
-  if (migratedState && persisted.ok) {
+  if (!protectedData && persistState(state, storage).ok && migratedState) {
     removeLegacyKeys(storage);
   }
   return state;

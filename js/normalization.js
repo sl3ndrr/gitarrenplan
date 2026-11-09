@@ -101,17 +101,32 @@ function normalizeStudent(student, usedStudentIds) {
   return {
     id: uniqueId(source.id, usedStudentIds, createStudentId),
     name: normalizeSingleLineText(source.name, {
-      fallback: "Name",
+      fallback: "",
       maxLength: DATA_LIMITS.personNameLength
     }),
     className: normalizeSingleLineText(source.className, {
-      fallback: "Klasse",
+      fallback: "",
       maxLength: DATA_LIMITS.metadataLength
     })
   };
 }
 
-function normalizeGroup(group, usedGroupIds, usedStudentIds, counters) {
+function recoverEntries(entries, normalize, discarded, kind) {
+  return entries.flatMap((item) => {
+    try {
+      return [normalize(item)];
+    } catch (error) {
+      if (!discarded || !(error instanceof DataValidationError)) {
+        throw error;
+      }
+      discarded[kind]++;
+      return [];
+    }
+  });
+}
+
+function normalizeGroup(group, context) {
+  const { groupIds, studentIds, counters, discarded } = context;
   const source = requirePlainObject(group, "Eine Gruppe");
   const students = source.students === undefined
     ? []
@@ -123,15 +138,18 @@ function normalizeGroup(group, usedGroupIds, usedStudentIds, counters) {
     );
   }
 
-  counters.students += students.length;
-  if (counters.students > DATA_LIMITS.totalStudents) {
+  const normalizedStudents = recoverEntries(
+    students, (item) => normalizeStudent(item, studentIds), discarded, "students"
+  );
+  if (counters.students + normalizedStudents.length > DATA_LIMITS.totalStudents) {
     throw new DataValidationError(
       "Ein Datenbestand darf höchstens " + DATA_LIMITS.totalStudents + " Schüler enthalten."
     );
   }
 
+  counters.students += normalizedStudents.length;
   return {
-    id: uniqueId(source.id, usedGroupIds, createGroupId),
+    id: uniqueId(source.id, groupIds, createGroupId),
     day: normalizeSingleLineText(source.day, {
       fallback: "",
       maxLength: DATA_LIMITS.metadataLength
@@ -140,7 +158,7 @@ function normalizeGroup(group, usedGroupIds, usedStudentIds, counters) {
       fallback: "Neue Gruppe",
       maxLength: DATA_LIMITS.metadataLength
     }),
-    students: students.map((item) => normalizeStudent(item, usedStudentIds))
+    students: normalizedStudents
   };
 }
 
@@ -155,11 +173,11 @@ function normalizeMeta(meta) {
       maxLength: DATA_LIMITS.metadataLength
     }),
     teacher: normalizeSingleLineText(source.teacher, {
-      fallback: DEFAULT_META.teacher,
+      fallback: "",
       maxLength: DATA_LIMITS.personNameLength
     }),
     location: normalizeSingleLineText(source.location, {
-      fallback: DEFAULT_META.location,
+      fallback: "",
       maxLength: DATA_LIMITS.metadataLength
     }),
     term: normalizeSingleLineText(source.term, {
@@ -204,7 +222,7 @@ export function normalizeAppearance(appearance) {
   };
 }
 
-function normalizePlanWithContext(plan, context, regeneratePlanId = false) {
+function normalizePlanWithContext(plan, context, regeneratePlanId = false, legacyMinRows) {
   const source = requirePlainObject(plan, "Ein Plan");
   const groups = source.groups === undefined
     ? []
@@ -224,25 +242,22 @@ function normalizePlanWithContext(plan, context, regeneratePlanId = false) {
     }),
     meta: normalizeMeta(source.meta),
     appearance: normalizeAppearance(source.appearance),
-    groups: groups.map((group) => normalizeGroup(
-      group,
-      context.groupIds,
-      context.studentIds,
-      context.counters
-    ))
+    layout: { minRows: normalizeMinRows(source.layout?.minRows ?? legacyMinRows) },
+    groups: recoverEntries(groups, (group) => normalizeGroup(group, context), context.discarded, "groups")
   };
 }
 
-function createNormalizationContext() {
+function createNormalizationContext(discarded) {
   return {
     planIds: new Set(),
     groupIds: new Set(),
     studentIds: new Set(),
-    counters: { students: 0 }
+    counters: { students: 0 },
+    discarded
   };
 }
 
-export function normalizePlans(plans, { regeneratePlanIds = false } = {}) {
+export function normalizePlans(plans, { regeneratePlanIds = false, legacyMinRows, discarded } = {}) {
   const list = requireArray(plans, "Die Pläne");
 
   if (list.length === 0) {
@@ -255,8 +270,8 @@ export function normalizePlans(plans, { regeneratePlanIds = false } = {}) {
     );
   }
 
-  const context = createNormalizationContext();
-  return list.map((plan) => normalizePlanWithContext(plan, context, regeneratePlanIds));
+  const context = createNormalizationContext(discarded);
+  return list.map((plan) => normalizePlanWithContext(plan, context, regeneratePlanIds, legacyMinRows));
 }
 
 export function normalizePlan(plan, { regeneratePlanId = false } = {}) {
@@ -274,12 +289,7 @@ export function normalizeGroups(groups) {
     );
   }
 
-  return list.map((group) => normalizeGroup(
-    group,
-    context.groupIds,
-    context.studentIds,
-    context.counters
-  ));
+  return list.map((group) => normalizeGroup(group, context));
 }
 
 export function createDefaultPlan(name = "Gitarrenunterricht") {
@@ -309,14 +319,17 @@ function normalizeUpdatedAt(value, fallback) {
   return fallback;
 }
 
-export function normalizeAppState(value, { now = new Date().toISOString() } = {}) {
+export function normalizeAppState(value, { now = new Date().toISOString(), discarded } = {}) {
   const source = requirePlainObject(value, "Der App-Zustand");
 
-  if (source.version !== APP_STATE_VERSION) {
+  if (![3, APP_STATE_VERSION].includes(source.version)) {
     throw new DataValidationError("Unbekannte App-State-Version.");
   }
 
-  const plans = normalizePlans(source.plans);
+  const plans = normalizePlans(source.plans, {
+    discarded,
+    legacyMinRows: source.version === 3 ? source.minRows : undefined
+  });
   const requestedActivePlanId = normalizeSingleLineText(source.activePlanId, {
     fallback: "",
     maxLength: DATA_LIMITS.idLength
@@ -333,8 +346,7 @@ export function normalizeAppState(value, { now = new Date().toISOString() } = {}
     revision,
     updatedAt: normalizeUpdatedAt(source.updatedAt, now),
     plans,
-    activePlanId,
-    minRows: normalizeMinRows(source.minRows)
+    activePlanId
   };
 }
 
@@ -346,8 +358,7 @@ export function createDefaultAppState({ now = new Date().toISOString() } = {}) {
     revision: 0,
     updatedAt: now,
     plans: [plan],
-    activePlanId: plan.id,
-    minRows: DEFAULT_MIN_ROWS
+    activePlanId: plan.id
   };
 }
 

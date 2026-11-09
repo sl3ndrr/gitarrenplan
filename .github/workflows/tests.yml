@@ -3,7 +3,9 @@ name: Tests
 on:
   push:
     branches:
+      - main
       - feat/optimierung-und-pdf-layout
+      - codex/gitarrenplan-ueberarbeitung
   pull_request:
 
 permissions:

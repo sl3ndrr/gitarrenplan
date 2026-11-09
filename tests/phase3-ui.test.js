@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { APP_STATE_VERSION, EXPORT_VERSION } from "../js/config.js";
+import { EXPORT_VERSION } from "../js/config.js";
 import {
   buildBackupExport,
   importPlansFromText
@@ -33,7 +33,7 @@ function plan(id, name, groups = []) {
 
 function stateWith(plans) {
   return normalizeAppState({
-    version: APP_STATE_VERSION,
+    version: 3,
     revision: 4,
     updatedAt: "2026-09-04T08:00:00.000Z",
     plans,
@@ -102,7 +102,7 @@ describe("vereinfachter Export", () => {
 
     expect(result.ok).toBe(true);
     expect(result.kind).toBe("single");
-    expect(getPlans()).toHaveLength(1);
+    expect(getPlans()).toHaveLength(2);
     expect(getActivePlan().name).toBe("Historischer Einzelplan");
   });
 });

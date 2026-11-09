@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { APP_STATE_VERSION, STORAGE_KEYS } from "../js/config.js";
+import { STORAGE_KEYS } from "../js/config.js";
 import { normalizeAppState } from "../js/normalization.js";
 import {
   dispatch,
@@ -19,7 +19,7 @@ function makeState({
   name = "Lokal"
 } = {}) {
   return normalizeAppState({
-    version: APP_STATE_VERSION,
+    version: 3,
     revision,
     updatedAt,
     activePlanId: "plan-1",

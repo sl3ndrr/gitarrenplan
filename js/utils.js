@@ -50,7 +50,11 @@ export function moveItem(array, from, to) {
 }
 
 export function downloadJson(data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  downloadText(JSON.stringify(data, null, 2), filename, "application/json");
+}
+
+export function downloadText(text, filename, type = "text/plain") {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
 

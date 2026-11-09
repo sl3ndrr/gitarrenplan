@@ -5,12 +5,11 @@ Die Anwendung speichert den vollständigen Zustand atomar unter
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "revision": 12,
   "updatedAt": "2026-09-04T12:00:00.000Z",
   "plans": [],
-  "activePlanId": "…",
-  "minRows": 6
+  "activePlanId": "…"
 }
 ```
 
@@ -66,15 +65,19 @@ ersetzt.
 
 ## Migration und Import
 
-Beim Start wird zuerst der V3-State gelesen. Falls er fehlt oder beschädigt
-ist, werden die bisherigen V2-Schlüssel für Pläne und aktiven Plan bzw. die
-V1-Schlüssel für Metadaten und Gruppen übernommen. Alte Schlüssel werden nur
-gelöscht, wenn der vollständige V3-State erfolgreich gespeichert wurde.
+Der bestehende Schlüssel bleibt für den Mehrtab-Schutz erhalten. Version 4
+speichert Mindestzeilen als `plan.layout.minRows` (0–20, Standard 6). Beim
+Laden von V3 wird der globale Wert in alle Pläne übernommen. Für V2- und
+V1-Schlüssel gilt dieselbe Migration. Alte Schlüssel werden erst nach
+erfolgreichem Speichern gelöscht. Defekte Rohdaten werden zuvor unter
+`<Schlüssel>_defekt_<Zeitstempel>_…` gesichert. Einzelne defekte Gruppen
+oder Teilnehmende werden beim Laden übersprungen und gemeldet. Neuere
+Zustände bleiben unverändert, und Schreibzugriffe sind solange gesperrt.
 
 Der Import akzeptiert weiterhin:
 
-- Einzelexporte vom Typ `gitarrenunterricht-plan` in Version 1 oder 2,
-- Gesamtexporte vom Typ `gitarrenunterricht-plans` in Version 1 oder 2,
+- Einzelexporte vom Typ `gitarrenunterricht-plan` in Version 1, 2 oder 3,
+- Gesamtexporte vom Typ `gitarrenunterricht-plans` in Version 1, 2 oder 3,
 - unverpackte Legacy-Einzelpläne mit `meta` oder `groups`,
 - Legacy-Listen aus mehreren Plänen.
 
@@ -84,7 +87,7 @@ vor einer Änderung des App-Zustands abgelehnt.
 ## Export
 
 Die Oberfläche erzeugt ausschließlich einen Gesamtexport vom Typ
-`gitarrenunterricht-plans`. Er enthält alle Pläne sowie `version` und
+`gitarrenunterricht-plans`. Er enthält alle Pläne inklusive Mindestzeilen sowie `version: 3` und
 `exportedAt` und wird als `gitarrenplan_sicherung_YYYY-MM-DD.json`
 heruntergeladen. Der frühere Einzelplan-Export wird nicht mehr angeboten; sein
 Format bleibt wie oben beschrieben vollständig importierbar.

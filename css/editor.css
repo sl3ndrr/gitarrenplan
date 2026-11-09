@@ -312,3 +312,13 @@ details.editor-box { padding: 0; }
 .editor-section-content { padding: 12px; border-top: 1px solid var(--border); }
 .editor-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .utility-actions { margin: 0 0 14px; }
+
+.notice-panel:not([hidden]) {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+#recoveryNotice:not([hidden]) { background: #fff3dc; }
+.notice-panel p { margin: 0 0 8px; }
+.notice-panel .button { margin-inline-end: 8px; }

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/preview.css">
     <link rel="stylesheet" href="css/print.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/print-layout.css" id="printLayoutStyles" media="print">
   </head>
   <body>
     <main id="app-shell" class="wrapper">
@@ -21,6 +22,7 @@
         <p>Pläne verwalten, als JSON sichern und als sichtbares Dokument drucken.</p>
       </header>
 
+      <section id="recoveryNotice" class="notice-panel no-print" aria-label="Hinweise zu gespeicherten Daten" hidden></section>
       <div class="workspace-layout">
       <section class="editor-panel no-print" aria-labelledby="editor-title">
         <h2 id="editor-title">Plan bearbeiten</h2>
@@ -41,6 +43,13 @@
             <h3 id="document-actions-title">Dokument</h3>
             <button class="button btn-primary" id="printBtn" type="button" aria-label="Sichtbaren Plan drucken oder als PDF speichern"><span aria-hidden="true">🖨</span> Drucken / PDF</button>
           </section>
+        </div>
+
+        <div id="backupNotice" class="notice-panel">
+          <p id="backupStatus"></p>
+          <p id="backupReminder" hidden>Du hast mehrere Änderungen vorgenommen. Sichere deine Pläne regelmäßig.
+            <button id="dismissBackupReminder" class="button btn-secondary" type="button">Hinweis schließen</button>
+          </p>
         </div>
 
         <div class="editor-grid">
@@ -162,7 +171,7 @@
           <summary><h3 class="danger-zone-label"><span aria-hidden="true">⚠</span> Gefährliche Aktionen</h3></summary>
           <div class="button-row danger-actions">
             <button class="button btn-danger" id="clearPlanBtn" type="button">Plan vollständig leeren</button>
-            <button class="button btn-danger" id="resetBtn" type="button">Ursprünglichen Plan wiederherstellen</button>
+            <button class="button btn-danger" id="resetBtn" type="button">Plan auf Standardwerte zurücksetzen</button>
           </div>
         </details>
 
@@ -189,6 +198,7 @@
         <select id="modal-select" class="hidden" aria-label="Auswahl"></select>
         <div class="modal-footer">
           <button id="modal-cancel" class="button btn-secondary" type="button">Abbrechen</button>
+          <button id="modal-alternative" class="button btn-danger hidden" type="button"></button>
           <button id="modal-confirm" class="button btn-primary" type="button">OK</button>
         </div>
       </div>

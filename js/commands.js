@@ -1,4 +1,4 @@
-import { DATA_LIMITS, DEFAULT_APPEARANCE, DEFAULT_META } from "./config.js";
+import { DATA_LIMITS, DEFAULT_APPEARANCE, DEFAULT_META, DEFAULT_MIN_ROWS } from "./config.js";
 import {
   createDefaultPlan,
   normalizeAppearance,
@@ -133,6 +133,7 @@ export const COMMAND_HANDLERS = Object.freeze({
     plan.name = "Gitarrenunterricht";
     plan.meta = clone(DEFAULT_META);
     plan.appearance = clone(DEFAULT_APPEARANCE);
+    plan.layout = { minRows: DEFAULT_MIN_ROWS };
     plan.groups = [];
     return { render: RENDER_ALL, notification: notice("Plan zurückgesetzt") };
   }),
@@ -150,14 +151,8 @@ export const COMMAND_HANDLERS = Object.freeze({
     if (!["title", "teacher", "location", "term"].includes(field)) {
       throw new CommandValidationError("Unbekanntes Metadatenfeld.");
     }
-    const fallbacks = {
-      title: DEFAULT_META.title,
-      teacher: DEFAULT_META.teacher,
-      location: DEFAULT_META.location,
-      term: DEFAULT_META.term
-    };
     activePlan(draft).meta[field] = normalizeSingleLineText(payload?.value, {
-      fallback: fallbacks[field],
+      fallback: field === "title" ? DEFAULT_META.title : "",
       maxLength: field === "teacher"
         ? DATA_LIMITS.personNameLength
         : DATA_LIMITS.metadataLength
@@ -166,7 +161,7 @@ export const COMMAND_HANDLERS = Object.freeze({
   }),
 
   "minRows/set": define("Mindestzeilen ändern", (draft, payload) => {
-    draft.minRows = payload?.value;
+    activePlan(draft).layout.minRows = payload?.value;
     return { render: RENDER_PAGES };
   }),
 
@@ -277,7 +272,7 @@ export const COMMAND_HANDLERS = Object.freeze({
       id: createStudentId(),
       name,
       className: normalizeSingleLineText(payload?.student?.className, {
-        fallback: "Klasse",
+        fallback: "",
         maxLength: DATA_LIMITS.metadataLength
       })
     };
@@ -343,12 +338,12 @@ export const COMMAND_HANDLERS = Object.freeze({
     );
     if (payload?.field === "name") {
       student.name = normalizeSingleLineText(payload.value, {
-        fallback: "Name",
+        fallback: student.name,
         maxLength: DATA_LIMITS.personNameLength
       });
     } else if (payload?.field === "className") {
       student.className = normalizeSingleLineText(payload.value, {
-        fallback: "Klasse",
+        fallback: "",
         maxLength: DATA_LIMITS.metadataLength
       });
     } else {
@@ -362,7 +357,7 @@ export const COMMAND_HANDLERS = Object.freeze({
       throw new CommandValidationError("Keine Pläne zum Importieren gefunden.");
     }
     const plans = clone(payload.plans);
-    if (draft.plans.length === 1 && draft.plans[0].groups.length === 0) {
+    if (payload.replace === true) {
       draft.plans = plans;
     } else {
       draft.plans.push(...plans);

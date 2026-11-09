@@ -7,9 +7,9 @@ export const STORAGE_KEYS = Object.freeze({
   legacyMetaV1: "gitarrenunterricht_meta_v1"
 });
 
-export const APP_STATE_VERSION = 3;
-export const EXPORT_VERSION = 2;
-export const SUPPORTED_EXPORT_VERSIONS = Object.freeze([1, 2]);
+export const APP_STATE_VERSION = 4;
+export const EXPORT_VERSION = 3;
+export const SUPPORTED_EXPORT_VERSIONS = Object.freeze([1, 2, 3]);
 export const MAX_UNDO_STEPS = 10;
 export const DEFAULT_MIN_ROWS = 6;
 
