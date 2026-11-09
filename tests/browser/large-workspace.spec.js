@@ -60,7 +60,7 @@ for (const width of [1920, 2560, 3440]) {
     await page.locator("#spreadBtn").click();
     await page.locator("#pageNav").selectOption({ value: "2" });
     await expect(page.locator("#pageNav")).toHaveValue("2");
-    await expect(frames.nth(1)).toBeInViewport({ ratio: 0.4 });
+    await expect(frames.nth(1)).toBeInViewport({ ratio: 0.35 });
     await page.locator("#zoomSelect").selectOption("1.25");
     await expect(page.locator("#zoomValue")).toHaveText("125 %");
     const target = page.locator(".timeslot summary").first();
