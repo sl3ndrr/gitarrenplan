@@ -1,4 +1,5 @@
 import { safeGetItem, safeSetItem } from "../persistence.js";
+import { motionAllowed } from "../ui/motion.js";
 import { showModal } from "../ui/feedback.js";
 import { initialiseOverview } from "./overview.js";
 import { printPlan } from "./lifecycle.js";
@@ -129,8 +130,13 @@ export function initialiseWorkspace() {
     }));
     navigation.disabled = frames.length < 2;
     intersection?.disconnect();
+    sizeObserver?.disconnect();
+    sizeObserver?.observe(workspace);
     visible.clear();
-    frames.forEach((frame) => intersection?.observe(frame));
+    frames.forEach((frame) => {
+      intersection?.observe(frame);
+      sizeObserver?.observe(frame.firstElementChild);
+    });
     updateNavigator(current);
     resize();
   }
@@ -142,6 +148,12 @@ export function initialiseWorkspace() {
     resize();
   }
 
+  function animateZoom() {
+    if (motionAllowed()) pages.animate([{ opacity: 0.82 }, { opacity: 1 }], {
+      duration: 160, easing: "ease-out"
+    });
+  }
+
   function changeZoom(direction) {
     const level = direction > 0 ? ZOOM_LEVELS.find((value) => value > scale + 0.005)
       : ZOOM_LEVELS.findLast((value) => value < scale - 0.005);
@@ -149,11 +161,11 @@ export function initialiseWorkspace() {
     zoom = level;
     save();
     resize();
+    animateZoom();
   }
 
   const mutations = new window.MutationObserver(refresh);
   mutations.observe(pages, { childList: true });
-  sizeObserver?.observe(workspace);
   listen(window, "resize", resize);
   listen(get("editViewBtn"), "click", () => switchView("edit"));
   listen(get("previewViewBtn"), "click", () => switchView("preview"));
@@ -169,12 +181,14 @@ export function initialiseWorkspace() {
     spread = get("spreadBtn").getAttribute("aria-pressed") !== "true";
     save();
     resize();
+    animateZoom();
   });
   listen(select, "change", () => {
     zoom = select.value === "fit" ? "fit" : Number(select.value);
     if (zoom === "fit") spread = null;
     save();
     resize();
+    animateZoom();
   });
   listen(get("zoomOut"), "click", () => changeZoom(-1));
   listen(get("zoomIn"), "click", () => changeZoom(1));

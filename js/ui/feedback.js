@@ -1,7 +1,10 @@
+import { motionAllowed } from "./motion.js";
+
 let lastSaveErrorAt = 0;
 const SAVE_ERROR_THROTTLE_MS = 5000;
 const feedbackTimers = new Set();
 let activeDialog = null;
+let closeTimer = null;
 
 function schedule(callback, delay) {
   const timer = globalThis.setTimeout(() => {
@@ -62,7 +65,14 @@ export function showToast(message, type = "success", undo = null) {
   const resume = () => {
     if (toast.matches(":hover, :focus-within") || timer !== null) return;
     started = Date.now();
-    timer = schedule(() => toast.remove(), Math.max(0, remaining));
+    timer = schedule(() => {
+      if (!motionAllowed()) toast.remove();
+      else {
+        toast.classList.add("is-closing");
+        toast.inert = true;
+        schedule(() => toast.remove(), 120);
+      }
+    }, Math.max(0, remaining));
   };
   toast.addEventListener("mouseenter", pause);
   toast.addEventListener("mouseleave", resume);
@@ -72,7 +82,8 @@ export function showToast(message, type = "success", undo = null) {
     pause();
     toast.remove();
     undo();
-    document.getElementById("undoBtn")?.focus();
+    const undoButton = document.getElementById("undoBtn");
+    (undoButton?.disabled ? document.getElementById("pages") : undoButton)?.focus();
   });
   resume();
 }
@@ -115,6 +126,11 @@ export function showModal({
   activeDialog?.close({ restoreFocus: false });
 
   const overlay = document.getElementById("modal-overlay");
+  cancelScheduled(closeTimer);
+  closeTimer = null;
+  overlay.classList.remove("is-closing");
+  overlay.removeAttribute("inert");
+  overlay.removeAttribute("aria-hidden");
   const titleElement = document.getElementById("modal-title");
   const messageElement = document.getElementById("modal-message");
   const inputElement = document.getElementById("modal-input");
@@ -178,7 +194,18 @@ export function showModal({
       return;
     }
     closed = true;
-    overlay.classList.add("hidden");
+    if (restoreFocus && motionAllowed()) {
+      overlay.classList.add("is-closing");
+      overlay.setAttribute("inert", "");
+      overlay.setAttribute("aria-hidden", "true");
+      closeTimer = schedule(() => {
+        closeTimer = null;
+        overlay.classList.add("hidden");
+        overlay.classList.remove("is-closing");
+      }, 120);
+    } else {
+      overlay.classList.add("hidden");
+    }
     alternativeButton?.removeEventListener("click", onAlternativeClick);
     confirmButton.removeEventListener("click", onConfirmClick);
     cancelButton.removeEventListener("click", onCancelClick);
@@ -298,6 +325,12 @@ export function showModal({
 export function disposeFeedback() {
   activeDialog?.close();
   activeDialog = null;
+  cancelScheduled(closeTimer);
+  closeTimer = null;
+  const overlay = document.getElementById("modal-overlay");
+  overlay?.classList.add("hidden");
+  overlay?.classList.remove("is-closing");
+  document.querySelectorAll(".motion-ghost").forEach((ghost) => ghost.remove());
   feedbackTimers.forEach((timer) => globalThis.clearTimeout(timer));
   feedbackTimers.clear();
   document.getElementById("toast-container")?.replaceChildren();

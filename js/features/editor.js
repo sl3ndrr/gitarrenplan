@@ -1,4 +1,4 @@
-import { DATA_LIMITS } from "../config.js";
+import { APPEARANCE_LAYOUT_SCALES, DATA_LIMITS } from "../config.js";
 import {
   dispatch,
   getActivePlan,
@@ -16,7 +16,20 @@ function updateRangeOutput(outputId, value, suffix) {
 
 function bindAppearanceRange(elementId, field, outputId, suffix) {
   const element = document.getElementById(elementId);
-  const updateOutput = () => updateRangeOutput(outputId, element.value, suffix);
+  const updateOutput = () => {
+    updateRangeOutput(outputId, element.value, suffix);
+    const value = Number(element.value);
+    document.querySelectorAll("#pages .page").forEach((page) => {
+      if (field === "colorIntensity") {
+        page.style.setProperty("--color-intensity", value + "%");
+        page.dataset.colorIntensity = String(value);
+      } else {
+        page.style.setProperty("--title-box-padding-y", value + "px");
+        page.style.setProperty("--title-box-padding-y-mobile", Math.round(value * APPEARANCE_LAYOUT_SCALES.titleBoxPaddingMobile) + "px");
+        page.style.setProperty("--title-box-padding-y-compact", Math.round(value * APPEARANCE_LAYOUT_SCALES.titleBoxPaddingCompactPrint) + "px");
+      }
+    });
+  };
   element.addEventListener("input", updateOutput);
 
   const disposeTextInput = bindDebouncedTextInput(element, () => ({

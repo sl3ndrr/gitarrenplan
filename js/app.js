@@ -35,6 +35,11 @@ import {
   showToast
 } from "./ui/feedback.js";
 
+const ANIMATED_COMMANDS = new Set([
+  "group/add", "group/remove", "group/move", "group/sort", "groups/sortSchedule",
+  "student/add", "student/addMany", "student/remove", "student/move", "student/moveToGroup", "plan/select"
+]);
+
 let cleanupApp = null;
 let pendingBootstrapListener = null;
 
@@ -69,6 +74,7 @@ function handleStateEvent(event) {
     if (event.commandType === "group/add" && event.value?.groupId) {
       scope.preferredGroupId = event.value.groupId;
     }
+    if (ANIMATED_COMMANDS.has(event.commandType)) scope.motion = event.commandType;
     requestRender(scope);
     const status = document.getElementById("saveStatus");
     if (status) status.textContent = "Alle Änderungen sind lokal gespeichert";
