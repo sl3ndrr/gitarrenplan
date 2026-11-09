@@ -48,7 +48,7 @@ werden nur ersetzt, wenn Werte oder Beschriftungen tatsächlich wechseln.
 ## Mehrtab-Schutz
 
 Jeder erfolgreiche Schreibvorgang erhöht `revision` und setzt `updatedAt`.
-Vor lokalen Writes wird der gespeicherte V3-State erneut gelesen. Eine neuere
+Vor einem lokalen Schreibvorgang liest der Store den gespeicherten Zustand erneut. Eine neuere
 Revision wird daher nicht still überschrieben.
 
 Ein valides neueres `storage`-Event wird ohne offene lokale Bearbeitung
