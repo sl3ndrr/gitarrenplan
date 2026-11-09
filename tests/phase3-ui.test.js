@@ -57,16 +57,16 @@ afterEach(() => {
 });
 
 describe("vereinfachter Export", () => {
-  it("zeigt genau einen Exportbutton mit eindeutigem zugänglichem Namen", () => {
+  it("zeigt Exportieren in der Werkzeugleiste und Jetzt sichern in der Übersicht", () => {
     const html = readFileSync("index.html", "utf8");
     const parsed = new DOMParser().parseFromString(html, "text/html");
     const exportButtons = [...parsed.querySelectorAll("button")]
-      .filter((button) => button.textContent.trim() === "⬇ Exportieren");
+      .filter((button) => button.textContent.trim() === "Exportieren");
 
     expect(exportButtons).toHaveLength(1);
     expect(parsed.getElementById("exportAllBtn")).toBeNull();
-    expect(exportButtons[0].getAttribute("aria-label"))
-      .toBe("Alle Pläne als JSON-Sicherung exportieren");
+    expect(exportButtons[0].id).toBe("exportBtn");
+    expect(parsed.getElementById("overviewBackupBtn").textContent).toBe("Jetzt sichern");
     expect(parsed.querySelectorAll("h1")).toHaveLength(1);
   });
 
