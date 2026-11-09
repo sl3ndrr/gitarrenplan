@@ -33,7 +33,7 @@
   grid-column: 1 / -1;
 }
 
-.editor-box h3,
+.editor-section-title,
 .editor-box legend {
   margin: 0 0 10px;
   padding: 0;
@@ -308,7 +308,7 @@ details.editor-box { padding: 0; }
 .editor-box > summary::-webkit-details-marker, .danger-zone > summary::-webkit-details-marker { display: none; }
 .editor-box > summary::after, .danger-zone > summary::after { content: "+"; font-size: 20px; }
 .editor-box[open] > summary::after, .danger-zone[open] > summary::after { content: "−"; }
-.editor-box > summary h3, .danger-zone > summary h3 { margin: 0; }
+.editor-box > summary .editor-section-title, .danger-zone > summary h3 { margin: 0; }
 .editor-section-content { padding: 12px; border-top: 1px solid var(--border); }
 .editor-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .utility-actions { margin: 0 0 14px; }

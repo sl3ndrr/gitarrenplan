@@ -51,7 +51,9 @@ test("alle print-only-Komponenten bleiben verborgen; Icon und Label haben Abstan
   await page.setViewportSize({ width: 768, height: 1000 });
   await seedState(page, evidenceState());
   await page.goto("/");
-  await page.addStyleTag({ content: ".print-only { display: flex; }" });
+  await page.locator(".print-only").evaluateAll((elements) => elements.forEach((element) => {
+    element.style.display = "flex";
+  }));
   expect(await page.locator(".print-only").evaluateAll((elements) => (
     elements.every((element) => getComputedStyle(element).display === "none")
   ))).toBe(true);

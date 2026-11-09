@@ -209,6 +209,7 @@ function handlePageClick(event) {
   }
   if (action === "remove-group") {
     dispatch({ type: "group/remove", payload: { groupId: group.id } });
+    if (event.detail === 0) document.querySelector(".undo-toast button")?.focus();
     return;
   }
 
@@ -229,6 +230,7 @@ function handlePageClick(event) {
     moveStudentToAnotherGroup(plan, group, student);
   } else if (action === "remove-student") {
     dispatch({ type: "student/remove", payload: { groupId: group.id, studentId: student.id } });
+    if (event.detail === 0) document.querySelector(".undo-toast button")?.focus();
   }
 }
 

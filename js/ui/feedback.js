@@ -30,7 +30,8 @@ export function showToast(message, type = "success", undo = null) {
   }
   const toast = document.createElement("div");
   toast.className = "toast toast-" + type;
-  toast.setAttribute("role", type === "error" ? "alert" : "status");
+  const liveRegion = document.getElementById(type === "error" ? "toast-alert" : "toast-status");
+  if (liveRegion) liveRegion.textContent = undo ? message + " Rückgängig ist verfügbar." : message;
   const symbol = document.createElement("span");
   symbol.className = "toast-symbol";
   symbol.setAttribute("aria-hidden", "true");
@@ -334,5 +335,7 @@ export function disposeFeedback() {
   feedbackTimers.forEach((timer) => globalThis.clearTimeout(timer));
   feedbackTimers.clear();
   document.getElementById("toast-container")?.replaceChildren();
+  document.getElementById("toast-status")?.replaceChildren();
+  document.getElementById("toast-alert")?.replaceChildren();
   lastSaveErrorAt = 0;
 }

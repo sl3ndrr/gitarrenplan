@@ -2,6 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Verwaltung und Druckansicht für Gitarrenunterrichtspläne.">
     <title>Gitarrenunterricht Übersicht</title>
@@ -30,7 +31,7 @@
         <button class="button btn-secondary" id="previewViewBtn" type="button" aria-pressed="true">Vorschau</button>
       </div>
       <div class="workspace-layout">
-      <div class="utility-actions no-print" role="toolbar" aria-label="Werkzeuge für den Plan">
+      <div class="utility-actions no-print" role="group" aria-label="Werkzeuge für den Plan">
         <div class="toolbar-history">
           <button class="button btn-secondary" id="undoBtn" type="button" disabled>Rückgängig</button>
           <button class="button btn-secondary" id="redoBtn" type="button" disabled>Wiederholen</button>
@@ -78,12 +79,12 @@
         <select id="planSelect"></select>
         <div class="editor-grid">
           <details class="editor-box full-width" aria-labelledby="plan-management-title">
-            <summary aria-label="Planverwaltung"><h3 id="plan-management-title">Planverwaltung</h3></summary>
+            <summary><span class="editor-section-title" id="plan-management-title">Planverwaltung</span></summary>
             <div class="editor-section-content">
             <div class="plan-row">
               <div>
                 <label for="planName">Planname</label>
-                <input id="planName" type="text" placeholder="z. B. Gitarrenunterricht Montag" aria-label="Name des aktiven Plans">
+                <input id="planName" type="text" placeholder="z. B. Gitarrenunterricht Montag">
               </div>
             </div>
             <div class="button-row">
@@ -94,7 +95,7 @@
           </div></details>
 
           <details class="editor-box full-width" aria-labelledby="general-information-title">
-            <summary aria-label="Allgemeine Informationen"><h3 id="general-information-title">Allgemeine Informationen</h3></summary>
+            <summary><span class="editor-section-title" id="general-information-title">Allgemeine Informationen</span></summary>
             <div class="editor-section-content">
 
             <label for="metaTitle">Titel</label>
@@ -110,11 +111,11 @@
             <input id="metaTerm" type="text" placeholder="z. B. 2. Halbjahr 2025/2026">
 
             <label for="minRows">Mindest-Zeilen pro Gruppe</label>
-            <input id="minRows" type="number" min="0" max="20" value="6" aria-label="Mindestanzahl der Zeilen pro Gruppe">
+            <input id="minRows" type="number" min="0" max="20" value="6">
           </div></details>
 
           <details class="editor-box full-width" aria-labelledby="appearance-title">
-            <summary aria-label="Gestaltung"><h3 id="appearance-title">Gestaltung &amp; Ausgabeformat</h3></summary>
+            <summary><span class="editor-section-title" id="appearance-title">Gestaltung &amp; Ausgabeformat</span></summary>
             <div class="editor-section-content">
               <div class="appearance-control">
                 <div class="appearance-control-heading">
@@ -158,7 +159,7 @@
           </details>
 
           <details open class="editor-box" aria-labelledby="new-group-title">
-            <summary aria-label="Gruppenformular"><h3 id="new-group-title">Neue Gruppe hinzufügen</h3></summary>
+            <summary><span class="editor-section-title" id="new-group-title">Neue Gruppe hinzufügen</span></summary>
             <div class="editor-section-content">
 
             <label for="newGroupDay">Wochentag</label>
@@ -179,13 +180,13 @@
           </div></details>
 
           <details class="editor-box" open aria-labelledby="new-student-title">
-            <summary aria-label="Teilnehmende hinzufügen"><h3 id="new-student-title">Teilnehmende hinzufügen</h3></summary>
+            <summary><span class="editor-section-title" id="new-student-title">Teilnehmende hinzufügen</span></summary>
             <div class="editor-section-content">
           <fieldset class="editor-fieldset" id="studentForm" aria-describedby="studentFormHint">
             <legend class="visually-hidden">Teilnehmende hinzufügen</legend>
 
             <label for="groupSelect">Gruppe auswählen</label>
-            <select id="groupSelect" aria-label="Gruppe für die neue Person"></select>
+            <select id="groupSelect"></select>
 
             <label for="studentName">Name</label>
             <input id="studentName" type="text" placeholder="Name eingeben">
@@ -206,7 +207,7 @@
         <input id="importFile" type="file" accept="application/json,.json" hidden aria-hidden="true">
 
         <details class="danger-zone" aria-label="Gefährliche Aktionen">
-          <summary><h3 class="danger-zone-label"><span aria-hidden="true">⚠</span> Gefährliche Aktionen</h3></summary>
+          <summary><span class="danger-zone-label"><span aria-hidden="true">⚠</span> Gefährliche Aktionen</span></summary>
           <div class="button-row danger-actions">
             <button class="button btn-danger" id="clearPlanBtn" type="button">Plan vollständig leeren</button>
             <button class="button btn-danger" id="resetBtn" type="button">Plan auf Standardwerte zurücksetzen</button>
@@ -258,7 +259,9 @@
       </div>
     </div>
 
-    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <div id="toast-container"></div>
+    <div id="toast-status" class="visually-hidden no-print" role="status" aria-atomic="true"></div>
+    <div id="toast-alert" class="visually-hidden no-print" role="alert" aria-atomic="true"></div>
 
     <script type="module" src="js/app.js"></script>
   </body>

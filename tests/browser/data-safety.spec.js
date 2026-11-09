@@ -37,7 +37,9 @@ test("bietet vor dem Drucken eine Wahl an, wenn der Slot tatsächlich überläuf
   const state = createState(1, { studentsPerGroup: 8 });
   await seedState(page, state);
   await page.goto("/");
-  await page.addStyleTag({ content: ".timeslot { max-height: 45px !important }" });
+  await page.locator(".timeslot").evaluateAll((slots) => slots.forEach((slot) => {
+    slot.style.setProperty("max-height", "45px");
+  }));
   await page.evaluate(() => {
     window.print = () => { document.body.dataset.printed = "yes"; };
   });

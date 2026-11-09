@@ -361,98 +361,143 @@ function renderSlotRows(segments, studentCounts, minRows, appearance, showNotes)
   return rows.join("");
 }
 
+function attributes(values) {
+  return Object.entries(values)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => ' ' + key + '="' + escapeHtml(value) + '"')
+    .join("");
+}
+
+function editorInput({ kind, groupId, studentId, field, label, value, style, type = "text", placeholder, list, maxLength }) {
+  const itemId = studentId ?? groupId;
+  return '<input' + attributes({
+    type,
+    class: style + " editable inline-editor no-print",
+    value,
+    placeholder,
+    list,
+    maxlength: maxLength,
+    "data-inline-key": kind + ":" + itemId + ":" + field,
+    "data-inline-type": kind,
+    "data-field": field,
+    "data-group-id": groupId,
+    "data-student-id": studentId,
+    "aria-label": label
+  }) + '>';
+}
+
+function actionButton({ action, groupId, studentId, label, visible, icon, style = "icon-button" }) {
+  return '<button' + attributes({
+    class: "button " + style,
+    type: "button",
+    "aria-label": label,
+    title: label,
+    "data-action": action,
+    "data-group-id": groupId,
+    "data-student-id": studentId
+  }) + '>' + (icon ? '<span aria-hidden="true">' + icon + '</span>' : '')
+    + '<span>' + escapeHtml(visible) + '</span></button>';
+}
+
 function renderGroup(segment, studentCount, minRows, appearance, showNotes) {
-
-  const groupId = escapeHtml(segment.groupId);
-  const dayText = segment.day || "Wochentag";
-  const dayClass = segment.day ? "day-badge" : "day-badge empty-day";
-  const studentRows = segment.students.map((student, index) => (
+  const { groupId, day, time, label, continuation } = segment;
+  const dayClass = day ? "day-badge" : "day-badge empty-day";
+  const accessibleLabel = [day, time, continuation ? "Fortsetzung" : ""].filter(Boolean).join(" · ");
+  const editableHeader = continuation
+    ? '<span class="' + dayClass + ' no-print">' + escapeHtml(day || "Wochentag") + '</span>'
+      + '<span class="time-text no-print">' + escapeHtml(time) + '</span>'
+    : editorInput({
+      kind: "group", groupId, field: "day", value: day, style: dayClass,
+      label: "Wochentag dieser Gruppe bearbeiten", placeholder: "Wochentag",
+      list: "weekdays", maxLength: DATA_LIMITS.metadataLength
+    }) + renderGroupTimeEditors(segment);
+  const actions = [
+    { action: "group-up", label: "Gruppe nach oben verschieben", visible: "Nach oben", icon: "↑" },
+    { action: "group-down", label: "Gruppe nach unten verschieben", visible: "Nach unten", icon: "↓" },
+    { action: "sort-group", label: "Teilnehmende alphabetisch sortieren", visible: "Alphabetisch sortieren", icon: "A–Z" },
+    { action: "sort-surname", visible: "Nach Nachname sortieren" },
+    { action: "remove-group", label: "Gruppe entfernen", visible: "Entfernen", icon: "✕", style: "remove-group-button" }
+  ];
+  const studentRows = segment.students.map((student, index) =>
     renderStudentRow(student, groupId, segment.studentOffset + index, showNotes)
-  ));
-  const isLastSegment = segment.part === segment.totalParts;
-  const emptyRows = Array.from({ length: segment.emptyRows }, (_, index) =>
-    renderEmptyRow(isLastSegment && index === 0 ? segment.groupId : "", false, showNotes)
   );
-  if (isLastSegment && !emptyRows.length) emptyRows.push(renderEmptyRow(segment.groupId, true, showNotes));
-  const dayKey = escapeHtml("group:" + segment.groupId + ":day");
-  const groupLabel = segment.day ? segment.day + " · " + segment.time : segment.time;
-  const accessibleLabel = groupLabel + (segment.continuation ? " · Fortsetzung" : "");
-  const editableHeader = segment.continuation
-    ? [
-      '<span class="' + dayClass + ' no-print">' + escapeHtml(dayText) + "</span>",
-      '<span class="time-text no-print">' + escapeHtml(segment.time) + "</span>"
-    ].join("")
-    : [
-      '<input type="text" class="' + dayClass + ' editable inline-editor no-print" value="' + escapeHtml(segment.day) + '" placeholder="Wochentag" list="weekdays" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + dayKey + '" data-inline-type="group" data-field="day" data-group-id="' + groupId + '" aria-label="Wochentag dieser Gruppe bearbeiten">',
-      renderGroupTimeEditors(segment)
-    ].join("");
-  const continuationMarker = segment.continuation
-    ? '<span class="continuation-marker">Fortsetzung</span>'
-    : "";
-  const occupancy = appearance.showOccupancy
-    ? '<span class="group-occupancy" title="Belegung / mindestens vorgesehene Zeilen">'
-      + studentCount + " / " + Math.max(studentCount, minRows) + " Plätze</span>"
-    : "";
-
+  const isLast = segment.part === segment.totalParts;
+  const emptyRows = Array.from({ length: segment.emptyRows }, (_, index) =>
+    renderEmptyRow(isLast && index === 0 ? groupId : "", false, showNotes)
+  );
+  if (isLast && !emptyRows.length) emptyRows.push(renderEmptyRow(groupId, true, showNotes));
+  const slotAttributes = attributes({
+    class: "timeslot",
+    "data-weekday": weekdayKey(day),
+    "data-group-id": groupId,
+    "data-motion-key": segment.key,
+    "data-segment-part": segment.part,
+    tabindex: -1,
+    "aria-label": "Gruppe " + accessibleLabel
+  });
+  const occupancy = studentCount + " / " + Math.max(studentCount, minRows) + " Plätze";
   return [
-    '<section class="timeslot" data-weekday="' + weekdayKey(segment.day) + '" data-group-id="' + groupId + '" data-motion-key="' + escapeHtml(segment.key) + '" data-segment-part="' + segment.part + '" tabindex="-1" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
-    '<div class="timeslot-header">',
-    '<div class="group-header-left">',
-    '<span class="time-text print-only">' + escapeHtml(segment.time) + "</span>",
-    segment.start && segment.end && segment.label ? '<span class="print-only">' + escapeHtml(segment.label) + "</span>" : "",
+    '<section' + slotAttributes + '>',
+    '<div class="timeslot-header"><div class="group-header-left">',
+    '<span class="time-text print-only">' + escapeHtml(time) + '</span>',
+    segment.start && segment.end && label ? '<span class="print-only">' + escapeHtml(label) + '</span>' : "",
     editableHeader,
-    continuationMarker,
-    occupancy,
-    "</div>",
-    segment.continuation ? "" : renderActionMenu([
-    '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
-    '<button class="button icon-button" aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '"><span aria-hidden="true">↓</span><span>Nach unten</span></button>',
-    '<button class="button icon-button" aria-label="Teilnehmende alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span><span>Alphabetisch sortieren</span></button>',
-    '<button class="button icon-button" data-action="sort-surname" data-group-id="' + groupId + '">Nach Nachname sortieren</button>',
-    '<button class="button remove-group-button" aria-label="Gruppe entfernen" title="Gruppe entfernen" data-action="remove-group" data-group-id="' + groupId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
-    ].join(""), "Gruppenaktionen", "group-actions:" + segment.groupId, "slot-actions"),
-    "</div>",
-    '<table class="student-table">',
-    '<caption class="visually-hidden">Teilnehmende in Gruppe ' + escapeHtml(accessibleLabel) + "</caption>",
-    '<thead class="visually-hidden"><tr><th scope="col">Name</th><th scope="col">Klasse</th><th scope="col">Aktionen</th></tr></thead>',
-    "<tbody>",
-    studentRows.join(""),
-    emptyRows.join(""),
-    "</tbody></table></section>"
+    continuation ? '<span class="continuation-marker">Fortsetzung</span>' : "",
+    appearance.showOccupancy ? '<span class="group-occupancy">' + occupancy + '</span>' : "",
+    '</div>',
+    continuation ? "" : renderActionMenu(actions.map((action) =>
+      actionButton({ ...action, groupId })).join(""), "Gruppenaktionen", "group-actions:" + groupId, "slot-actions"),
+    '</div><table class="student-table">',
+    '<caption class="visually-hidden">Teilnehmende in Gruppe ' + escapeHtml(accessibleLabel) + '</caption>',
+    '<thead class="visually-hidden"><tr><th scope="col">Name</th><th scope="col">Klasse</th>',
+    showNotes ? '<th scope="col" class="print-only">Notiz</th>' : "",
+    '<th scope="col">Aktionen</th></tr></thead><tbody>',
+    ...studentRows, ...emptyRows,
+    '</tbody></table></section>'
   ].join("");
 }
 
 function renderActionMenu(content, label, focusKey, className) {
   const drag = className === "slot-actions" ? ' draggable="true" data-drag-kind="group"' : "";
-  return '<details class="action-menu no-print"><summary class="button actions-toggle"' + drag + ' data-focus-key="'
-    + escapeHtml(focusKey) + '" aria-label="' + escapeHtml(label) + ' öffnen" title="'
-    + escapeHtml(label) + '"><span aria-hidden="true">⋮</span></summary>'
+  const summary = attributes({ "data-focus-key": focusKey, "aria-label": label + " öffnen", title: label });
+  return '<details class="action-menu no-print"><summary class="button actions-toggle"' + drag + summary
+    + '><span aria-hidden="true">⋮</span></summary>'
     + '<div class="action-menu-items ' + className + '" role="group" aria-label="'
     + escapeHtml(label) + '">' + content + '</div></details>';
 }
 
 function renderStudentRow(student, groupId, index, showNotes) {
-  const studentId = escapeHtml(student.id);
-  const labelName = escapeHtml(student.name);
-  const nameKey = escapeHtml("student:" + student.id + ":name");
-  const classKey = escapeHtml("student:" + student.id + ":className");
-
+  const { id: studentId, name, className } = student;
+  const input = { kind: "student", groupId, studentId };
+  const actions = [
+    { action: "student-up", visible: "Nach oben", icon: "↑" },
+    { action: "student-down", visible: "Nach unten", icon: "↓" },
+    { action: "move-student", visible: "Gruppe wechseln", icon: "⇄" },
+    { action: "remove-student", visible: "Entfernen", icon: "✕" }
+  ];
+  const menu = actions.map((action) => actionButton({
+    ...action, groupId, studentId, label: action.visible + " · " + name
+  })).join("");
+  const row = attributes({
+    draggable: "true", "data-drag-kind": "student",
+    "data-motion-key": "student:" + studentId, "data-student-id": studentId
+  });
   return [
-    '<tr draggable="true" data-drag-kind="student" data-motion-key="student:' + studentId + '" data-student-id="' + studentId + '">',
-    '<td class="student-name"><span class="print-only">' + labelName + "</span>",
-    '<input type="text" class="student-name-input editable inline-editor no-print" value="' + labelName + '" maxlength="' + DATA_LIMITS.personNameLength + '" data-inline-key="' + nameKey + '" data-inline-type="student" data-field="name" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Name von Person ' + (index + 1) + ' bearbeiten"></td>',
-    '<td class="student-class">',
-    student.className ? '<span class="class-badge print-only">' + escapeHtml(student.className) + "</span>" : "",
-    '<input type="text" class="class-badge editable inline-editor no-print" placeholder="Klasse" value="' + escapeHtml(student.className) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + classKey + '" data-inline-type="student" data-field="className" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Person ' + (index + 1) + ' bearbeiten"></td>',
-    noteCell(showNotes),
+    '<tr' + row + '><td class="student-name"><span class="print-only">' + escapeHtml(name) + '</span>',
+    editorInput({
+      ...input, field: "name", value: name, style: "student-name-input", placeholder: "Name",
+      label: "Name von Person " + (index + 1) + " bearbeiten", maxLength: DATA_LIMITS.personNameLength
+    }),
+    '</td><td class="student-class">',
+    className ? '<span class="class-badge print-only">' + escapeHtml(className) + '</span>' : "",
+    editorInput({
+      ...input, field: "className", value: className, style: "class-badge", placeholder: "Klasse",
+      label: "Klasse von Person " + (index + 1) + " bearbeiten", maxLength: DATA_LIMITS.metadataLength
+    }),
+    '</td>', noteCell(showNotes),
     '<td class="student-actions no-print">',
-    renderActionMenu([
-    '<button class="button icon-button" aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
-    '<button class="button icon-button" aria-label="' + labelName + ' nach unten" title="Nach unten" data-action="student-down" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↓</span><span>Nach unten</span></button>',
-    '<button class="button icon-button" aria-label="' + labelName + ' in andere Gruppe verschieben" title="In andere Gruppe verschieben" data-action="move-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">⇄</span><span>Gruppe wechseln</span></button>',
-    '<button class="button icon-button" aria-label="' + labelName + ' entfernen" title="Entfernen" data-action="remove-student" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
-    ].join(""), "Aktionen für " + student.name, "student-actions:" + student.id, "student-action-list"),
-    "</td></tr>"
+    renderActionMenu(menu, "Aktionen für " + name, "student-actions:" + studentId, "student-action-list"),
+    '</td></tr>'
   ].join("");
 }
 
@@ -462,13 +507,11 @@ function renderGroupTimeEditors(segment) {
     ["end", "time", "Ende", segment.end],
     [segment.start || segment.end ? "label" : "time", "text", "Bezeichnung", segment.label]
   ];
-  const inputs = fields.map(([field, type, label, value]) => {
-    const groupId = escapeHtml(segment.groupId);
-    return '<input class="time-text editable inline-editor no-print" type="' + type
-      + '" value="' + escapeHtml(value || "") + '" placeholder="' + label + '" aria-label="' + label
-      + '" data-inline-key="group:' + groupId + ':' + field
-      + '" data-inline-type="group" data-field="' + field + '" data-group-id="' + groupId + '">';
-  });
+  const inputs = fields.map(([field, type, label, value]) => editorInput({
+    kind: "group", groupId: segment.groupId, field, type, label,
+    value: value || "", style: "time-text", placeholder: type === "text" ? label : undefined,
+    maxLength: type === "text" ? DATA_LIMITS.metadataLength : undefined
+  }));
   return '<div class="time-pair no-print">' + inputs.slice(0, 2).join("") + "</div>" + inputs[2];
 }
 

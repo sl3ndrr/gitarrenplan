@@ -12,12 +12,11 @@ Die Anwendung bleibt eine statische Vanilla-JavaScript-Anwendung. Fachliche
 - `subscribe(listener)` meldet bestätigte Änderungen, Undo-Änderungen,
   Fehler und Mehrtab-Konflikte. Die Rückgabe entfernt den Listener.
 - `runUndoable(label, mutation, options)` ist die zentrale Transaktion für
-  Validierung, genau einen V3-Schreibvorgang, Undo und Benachrichtigung.
-- `undo()` stellt `plans`, `activePlanId` und `minRows` gemeinsam wieder
-  her. Ein fehlgeschlagener Schreibvorgang verändert weder State noch Stack.
+  Validierung, genau einen V4-Schreibvorgang, Undo und Benachrichtigung.
+- `undo()` und `redo()` stellen vollständige Snapshots aus Plänen und aktiver Plan-ID wieder her. Ein fehlgeschlagener Schreibvorgang verändert weder State noch Verlauf.
 
 Die Handler in `js/commands.js` enthalten die fachlichen Mutationen für
-Pläne, Metadaten, Mindestzeilen, Gruppen, Schüler und Import. Feature-Module
+Pläne, Metadaten, Mindestzeilen, Gruppen, Teilnehmende und Import. Feature-Module
 übersetzen nur noch DOM-Ereignisse in Commands und koordinieren Dialoge.
 
 ## Texteingaben und Undo
@@ -29,7 +28,7 @@ Zwischenstände teilen denselben Undo-Snapshot. `change`, Enter,
 sofort ab. Escape persistiert den Originalwert und entfernt den zugehörigen
 Undo-Schritt erst nach erfolgreichem Schreiben.
 
-Inline-Felder sind native einzeilige Inputs. Schüler werden ausschließlich
+Inline-Felder sind native einzeilige Inputs. Teilnehmende werden ausschließlich
 über ihre stabile ID adressiert. Für den Druck enthält das Markup getrennte
 Text-Spans; die Inputs werden dort ausgeblendet.
 
@@ -76,31 +75,32 @@ Features dürfen nur `dispatch()` verwenden.
 Aufruf `render(preferredGroupId)` wird weiterhin akzeptiert. Datenmigration
 und Importformate sind in `DATENFORMAT.md` beschrieben.
 
-## Bildschirm und Druck trennen
+## Bildschirm, Druck und Bewegung
 
-`js/features/workspace.js` beobachtet die verfügbare Breite und die Seitenhöhen.
-Jede `.page` liegt in einem `.page-frame`, der den skalierten Platz im normalen
-Dokumentfluss reserviert. Der eigentliche Seitenknoten bleibt 210 mm breit;
-`@media print` hebt sowohl Transform als auch Bildschirm-Rahmenmaße auf.
-Die 44-px-Mindestziele werden invers zur Bildschirm-Skalierung bemessen.
-Observer und Listener werden beim App-Cleanup entfernt.
+`workspace.js` misst die verfügbare Breite. CSS `zoom` skaliert die
+Browser-Layoutboxen samt Schrift und Eingabeelementen. Die A4-Frame-Größe
+reserviert den Platz, und `--target-size` rechnet Bildschirmziele invers
+auf 44 sichtbare Pixel um. Der Seitennavigator folgt der Sichtbarkeit per
+IntersectionObserver. Bei genügend Breite können zwei Frames nebeneinander stehen.
 
-`.print-only` wird ausschließlich im Bildschirmmedium zentral mit
-`display: none !important` versteckt. Komponenten dürfen ihre natürliche
-Display-Art behalten; im Druck setzen explizite Regeln die sichtbare Form.
-Das gilt auch für die neuen als Grid angeordneten Tagesüberschriften.
+`print-layout.css` gilt im Browserdruck, in der genauen Vorschau und während
+der synchronen Überlaufmessung. `print.css` setzt die physische A4-Größe,
+verbirgt die Arbeitsoberfläche und hebt Bildschirmzoom und Animationen auf.
+`pagination.js` teilt den Gruppenplan in gleich große 2×2- oder 2×3-Slots.
+`print-formats.js` paginiert Wochenübersicht und Anwesenheitsliste. Die
+Wochenübersicht zeigt bis zu drei Namen je Gruppe und die Gesamtbelegung.
+Der Gruppenplan und die Anwesenheitsliste geben alle Namen aus.
 
-Je zwei aufeinanderfolgende Drucksegmente bilden eine `.slot-row`. Gleiche
-nicht leere Tagesnamen teilen eine Überschrift; gemischte Tage behalten ihre
-Zuordnung. Die reine Paginierung und die fachliche Reihenfolge bleiben erhalten.
-Kennzahlen verwenden die vollständigen logischen Gruppen statt der Segmente.
+Native Details und Summary-Elemente behalten ihre Tastatursemantik. Menüs
+schließen per Escape oder Außenklick. Stabile Schlüssel ermöglichen die
+Wiederherstellung von Eingabefokus und Textauswahl nach einem Render.
 
-Native `details`/`summary` tragen Editorbereiche und Aktionsmenüs. Die Menüs
-lassen sich mit Tab bedienen und mit Escape schließen; Außenklick schließt sie
-ebenfalls. Aktionen fokussieren zuerst den Auslöser. Dessen stabiler
-`data-focus-key` stellt den Fokus nach dem Rendern wieder her. Die vorhandene
-Inline-Fokus- und Textauswahlwiederherstellung bleibt unverändert.
-
-Globales Rückgängig wird weiterhin über den vorhandenen Undo-Stack unterstützt.
-Eine globale Redo-Funktion war im Ausgangsstand nicht implementiert; native
-Tastenkombinationen in Texteingaben bleiben dem Browser überlassen.
+`ui/motion.js` erfasst vor Strukturänderungen die sichtbaren stabilen
+Elemente. Nach dem Render gleicht FLIP die Positionen über
+`transform` aus. Für das Ausblenden entfernt der Store die Daten sofort,
+während eine kurzlebige, inerte Kopie visuell ausläuft. Planwechsel blenden
+die aktualisierte Vorschau über die Web Animations API ein. So bleiben
+`requestRender()` und der synchrone Flush vor dem Druck in einem Ablauf.
+Der Initialrender, Texteingaben, reduzierte Bewegung und Pläne mit über
+1.000 Teilnehmenden überspringen FLIP. CSS-Tokens steuern die übrigen
+kurzen Animationen. Der Browser-Test prüft den Grenzplan mit 5.000 Personen.

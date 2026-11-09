@@ -228,8 +228,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  background: var(--bg-gradient);
-  color: #ffffff;
+  background: var(--day-tint);
+  color: var(--day-accent);
+  border-left: 4px solid var(--day-accent);
   border-radius: calc(var(--radius-document) - 1px) calc(var(--radius-document) - 1px) 0 0;
 }
 
@@ -308,7 +309,7 @@
 .student-table td {
   height: 40px;
   padding: 10px 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
   font-size: 13px;
   vertical-align: middle;
 }
@@ -365,10 +366,6 @@
 .student-actions .button[data-action="move-student"] {
   background: var(--primary-light);
   color: var(--primary);
-}
-
-.empty-row td {
-  border-bottom: 1px solid #e2e8f0;
 }
 
 .timeslot .student-table tr:last-child td {
@@ -524,11 +521,6 @@ input[type="text"].inline-editor {
 .day-heading-column-2 { grid-column: 2; }
 .day-heading-shared,
 .shared-day > .day-heading { grid-column: 1 / -1; }
-.timeslot-header {
-  background: var(--day-tint);
-  color: var(--day-accent);
-  border-left: 4px solid var(--day-accent);
-}
 .group-header-left input.day-badge.inline-editor,
 .continuation-marker,
 .day-badge {
@@ -543,7 +535,6 @@ input[type="text"].inline-editor {
   font-weight: 600;
   line-height: 1.2;
 }
-.student-table td { border-bottom-color: #e2e8f0; }
 .student-table .empty-row td {
   height: 20px;
   padding: 2px 7px;

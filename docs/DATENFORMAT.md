@@ -45,6 +45,33 @@ Jeder Plan kann zusätzlich zur `meta`-Struktur eine planweite
 Fehlende Gestaltungswerte werden beim Laden alter Daten mit den Standardwerten
 ergänzt; dadurch bleiben bestehende Sicherungen ohne Migration nutzbar.
 
+## Ausgabeformat und Gruppenzeiten
+
+`plan.layout` speichert diese Einstellungen pro Plan:
+
+| Feld | Werte | Standard |
+| --- | --- | --- |
+| `minRows` | 0–20 | 6 |
+| `orientation` | `portrait`, `landscape` | `portrait` |
+| `output` | `groups`, `week`, `attendance` | `groups` |
+| `attendanceColumns` | 8–12 Datumsspalten | 10 |
+| `showNotes` | Notizspalte bei Gruppenplan und Anwesenheitsliste | `false` |
+| `showUpdatedAt` | Letzte Planänderung in der Fußzeile | `true` |
+| `monochrome` | Preset für S/W-Druck | `false` |
+
+`plan.updatedAt` ist der ISO-Zeitpunkt der letzten inhaltlichen Änderung.
+Bei älteren Daten ohne Planzeitpunkt dient der gespeicherte App-Zeitpunkt
+als Ausgangswert. Undo und Redo stellen den Zeitstempel des jeweiligen
+Snapshots wieder her.
+
+Gruppen speichern `day`, `time`, `start`, `end` und `label`. Zeitgrenzen
+verwenden `HH:MM` oder einen leeren String. Eindeutige alte Zeitintervalle
+werden beim Laden aufgeteilt. Freie Angaben bleiben als Bezeichnung und
+Anzeige erhalten. Gängige Abkürzungen werden auf Wochentagsnamen abgebildet.
+
+Letzter Export, Sicherungserinnerung, Zoom und Editorbereiche sind
+Geräteeinstellungen mit eigenen Local-Storage-Schlüsseln.
+
 ## Harte Grenzen
 
 | Bereich | Höchstwert |
@@ -52,15 +79,15 @@ ergänzt; dadurch bleiben bestehende Sicherungen ohne Migration nutzbar.
 | JSON-Importdatei | 2 MiB (2.097.152 Bytes) |
 | Pläne | 50 |
 | Gruppen je Plan | 100 |
-| Schüler je Gruppe | 100 |
-| Schüler insgesamt | 5.000 |
+| Teilnehmende je Gruppe | 100 |
+| Teilnehmende insgesamt | 5.000 |
 | Plan- und Personennamen | 80 Zeichen |
 | Andere Text-Metadaten | 160 Zeichen |
 
 Alle Textfelder werden als einzeilige Strings normalisiert. Zeilenumbrüche
 werden durch Leerzeichen ersetzt, skalare Zahlen und Wahrheitswerte sicher in
 Strings umgewandelt und Objektwerte durch den jeweiligen Standardwert ersetzt.
-Fehlende oder doppelte Plan-, Gruppen- und Schüler-IDs werden durch neue IDs
+Fehlende oder doppelte Plan-, Gruppen- und Teilnehmenden-IDs werden durch neue IDs
 ersetzt.
 
 ## Migration und Import

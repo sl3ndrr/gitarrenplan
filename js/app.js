@@ -100,6 +100,10 @@ export function bootstrap() {
   cleanupApp?.();
   const issues = [];
   initialiseState(loadState(undefined, (issue) => issues.push(issue)));
+  const status = document.getElementById("saveStatus");
+  if (status) status.textContent = issues.some((issue) => issue.future || !issue.saved)
+    ? "Speichern gesperrt · Gespeicherte Daten prüfen"
+    : "Alle Änderungen sind lokal gespeichert";
 
   const cleanups = [
     subscribe(handleStateEvent),
