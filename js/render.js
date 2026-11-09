@@ -6,6 +6,7 @@ import {
 } from "./config.js";
 import { paginateGroups } from "./pagination.js";
 import { getActivePlan, getActivePlanId, getMinRows, getPlans } from "./state.js";
+import { capturePageMotion, playPageMotion } from "./ui/motion.js";
 import { escapeHtml, formatDate } from "./utils.js";
 
 const ALL_RENDER_SCOPES = Object.freeze({
@@ -33,6 +34,7 @@ function mergeRenderScope(target, source = {}) {
   if (source.preferredGroupId) {
     target.preferredGroupId = source.preferredGroupId;
   }
+  if (source.motion) target.motion = source.motion;
   return target;
 }
 
@@ -106,7 +108,7 @@ function performRender(scope) {
     renderPlanSelect();
   }
   if (scope.pages) {
-    renderPages();
+    renderPages(scope.motion);
   }
   if (scope.groupSelect) {
     renderGroupSelect(scope.preferredGroupId);
@@ -166,11 +168,12 @@ function applyAppearanceVariables(page, appearance) {
   );
 }
 
-function renderPages() {
+function renderPages(motion) {
   const plan = getActivePlan();
   const appearance = plan.appearance;
   const container = document.getElementById("pages");
   const focusSnapshot = captureInlineFocus();
+  const motionSnapshot = capturePageMotion(container, plan, motion);
   const drafts = new Map([...container.querySelectorAll("[data-add-key]")]
     .filter((input) => input.value).map((input) => [input.dataset.addKey, input.value]));
   const fragment = document.createDocumentFragment();
@@ -222,6 +225,7 @@ function renderPages() {
     input.value = drafts.get(input.dataset.addKey) || "";
   });
   restoreInlineFocus(focusSnapshot, container);
+  playPageMotion(container, motionSnapshot);
 }
 
 function renderMainHeader(meta) {
@@ -359,7 +363,7 @@ function renderGroup(segment, studentCount, minRows, appearance) {
     : "";
 
   return [
-    '<section class="timeslot" data-weekday="' + weekdayKey(segment.day) + '" data-group-id="' + groupId + '" data-segment-part="' + segment.part + '" tabindex="-1" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
+    '<section class="timeslot" data-weekday="' + weekdayKey(segment.day) + '" data-group-id="' + groupId + '" data-motion-key="' + escapeHtml(segment.key) + '" data-segment-part="' + segment.part + '" tabindex="-1" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
     '<div class="timeslot-header">',
     '<div class="group-header-left">',
     '<span class="time-text print-only">' + escapeHtml(segment.time) + "</span>",
@@ -402,7 +406,7 @@ function renderStudentRow(student, groupId, index) {
   const classKey = escapeHtml("student:" + student.id + ":className");
 
   return [
-    '<tr draggable="true" data-drag-kind="student" data-student-id="' + studentId + '">',
+    '<tr draggable="true" data-drag-kind="student" data-motion-key="student:' + studentId + '" data-student-id="' + studentId + '">',
     '<td class="student-name"><span class="print-only">' + labelName + "</span>",
     '<input type="text" class="student-name-input editable inline-editor no-print" value="' + labelName + '" maxlength="' + DATA_LIMITS.personNameLength + '" data-inline-key="' + nameKey + '" data-inline-type="student" data-field="name" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Name von Schüler ' + (index + 1) + ' bearbeiten"></td>',
     '<td class="student-class">',

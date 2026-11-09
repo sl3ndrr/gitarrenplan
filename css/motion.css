@@ -1,0 +1,46 @@
+@media screen and (prefers-reduced-motion: no-preference) {
+  .editor-box::details-content, .danger-zone::details-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: clip;
+    transition: grid-template-rows var(--motion-standard) var(--motion-enter),
+      content-visibility var(--motion-standard) allow-discrete;
+  }
+
+  .editor-box[open]::details-content, .danger-zone[open]::details-content { grid-template-rows: 1fr; }
+  .editor-box > .editor-section-content, .danger-zone > .danger-actions { min-height: 0; }
+  .editor-box > summary::after, .danger-zone > summary::after { transition: transform var(--motion-fast) var(--motion-enter); }
+  .editor-box[open] > summary::after, .danger-zone[open] > summary::after { transform: rotate(180deg); }
+
+  .action-menu[open] .action-menu-items {
+    transform-origin: right top;
+    animation: menu-in var(--motion-fast) var(--motion-spring) both;
+  }
+
+  .modal-overlay:not(.hidden) { animation: fade-in var(--motion-standard) var(--motion-enter) both; }
+  .modal-overlay:not(.hidden) > .modal { animation: modal-in var(--motion-standard) var(--motion-spring) both; }
+  .modal-overlay.is-closing { animation: fade-out var(--motion-fast) var(--motion-out) both; pointer-events: none; }
+  .modal-overlay.is-closing > .modal { animation: modal-out var(--motion-fast) var(--motion-out) both; }
+  .overview-note { animation: fade-in var(--motion-standard) var(--motion-enter) both; }
+  .overview-note + .overview-note { animation-delay: var(--motion-stagger); }
+  .undo-toast { animation: toast-in var(--motion-standard) var(--motion-enter) both; }
+  .undo-toast.is-closing { animation: toast-out var(--motion-fast) var(--motion-out) both; }
+  .toast-out { animation: toast-out var(--motion-fast) var(--motion-out) both; }
+  .timeslot-header, .day-heading { transition: background-color var(--motion-fast), color var(--motion-fast); }
+  .button { transition: transform var(--motion-fast), opacity var(--motion-fast); }
+}
+
+.motion-ghost {
+  position: fixed;
+  z-index: 5;
+  overflow: clip;
+  pointer-events: none;
+  transform-origin: top center;
+  background: var(--surface);
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+@keyframes modal-out { to { opacity: 0; transform: translateY(5px) scale(.98); } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-3px) scale(.97); } }
