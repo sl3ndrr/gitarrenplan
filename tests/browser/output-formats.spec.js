@@ -28,3 +28,24 @@ test("der Stand stammt bei Altplänen aus dem gespeicherten Änderungsdatum", as
   await page.goto("/");
   await expect(page.locator(".page-footer")).toContainText("Stand: 04.09.2026");
 });
+
+test("die genaue Vorschau verwendet auch auf dem Handy die Druckmaße", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 900 });
+  await seedState(page, createState(4));
+  await page.goto("/");
+  await page.locator("#proofBtn").click();
+  const layout = () => page.evaluate(() => {
+    const style = (selector) => getComputedStyle(document.querySelector(selector));
+    return {
+      paper: style(".page").width,
+      title: style(".preview-document-title").fontSize,
+      meta: style(".info-grid").gridTemplateColumns,
+      columns: style(".slot-row").gridTemplateColumns,
+      row: style(".student-table td").height,
+      padding: style(".page").paddingLeft
+    };
+  });
+  const screen = await layout();
+  await page.emulateMedia({ media: "print" });
+  expect(await layout()).toEqual(screen);
+});

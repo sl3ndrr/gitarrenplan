@@ -60,7 +60,8 @@ function renderWeekCard(group, minRows) {
   if (group.students.length > names.length) names.push("<li>und " + (group.students.length - names.length) + " weitere</li>");
   const groupLabel = group.start && group.end && group.label ? "<span>" + escapeHtml(group.label) + "</span>" : "";
   const additionalDay = !WEEKDAYS.includes(group.day) && group.day ? "<span>" + escapeHtml(group.day) + "</span>" : "";
-  return '<div class="week-card" data-print-check aria-label="Gruppe ' + escapeHtml([group.day, group.time].join(" · ")) + '">'
+  return '<div class="week-card" data-weekday="' + (WEEKDAYS.includes(group.day) ? group.day.toLowerCase() : "neutral")
+    + '" data-print-check aria-label="Gruppe ' + escapeHtml([group.day, group.time].join(" · ")) + '">'
     + "<strong>" + escapeHtml(group.time) + "</strong>" + groupLabel + additionalDay
     + "<span>" + group.students.length + " / " + Math.max(group.students.length, minRows) + " Plätze</span>"
     + "<ul>" + names.join("") + "</ul></div>";
