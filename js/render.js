@@ -219,7 +219,8 @@ function renderPages(motion) {
     ].join(" ");
     page.dataset.grid = pagination.layout?.id ?? output;
     page.dataset.colorIntensity = String(appearance.colorIntensity);
-    applyAppearanceVariables(page, appearance);
+    applyAppearanceVariables(page, plan.layout.monochrome && showingOutput
+      ? { ...appearance, colorIntensity: 0 } : appearance);
     page.setAttribute("aria-label", "Druckseite " + pageNumber + " von " + totalPages);
     const header = output === "groups"
       ? isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta)

@@ -74,14 +74,14 @@ export function initialiseWorkspace() {
   let proof = false;
   let scale = 1;
   let current = 0;
-  let manualPage = false;
+  let navigationUntil = 0;
   let frames = [];
   const save = () => safeSetItem(VIEW_KEY, JSON.stringify({ zoom, spread }));
 
   function updateNavigator(index) {
     if (!frames.length) return;
     current = Math.max(0, Math.min(index, frames.length - 1));
-    navigation.value = String(current);
+    navigation.value = String(current + 1);
     navigation.setAttribute("aria-label", "Seite wählen, aktuell Seite " + (current + 1));
     get("pageCount").textContent = "von " + frames.length;
   }
@@ -115,7 +115,7 @@ export function initialiseWorkspace() {
   const visible = new Map();
   const intersection = typeof window.IntersectionObserver === "function" ? new window.IntersectionObserver((entries) => {
     entries.forEach((entry) => visible.set(entry.target, entry.intersectionRatio));
-    if (manualPage) return;
+    if (Date.now() < navigationUntil) return;
     const maximum = Math.max(0, ...visible.values());
     if (!maximum || visible.get(frames[current]) === maximum) return;
     updateNavigator(frames.findIndex((frame) => visible.get(frame) === maximum));
@@ -126,7 +126,7 @@ export function initialiseWorkspace() {
     frames = [...pages.children];
     navigation.replaceChildren(...frames.map((frame, index) => {
       const option = document.createElement("option");
-      option.value = String(index);
+      option.value = String(index + 1);
       option.textContent = String(index + 1);
       frame.dataset.pageIndex = String(index);
       return option;
@@ -196,17 +196,11 @@ export function initialiseWorkspace() {
   });
   listen(get("zoomOut"), "click", () => changeZoom(-1));
   listen(get("zoomIn"), "click", () => changeZoom(1));
-  listen(navigation, "input", () => {
-    manualPage = true;
-    updateNavigator(Number(navigation.value));
+  listen(navigation, "change", () => {
+    navigationUntil = Date.now() + 600;
+    updateNavigator(Number(navigation.value) - 1);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     frames[current]?.scrollIntoView({ block: "start", inline: "nearest", behavior: reduce ? "instant" : "smooth" });
-  });
-  const resumeTracking = () => { manualPage = false; };
-  listen(window, "wheel", resumeTracking, { passive: true });
-  listen(window, "touchstart", resumeTracking, { passive: true });
-  listen(window, "pointerdown", (event) => {
-    if (!event.target.closest?.(".utility-actions")) resumeTracking();
   });
   listen(pages, "wheel", (event) => {
     if (!(event.ctrlKey || event.metaKey) || inputFocused(event)) return;
@@ -214,8 +208,6 @@ export function initialiseWorkspace() {
     changeZoom(event.deltaY < 0 ? 1 : -1);
   }, { passive: false });
   listen(document, "keydown", (event) => {
-    if (["PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"].includes(event.key)
-      && !inputFocused(event)) resumeTracking();
     if (inputFocused(event) || event.altKey || shell.hasAttribute("inert") || event.defaultPrevented) return;
     const modified = event.ctrlKey || event.metaKey;
     const key = event.key.toLowerCase();

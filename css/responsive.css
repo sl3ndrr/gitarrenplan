@@ -119,7 +119,7 @@
   .app-header { margin-bottom: 12px; }
   .editor-panel { padding: 12px; }
   .header-inner { padding: var(--title-box-padding-y-mobile) 12px; }
-  .preview-document-title { font-size: clamp(20px, 8vw, 26px); }
+  .preview-document-title { font-size: clamp(17px, 5.6vw, 26px); }
   .continuation-header { align-items: flex-start; flex-direction: column; }
   .continuation-meta { text-align: left; }
   .student-table, .student-table tbody { display: block; width: 100%; }
@@ -315,6 +315,10 @@
     grid-template-areas: "editor tools overview" "editor preview overview";
   }
   .overview-panel { position: sticky; top: 0; max-height: 100dvh; overflow: auto; }
+  .utility-actions { gap: 4px; padding-inline: 8px; }
+  .utility-actions .button { padding-inline: clamp(6px, 0.5vw, 11px); font-size: 12px; }
+  #proofBtn { max-width: 128px; white-space: normal; }
+  .toolbar-zoom select { max-width: 128px; font-size: 12px; }
 }
 @media screen and (max-width: 1179px) {
   body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }

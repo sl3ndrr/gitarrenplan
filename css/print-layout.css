@@ -110,11 +110,13 @@
 .timeslot-header {
   flex: 0 0 auto;
   padding: 5px 10px;
+  align-items: center;
   gap: 6px;
 }
 
 .group-header-left {
   min-width: 0;
+  display: flex;
   gap: 6px;
 }
 
@@ -164,7 +166,7 @@
   overflow-wrap: anywhere;
 }
 
-.student-class {
+#pages .student-table .student-class {
   width: 32%;
   min-width: 0;
   text-align: left;
@@ -202,6 +204,12 @@
 .empty-day {
   display: none !important;
 }
+
+#pages .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10mm; }
+#pages .info-grid[data-info-count="1"] { grid-template-columns: minmax(0, 1fr); }
+#pages .info-grid[data-info-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6mm; }
+#pages .compact-page .info-grid { gap: 4mm; }
+.preview-document-title { font-size: 28px; }
 
 .regular-page .preview-header { margin-bottom: 7mm; }
 .regular-page .info-grid { margin-bottom: 5mm; }
@@ -262,7 +270,7 @@
 }
 
 .compact-page .timeslot-header {
-  padding: 4px 8px;
+  padding: 3px 8px;
   gap: 5px;
 }
 
@@ -282,7 +290,7 @@
 
 .compact-page .student-table td {
   height: 25px;
-  padding: 2px 6px;
+  padding: 1px 6px;
   font-size: 13px;
 }
 
@@ -329,7 +337,7 @@
 .monochrome-page .timeslot-header, .monochrome-page .info-box,
 .monochrome-page .class-badge, .monochrome-page .week-card,
 .monochrome-page .output-table th { background: #f3f3f3; color: #111; }
-.monochrome-page .timeslot-header, .monochrome-page .day-heading { border-color: #555; color: #111; }
+.monochrome-page .timeslot-header, .monochrome-page .day-heading, .monochrome-page .week-card { border-color: #555; color: #111; }
 .monochrome-page .group-occupancy, .monochrome-page .continuation-marker { color: #222; }
 
 .format-header {
@@ -353,7 +361,7 @@
 .week-table { font-size: 11px; }
 .week-table tr > :first-child { width: 9%; }
 .week-table td { vertical-align: top; padding: 3px; }
-.week-card { background: #eff4fd; border-radius: 4px; padding: 5px; }
+.week-card { background: var(--day-tint); border-left: 2px solid var(--day-accent); border-radius: 4px; padding: 5px; }
 .week-card :is(strong, span) { display: block; }
 .week-card li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .week-card ul { list-style: none; padding: 0; margin: 4px 0 0; }
@@ -372,7 +380,7 @@
 .attendance-name { width: 24%; }
 .attendance-class { width: 16%; }
 .attendance-notes { width: 15%; }
-.attendance-table .attendance-date { text-align: center; padding-inline: 1px; font-size: 9px; }
+.attendance-table .attendance-date { text-align: center; padding-inline: 1px; font-size: 8px; }
 .attendance-table tr > :first-child { text-align: center; }
 .alternative-page .page-content { overflow: hidden; }
 .alternative-page .page-content:has(.week-table) { display: block; }

@@ -337,3 +337,7 @@ details.editor-box { padding: 0; }
 }
 .undo-toast:is(:hover, :focus-within) .undo-toast-progress { animation-play-state: paused; }
 @keyframes toast-progress { to { transform: scaleX(0); } }
+
+#backupNotice { margin-top: 10px; }
+#backupStatus:last-child, #backupStatus:has(+ [hidden]) { margin-bottom: 0; }
+.overview-note > summary { min-height: 44px; line-height: 1.3; align-content: center; }

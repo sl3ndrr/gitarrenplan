@@ -46,9 +46,9 @@ export function analyseSchedule(groups) {
 }
 
 function warning(title, items, style = "warning") {
-  const box = document.createElement("div");
+  const box = document.createElement(items.length ? "details" : "div");
   box.className = "overview-note " + style;
-  const heading = document.createElement("strong");
+  const heading = document.createElement(items.length ? "summary" : "strong");
   heading.textContent = title;
   box.append(heading);
   items.slice(0, 30).forEach(({ id, label }) => box.append(linkToGroup(label, id)));

@@ -68,16 +68,53 @@
       <section class="editor-panel no-print" aria-labelledby="editor-title">
         <h2 id="editor-title">Plan bearbeiten</h2>
 
-        <div id="backupNotice" class="notice-panel">
-          <p id="backupStatus"></p>
-          <p id="backupReminder" hidden>Du hast mehrere Änderungen vorgenommen. Sichere deine Pläne regelmäßig.
-            <button id="dismissBackupReminder" class="button btn-secondary" type="button">Hinweis schließen</button>
-          </p>
-        </div>
-
         <label for="planSelect">Aktiver Plan</label>
         <select id="planSelect"></select>
         <div class="editor-grid">
+          <details open class="editor-box" aria-labelledby="new-group-title">
+            <summary><span class="editor-section-title" id="new-group-title">Neue Gruppe</span></summary>
+            <div class="editor-section-content">
+
+            <label for="newGroupDay">Wochentag</label>
+            <select id="newGroupDay" aria-label="Wochentag für neue Gruppe">
+              <option value="">Kein Wochentag</option>
+            </select>
+
+            <div class="time-pair">
+              <label>Beginn <input id="newGroupStart" type="time"></label>
+              <label>Ende <input id="newGroupEnd" type="time"></label>
+            </div>
+            <label for="newGroupTime">Bezeichnung (optional)</label>
+            <input id="newGroupTime" type="text" placeholder="z. B. Fortgeschrittene">
+            <datalist id="weekdays"></datalist>
+
+            <button class="button btn-primary" id="addGroupBtn" type="button">Gruppe hinzufügen</button>
+            <button class="button btn-secondary" id="sortScheduleBtn" type="button">Nach Wochentag und Uhrzeit sortieren</button>
+          </div></details>
+
+          <details class="editor-box" open aria-labelledby="new-student-title">
+            <summary><span class="editor-section-title" id="new-student-title">Teilnehmende hinzufügen</span></summary>
+            <div class="editor-section-content">
+          <fieldset class="editor-fieldset" id="studentForm" aria-describedby="studentFormHint">
+            <legend class="visually-hidden">Teilnehmende hinzufügen</legend>
+
+            <label for="groupSelect">Gruppe auswählen</label>
+            <select id="groupSelect"></select>
+
+            <label for="studentName">Name</label>
+            <input id="studentName" type="text" placeholder="Name eingeben">
+
+            <label for="studentClass">Klasse</label>
+            <input id="studentClass" type="text" placeholder="z. B. Klasse 2 b">
+
+            <div class="button-row">
+              <button class="button btn-success" id="addStudentBtn" type="button">Hinzufügen</button>
+              <button class="button btn-secondary" id="bulkStudentsBtn" type="button">Mehrere einfügen</button>
+            </div>
+            <p id="studentFormHint" class="form-hint hidden">Lege zuerst eine Gruppe an, um Teilnehmende hinzuzufügen.</p>
+          </fieldset>
+            </div>
+          </details>
           <details class="editor-box full-width" aria-labelledby="plan-management-title">
             <summary><span class="editor-section-title" id="plan-management-title">Planverwaltung</span></summary>
             <div class="editor-section-content">
@@ -158,50 +195,6 @@
             </div>
           </details>
 
-          <details open class="editor-box" aria-labelledby="new-group-title">
-            <summary><span class="editor-section-title" id="new-group-title">Neue Gruppe hinzufügen</span></summary>
-            <div class="editor-section-content">
-
-            <label for="newGroupDay">Wochentag</label>
-            <select id="newGroupDay" aria-label="Wochentag für neue Gruppe">
-              <option value="">Kein Wochentag</option>
-            </select>
-
-            <div class="time-pair">
-              <label>Beginn <input id="newGroupStart" type="time"></label>
-              <label>Ende <input id="newGroupEnd" type="time"></label>
-            </div>
-            <label for="newGroupTime">Bezeichnung (optional)</label>
-            <input id="newGroupTime" type="text" placeholder="z. B. Fortgeschrittene">
-            <datalist id="weekdays"></datalist>
-
-            <button class="button btn-primary" id="addGroupBtn" type="button">Gruppe hinzufügen</button>
-            <button class="button btn-secondary" id="sortScheduleBtn" type="button">Nach Wochentag und Uhrzeit sortieren</button>
-          </div></details>
-
-          <details class="editor-box" open aria-labelledby="new-student-title">
-            <summary><span class="editor-section-title" id="new-student-title">Teilnehmende hinzufügen</span></summary>
-            <div class="editor-section-content">
-          <fieldset class="editor-fieldset" id="studentForm" aria-describedby="studentFormHint">
-            <legend class="visually-hidden">Teilnehmende hinzufügen</legend>
-
-            <label for="groupSelect">Gruppe auswählen</label>
-            <select id="groupSelect"></select>
-
-            <label for="studentName">Name</label>
-            <input id="studentName" type="text" placeholder="Name eingeben">
-
-            <label for="studentClass">Klasse</label>
-            <input id="studentClass" type="text" placeholder="z. B. Klasse 2 b">
-
-            <div class="button-row">
-              <button class="button btn-success" id="addStudentBtn" type="button">Hinzufügen</button>
-              <button class="button btn-secondary" id="bulkStudentsBtn" type="button">Mehrere einfügen</button>
-            </div>
-            <p id="studentFormHint" class="form-hint hidden">Lege zuerst eine Gruppe an, um Teilnehmende hinzuzufügen.</p>
-          </fieldset>
-            </div>
-          </details>
         </div>
 
         <input id="importFile" type="file" accept="application/json,.json" hidden aria-hidden="true">
@@ -213,6 +206,13 @@
             <button class="button btn-danger" id="resetBtn" type="button">Plan auf Standardwerte zurücksetzen</button>
           </div>
         </details>
+
+        <div id="backupNotice" class="notice-panel">
+          <p id="backupStatus"></p>
+          <p id="backupReminder" hidden>Du hast mehrere Änderungen vorgenommen. Sichere deine Pläne regelmäßig.
+            <button id="dismissBackupReminder" class="button btn-secondary" type="button">Hinweis schließen</button>
+          </p>
+        </div>
 
         <p class="small-note">
           Änderungen werden automatisch lokal in diesem Browser gespeichert und sind nur auf diesem Gerät verfügbar.<br>
