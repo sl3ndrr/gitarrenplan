@@ -97,6 +97,21 @@ describe("zentrale Normalisierung", () => {
     expect(students.every((student) => typeof student.id === "string" && student.id)).toBe(true);
   });
 
+  it("migriert alte Zeitintervalle und verwirft objektartige Zeitgrenzen", () => {
+    const plan = normalizePlan({
+      groups: [
+        { day: "Mo.", time: "9:15 – 10:00 Uhr" },
+        { day: "mittwochs", time: "Fortgeschrittene", start: ["15:00"], end: "25:00" }
+      ]
+    });
+    expect(plan.groups[0]).toMatchObject({
+      day: "Montag", time: "09:15 – 10:00 Uhr", start: "09:15", end: "10:00", label: ""
+    });
+    expect(plan.groups[1]).toMatchObject({
+      day: "Mittwoch", time: "Fortgeschrittene", start: "", end: "", label: "Fortgeschrittene"
+    });
+  });
+
   it("lehnt unbekannte App-State-Versionen ab", () => {
     expect(() => normalizeAppState({
       version: APP_STATE_VERSION + 1,

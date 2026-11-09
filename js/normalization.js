@@ -137,7 +137,7 @@ export function normalizeWeekday(value) {
 }
 
 export function normalizeClock(value) {
-  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : "";
+  return typeof value === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : "";
 }
 
 export function normalizeGroupTime(source) {
