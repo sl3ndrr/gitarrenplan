@@ -46,6 +46,7 @@ test("die genaue Vorschau verwendet auch auf dem Handy die Druckmaße", async ({
       padding: parseFloat(style(".page").paddingLeft)
     };
   });
+  await expect(page.locator(".preview-document-title")).toHaveCSS("font-size", "28px");
   const screen = await layout();
   await page.emulateMedia({ media: "print" });
   const printed = await layout();

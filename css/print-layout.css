@@ -211,7 +211,7 @@
 #pages .info-grid[data-info-count="1"] { grid-template-columns: minmax(0, 1fr); }
 #pages .info-grid[data-info-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6mm; }
 #pages .compact-page .info-grid { gap: 4mm; }
-.preview-document-title { font-size: 28px; }
+#pages .regular-page .preview-document-title { font-size: 28px; }
 
 .regular-page .preview-header { margin-bottom: 7mm; }
 .regular-page .info-grid { margin-bottom: 5mm; }
