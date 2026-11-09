@@ -359,7 +359,7 @@ function renderGroup(segment, studentCount, minRows, appearance) {
     : "";
 
   return [
-    '<section class="timeslot" data-weekday="' + weekdayKey(segment.day) + '" data-group-id="' + groupId + '" data-segment-part="' + segment.part + '" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
+    '<section class="timeslot" data-weekday="' + weekdayKey(segment.day) + '" data-group-id="' + groupId + '" data-segment-part="' + segment.part + '" tabindex="-1" aria-label="Gruppe ' + escapeHtml(accessibleLabel) + '">',
     '<div class="timeslot-header">',
     '<div class="group-header-left">',
     '<span class="time-text print-only">' + escapeHtml(segment.time) + "</span>",

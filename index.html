@@ -17,9 +17,10 @@
   <body>
     <main id="app-shell" class="wrapper">
       <header class="app-header no-print">
-        <p class="app-eyebrow">Unterrichtsplanung</p>
-        <h1>Gitarrenplan</h1>
-        <p>Pläne verwalten, als JSON sichern und als sichtbares Dokument drucken.</p>
+        <div class="app-brand"><span aria-hidden="true" class="brand-mark">▼</span>
+          <h1>Gitarrenplan</h1><span>Unterrichtsplanung</span>
+        </div>
+        <span id="saveStatus" role="status">Alle Änderungen sind lokal gespeichert</span>
       </header>
 
       <section id="recoveryNotice" class="notice-panel no-print" aria-label="Hinweise zu gespeicherten Daten" hidden></section>
@@ -27,26 +28,41 @@
         <button class="button btn-secondary" id="editViewBtn" type="button" aria-pressed="false">Bearbeiten</button>
         <button class="button btn-secondary" id="previewViewBtn" type="button" aria-pressed="true">Vorschau</button>
       </div>
-        <div class="utility-actions no-print" aria-label="Weitere Aktionen">
-          <section class="action-group" aria-labelledby="editing-actions-title">
-            <h3 id="editing-actions-title">Bearbeitung</h3>
-            <button class="button btn-secondary" id="undoBtn" type="button" disabled aria-label="Letzte Änderung rückgängig machen (Strg+Z)"><span aria-hidden="true">↩</span> Rückgängig</button>
-            <button class="button btn-secondary" id="redoBtn" type="button" disabled>Wiederholen</button>
-          </section>
-          <section class="action-group" aria-labelledby="backup-actions-title">
-            <h3 id="backup-actions-title">Datensicherung</h3>
-            <div class="button-row">
-              <button class="button btn-secondary" id="exportBtn" type="button" aria-label="Alle Pläne als JSON-Sicherung exportieren"><span aria-hidden="true">⬇</span> Exportieren</button>
-              <button class="button btn-secondary" id="importBtn" type="button" aria-label="JSON-Sicherung importieren"><span aria-hidden="true">⬆</span> Importieren</button>
-            </div>
-          </section>
-          <section class="action-group" aria-labelledby="document-actions-title">
-            <h3 id="document-actions-title">Dokument</h3>
-            <button class="button btn-primary" id="printBtn" type="button" aria-label="Sichtbaren Plan drucken oder als PDF speichern"><span aria-hidden="true">🖨</span> Drucken / PDF</button>
-          </section>
-        </div>
-
       <div class="workspace-layout">
+      <div class="utility-actions no-print" role="toolbar" aria-label="Werkzeuge für den Plan">
+        <div class="toolbar-history">
+          <button class="button btn-secondary" id="undoBtn" type="button" disabled>Rückgängig</button>
+          <button class="button btn-secondary" id="redoBtn" type="button" disabled>Wiederholen</button>
+        </div>
+        <div class="toolbar-view">
+          <button class="button btn-secondary" id="proofBtn" type="button" aria-pressed="false">Genau so wird gedruckt</button>
+          <button class="button btn-secondary" id="spreadBtn" type="button" aria-pressed="false">Doppelseite</button>
+        </div>
+        <div class="toolbar-zoom">
+          <button class="button btn-secondary" id="zoomOut" type="button" aria-label="Verkleinern">−</button>
+          <output id="zoomValue">100 %</output>
+          <button class="button btn-secondary" id="zoomIn" type="button" aria-label="Vergrößern">+</button>
+          <label class="visually-hidden" for="zoomSelect">Zoom</label>
+          <select id="zoomSelect">
+            <option value="fit">Breite anpassen</option>
+            <option value="0.75">75 %</option>
+            <option value="1">100 %</option>
+            <option value="1.25">125 %</option>
+            <option value="1.5">150 %</option>
+          </select>
+        </div>
+        <div class="toolbar-pages">
+          <label for="pageNav">Seite</label>
+          <select id="pageNav" aria-label="Seite wählen"></select>
+          <span id="pageCount"></span>
+        </div>
+        <div class="toolbar-files">
+          <button class="button btn-secondary" id="exportBtn" type="button">Exportieren</button>
+          <button class="button btn-secondary" id="importBtn" type="button">Importieren</button>
+        </div>
+        <div class="toolbar-print"><button class="button btn-primary" id="printBtn" type="button">Drucken / PDF</button></div>
+        <button class="button btn-secondary" id="shortcutHelp" type="button" aria-label="Tastenkürzel">?</button>
+      </div>
       <section class="editor-panel no-print" aria-labelledby="editor-title">
         <h2 id="editor-title">Plan bearbeiten</h2>
 
@@ -189,9 +205,23 @@
       </section>
 
       <section class="preview-workspace" aria-labelledby="preview-title">
-      <h2 id="preview-title" class="section-heading no-print">Druckvorschau</h2>
-      <div id="pages" class="preview-region"></div>
+      <h2 id="preview-title" class="visually-hidden no-print">Planvorschau</h2>
+      <div id="pages" class="preview-region" tabindex="0" aria-label="Planseiten"></div>
       </section>
+      <aside class="overview-panel no-print">
+        <details id="overviewPanel">
+          <summary>Übersicht</summary>
+          <div class="overview-content">
+            <div class="overview-metrics" id="overviewMetrics"></div>
+            <h3>Belegung</h3>
+            <div class="overview-occupancy" id="overviewOccupancy"></div>
+            <h3>Hinweise</h3>
+            <div class="overview-warnings" id="overviewWarnings"></div>
+            <p id="overviewBackupStatus"></p>
+            <button class="button btn-primary" id="overviewBackupBtn" type="button">Jetzt sichern</button>
+          </div>
+        </details>
+      </aside>
       </div>
     </main>
 
