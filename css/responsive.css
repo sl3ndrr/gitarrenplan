@@ -118,8 +118,8 @@
 @media screen and (max-width: 600px) {
   .app-header { margin-bottom: 12px; }
   .editor-panel { padding: 12px; }
-  .header-inner { padding: var(--title-box-padding-y-mobile) 12px; }
-  .preview-document-title { font-size: clamp(17px, 5.6vw, 26px); }
+  .fluid-page .header-inner { padding: var(--title-box-padding-y-mobile) 12px; }
+  .fluid-page .preview-document-title { font-size: clamp(17px, 5.6vw, 26px); }
   .continuation-header { align-items: flex-start; flex-direction: column; }
   .continuation-meta { text-align: left; }
   .student-table, .student-table tbody { display: block; width: 100%; }
