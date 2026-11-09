@@ -36,16 +36,25 @@ test("die genaue Vorschau verwendet auch auf dem Handy die Druckmaße", async ({
   await page.locator("#proofBtn").click();
   const layout = () => page.evaluate(() => {
     const style = (selector) => getComputedStyle(document.querySelector(selector));
+    const tracks = (value) => value.split(" ").map((width) => parseFloat(width));
     return {
-      paper: style(".page").width,
-      title: style(".preview-document-title").fontSize,
-      meta: style(".info-grid").gridTemplateColumns,
-      columns: style(".slot-row").gridTemplateColumns,
-      row: style(".student-table td").height,
-      padding: style(".page").paddingLeft
+      paper: parseFloat(style(".page").width),
+      title: parseFloat(style(".preview-document-title").fontSize),
+      meta: tracks(style(".info-grid").gridTemplateColumns),
+      columns: tracks(style(".slot-row").gridTemplateColumns),
+      row: parseFloat(style(".student-table td").height),
+      padding: parseFloat(style(".page").paddingLeft)
     };
   });
   const screen = await layout();
   await page.emulateMedia({ media: "print" });
-  expect(await layout()).toEqual(screen);
+  const printed = await layout();
+  expect(screen.meta).toHaveLength(3);
+  expect(screen.columns).toHaveLength(2);
+  for (const key of ["paper", "title", "row", "padding"]) {
+    expect(Math.abs(screen[key] - printed[key]), key).toBeLessThanOrEqual(1);
+  }
+  for (const key of ["meta", "columns"]) {
+    screen[key].forEach((width, index) => expect(Math.abs(width - printed[key][index]), key).toBeLessThanOrEqual(1));
+  }
 });

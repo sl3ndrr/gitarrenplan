@@ -120,6 +120,8 @@
   gap: 6px;
 }
 
+.group-header-left:has(.continuation-marker) .group-occupancy { flex-basis: auto; }
+
 .day-badge,
 .continuation-marker {
   padding: 2px 6px;
@@ -292,6 +294,7 @@
   height: 25px;
   padding: 1px 6px;
   font-size: 13px;
+  line-height: 1.15;
 }
 
 .compact-page .class-badge {
@@ -302,8 +305,12 @@
 .continuation-page .continuation-header {
   flex: 0 0 auto;
 }
-.slot-row { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto minmax(0, 1fr); }
-.slot-row.no-day-heading { grid-template-rows: minmax(0, 1fr); }
+#pages .slot-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 4px var(--spacing-section);
+}
+#pages .slot-row.no-day-heading { grid-template-rows: minmax(0, 1fr); }
 .student-table .empty-row td { height: 20px; padding: 2px 6px; border-bottom-color: #cbd5e1; }
 
 .page.landscape-page {
@@ -380,9 +387,7 @@
 .attendance-name { width: 24%; }
 .attendance-class { width: 16%; }
 .attendance-notes { width: 15%; }
-.attendance-table .attendance-date { text-align: center; padding-inline: 1px; font-size: 8px; }
+.attendance-table .attendance-date { text-align: center; padding-inline: 0; font-size: 7px; white-space: nowrap; }
 .attendance-table tr > :first-child { text-align: center; }
 .alternative-page .page-content { overflow: hidden; }
 .alternative-page .page-content:has(.week-table) { display: block; }
-
-#pages .slot-row:has(.day-heading-group) { grid-template-rows: auto minmax(0, 1fr); }

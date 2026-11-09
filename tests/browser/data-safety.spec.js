@@ -35,6 +35,8 @@ test("zeigt die Importzahlen und stellt einen ersetzten Plan per Undo wieder her
 
 test("bietet vor dem Drucken eine Wahl an, wenn der Slot tatsächlich überläuft", async ({ page }) => {
   const state = createState(1, { studentsPerGroup: 8 });
+  state.plans[0].groups[0].students[0].name = "W".repeat(80);
+  state.plans[0].groups[0].students[0].className = "W".repeat(160);
   await seedState(page, state);
   await page.goto("/");
   await page.locator(".timeslot").evaluateAll((slots) => slots.forEach((slot) => {
