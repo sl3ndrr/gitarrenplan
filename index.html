@@ -114,7 +114,7 @@
           </div></details>
 
           <details class="editor-box full-width" aria-labelledby="appearance-title">
-            <summary aria-label="Gestaltung"><h3 id="appearance-title">Gestaltung</h3></summary>
+            <summary aria-label="Gestaltung"><h3 id="appearance-title">Gestaltung &amp; Ausgabeformat</h3></summary>
             <div class="editor-section-content">
               <div class="appearance-control">
                 <div class="appearance-control-heading">
@@ -127,7 +127,7 @@
 
               <label class="toggle-control" for="showOccupancy">
                 <input id="showOccupancy" type="checkbox">
-                <span>Schüleranzahl in allen Gruppen anzeigen</span>
+                <span>Zahl der Teilnehmenden in allen Gruppen anzeigen</span>
               </label>
 
               <div class="appearance-control">
@@ -138,6 +138,22 @@
                 <input id="titleBoxPadding" type="range" aria-describedby="titleBoxPaddingHint">
                 <p id="titleBoxPaddingHint" class="form-hint">Steuert den vertikalen Innenabstand ober- und unterhalb des Dokumenttitels.</p>
               </div>
+              <label for="outputFormat">Ausgabeformat</label>
+              <select id="outputFormat" data-layout-field="output">
+                <option value="groups">Gruppenplan</option>
+                <option value="week">Wochenübersicht</option>
+                <option value="attendance">Anwesenheitsliste</option>
+              </select>
+              <label for="orientation">Ausrichtung</label>
+              <select id="orientation" data-layout-field="orientation">
+                <option value="portrait">A4 Hochformat</option>
+                <option value="landscape">A4 Querformat</option>
+              </select>
+              <label for="attendanceColumns">Datumsspalten (Anwesenheitsliste)</label>
+              <input id="attendanceColumns" type="number" min="8" max="12" value="10" data-layout-field="attendanceColumns">
+              <label class="toggle-control"><input type="checkbox" data-layout-field="showNotes"> Notizspalte anzeigen</label>
+              <label class="toggle-control"><input type="checkbox" data-layout-field="showUpdatedAt" checked> Änderungsdatum anzeigen</label>
+              <label class="toggle-control"><input type="checkbox" data-layout-field="monochrome"> S/W-Druck</label>
             </div>
           </details>
 
@@ -163,16 +179,16 @@
           </div></details>
 
           <details class="editor-box" open aria-labelledby="new-student-title">
-            <summary aria-label="Schülerformular"><h3 id="new-student-title">Neuen Schüler hinzufügen</h3></summary>
+            <summary aria-label="Teilnehmende hinzufügen"><h3 id="new-student-title">Teilnehmende hinzufügen</h3></summary>
             <div class="editor-section-content">
           <fieldset class="editor-fieldset" id="studentForm" aria-describedby="studentFormHint">
-            <legend class="visually-hidden">Neuen Schüler hinzufügen</legend>
+            <legend class="visually-hidden">Teilnehmende hinzufügen</legend>
 
             <label for="groupSelect">Gruppe auswählen</label>
-            <select id="groupSelect" aria-label="Zielgruppe für neuen Schüler"></select>
+            <select id="groupSelect" aria-label="Gruppe für die neue Person"></select>
 
             <label for="studentName">Name</label>
-            <input id="studentName" type="text" placeholder="Name des Schülers">
+            <input id="studentName" type="text" placeholder="Name eingeben">
 
             <label for="studentClass">Klasse</label>
             <input id="studentClass" type="text" placeholder="z. B. Klasse 2 b">
@@ -181,7 +197,7 @@
               <button class="button btn-success" id="addStudentBtn" type="button">Hinzufügen</button>
               <button class="button btn-secondary" id="bulkStudentsBtn" type="button">Mehrere einfügen</button>
             </div>
-            <p id="studentFormHint" class="form-hint hidden">Lege zuerst eine Gruppe an, um Schüler hinzuzufügen.</p>
+            <p id="studentFormHint" class="form-hint hidden">Lege zuerst eine Gruppe an, um Teilnehmende hinzuzufügen.</p>
           </fieldset>
             </div>
           </details>
@@ -201,7 +217,7 @@
           Änderungen werden automatisch lokal in diesem Browser gespeichert und sind nur auf diesem Gerät verfügbar.<br>
           <strong>Exportieren</strong> sichert alle bearbeitbaren Pläne als JSON-Datei. <strong>Drucken / PDF</strong> erzeugt das sichtbare Dokument.<br>
           Die Daten werden nicht an einen Server übertragen. Die JSON-Sicherung enthält die eingetragenen Namen.<br>
-          Gruppenzeiten, Wochentage, Schülernamen und Klassen sind direkt im Plan per Klick bearbeitbar. Rückgängig: Strg+Z.
+          Gruppenzeiten, Wochentage, Namen und Klassen sind direkt im Plan per Klick bearbeitbar. Rückgängig: Strg+Z.
         </p>
       </section>
 

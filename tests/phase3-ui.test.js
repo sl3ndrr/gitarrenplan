@@ -183,7 +183,7 @@ describe("Dokumentsemantik und Empty State", () => {
       .every((row) => row.getAttribute("aria-hidden") === "true")).toBe(true);
   });
 
-  it("deaktiviert den Schülerworkflow ohne Gruppe und fokussiert per CTA das Gruppenfeld", () => {
+  it("deaktiviert den Erfassung von Teilnehmenden ohne Gruppe und fokussiert per CTA das Gruppenfeld", () => {
     render();
     const cleanup = initialiseScheduleActions();
 

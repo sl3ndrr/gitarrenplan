@@ -57,7 +57,7 @@ describe("Druckübersicht", () => {
     show(["Montag", "Dienstag", "Freitag"], [0, 3, 8]);
     expect([...document.querySelectorAll(".group-occupancy")].map((node) => node.textContent))
       .toEqual(["0 / 6 Plätze", "3 / 6 Plätze", "8 / 8 Plätze"]);
-    expect(document.querySelector(".document-summary").textContent).toBe("3 Gruppen · 11 Schüler:innen gesamt");
+    expect(document.querySelector(".document-summary").textContent).toBe("3 Gruppen · 11 Teilnehmende gesamt");
     show([""], [0], 0);
     expect(document.querySelector(".group-occupancy").textContent).toBe("0 / 0 Plätze");
   });

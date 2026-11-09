@@ -144,7 +144,7 @@ function moveStudentToAnotherGroup(plan, group, student) {
   }
 
   showModal({
-    title: "Schüler verschieben",
+    title: "Person verschieben",
     message: "„" + student.name + "“ in welche Gruppe verschieben?",
     type: "select",
     options: otherGroups,

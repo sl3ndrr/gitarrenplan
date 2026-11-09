@@ -1,8 +1,9 @@
-import { DATA_LIMITS, DEFAULT_APPEARANCE, DEFAULT_META, DEFAULT_MIN_ROWS, WEEKDAYS } from "./config.js";
+import { DATA_LIMITS, DEFAULT_APPEARANCE, DEFAULT_META, DEFAULT_LAYOUT, WEEKDAYS } from "./config.js";
 import {
   createDefaultPlan,
   normalizeAppearance,
   normalizeGroupTime,
+  normalizeLayout,
   normalizeWeekday,
   normalizeSingleLineText
 } from "./normalization.js";
@@ -63,7 +64,7 @@ function findGroup(plan, groupId) {
 function findStudent(group, studentId) {
   const student = group.students.find((item) => item.id === studentId);
   if (!student) {
-    throw new CommandValidationError("Der ausgewählte Schüler existiert nicht.");
+    throw new CommandValidationError("Die ausgewählte Person existiert nicht.");
   }
   return student;
 }
@@ -111,7 +112,8 @@ export const COMMAND_HANDLERS = Object.freeze({
     const duplicate = {
       ...clone(source),
       id: createPlanId(),
-      name: source.name + " – Kopie"
+      name: source.name + " – Kopie",
+      updatedAt: new Date().toISOString()
     };
     draft.plans.push(duplicate);
     draft.activePlanId = duplicate.id;
@@ -143,7 +145,7 @@ export const COMMAND_HANDLERS = Object.freeze({
     plan.name = "Gitarrenunterricht";
     plan.meta = clone(DEFAULT_META);
     plan.appearance = clone(DEFAULT_APPEARANCE);
-    plan.layout = { minRows: DEFAULT_MIN_ROWS };
+    plan.layout = clone(DEFAULT_LAYOUT);
     plan.groups = [];
     return { render: RENDER_ALL, notification: notice("Plan zurückgesetzt") };
   }),
@@ -173,6 +175,16 @@ export const COMMAND_HANDLERS = Object.freeze({
   "minRows/set": define("Mindestzeilen ändern", (draft, payload) => {
     activePlan(draft).layout.minRows = payload?.value;
     return { render: RENDER_PAGES };
+  }),
+
+  "layout/set": define("Ausgabeformat ändern", (draft, payload) => {
+    const field = payload?.field;
+    if (!Object.hasOwn(DEFAULT_LAYOUT, field) || field === "minRows") {
+      throw new CommandValidationError("Unbekannte Ausgabeoption.");
+    }
+    const plan = activePlan(draft);
+    plan.layout = normalizeLayout({ ...plan.layout, [field]: payload.value });
+    return { render: { pages: true, editor: true } };
   }),
 
   "appearance/set": define("Gestaltung ändern", (draft, payload) => {
@@ -278,7 +290,7 @@ export const COMMAND_HANDLERS = Object.freeze({
     return { render: RENDER_GROUPS, notification: notice("Gespeichert ✓") };
   }),
 
-  "student/add": define("Schüler hinzufügen", (draft, payload) => {
+  "student/add": define("Teilnehmende hinzufügen", (draft, payload) => {
     const student = createStudent(payload?.student);
     const group = findGroup(activePlan(draft), payload?.groupId);
     group.students.push(student);
@@ -299,11 +311,11 @@ export const COMMAND_HANDLERS = Object.freeze({
     return { render: RENDER_PAGES, notification: notice(payload.students.length + " Teilnehmende hinzugefügt ✓") };
   }),
 
-  "student/move": define("Schüler verschieben", (draft, payload) => {
+  "student/move": define("Person verschieben", (draft, payload) => {
     const group = findGroup(activePlan(draft), payload?.groupId);
     const from = group.students.findIndex((item) => item.id === payload?.studentId);
     if (from < 0) {
-      throw new CommandValidationError("Der ausgewählte Schüler existiert nicht.");
+      throw new CommandValidationError("Die ausgewählte Person existiert nicht.");
     }
     const to = Number.isInteger(payload?.toIndex)
       ? payload.toIndex
@@ -314,7 +326,7 @@ export const COMMAND_HANDLERS = Object.freeze({
     return { render: RENDER_PAGES };
   }),
 
-  "student/moveToGroup": define("Schüler in andere Gruppe verschieben", (draft, payload) => {
+  "student/moveToGroup": define("Person in eine andere Gruppe verschieben", (draft, payload) => {
     const plan = activePlan(draft);
     const sourceGroup = findGroup(plan, payload?.sourceGroupId);
     const targetGroup = findGroup(plan, payload?.targetGroupId);
@@ -325,7 +337,7 @@ export const COMMAND_HANDLERS = Object.freeze({
       (item) => item.id === payload?.studentId
     );
     if (studentIndex < 0) {
-      throw new CommandValidationError("Der ausgewählte Schüler existiert nicht.");
+      throw new CommandValidationError("Die ausgewählte Person existiert nicht.");
     }
     const [student] = sourceGroup.students.splice(studentIndex, 1);
     const to = Number.isInteger(payload.toIndex)
@@ -338,7 +350,7 @@ export const COMMAND_HANDLERS = Object.freeze({
     };
   }),
 
-  "student/remove": define("Schüler entfernen", (draft, payload) => {
+  "student/remove": define("Person entfernen", (draft, payload) => {
     const group = findGroup(activePlan(draft), payload?.groupId);
     const student = findStudent(group, payload?.studentId);
     group.students = group.students.filter((item) => item.id !== student.id);
@@ -348,7 +360,7 @@ export const COMMAND_HANDLERS = Object.freeze({
     };
   }),
 
-  "student/update": define("Schüler bearbeiten", (draft, payload) => {
+  "student/update": define("Person bearbeiten", (draft, payload) => {
     const student = findStudent(
       findGroup(activePlan(draft), payload?.groupId),
       payload?.studentId
@@ -364,7 +376,7 @@ export const COMMAND_HANDLERS = Object.freeze({
         maxLength: DATA_LIMITS.metadataLength
       });
     } else {
-      throw new CommandValidationError("Unbekanntes Schülerfeld.");
+      throw new CommandValidationError("Unbekanntes Feld für Teilnehmende.");
     }
     return { render: RENDER_PAGES, notification: notice("Gespeichert ✓") };
   }),

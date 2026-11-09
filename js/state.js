@@ -143,13 +143,22 @@ function persistCandidate(candidate, {
   return persistState(candidate, storage);
 }
 
-function nextStateFromDraft(draft, baseRevision = appState.revision) {
-  return normalizeAppState({
+function nextStateFromDraft(draft, baseRevision = appState.revision, stamp = false) {
+  const updatedAt = new Date().toISOString();
+  const next = normalizeAppState({
     ...draft,
     version: APP_STATE_VERSION,
     revision: baseRevision + 1,
-    updatedAt: new Date().toISOString()
+    updatedAt
   });
+  if (stamp) {
+    const previous = new Map(appState.plans.map((plan) => [plan.id, plan]));
+    for (const plan of next.plans) {
+      const prior = previous.get(plan.id);
+      if (prior && JSON.stringify(prior) !== JSON.stringify(plan)) plan.updatedAt = updatedAt;
+    }
+  }
+  return next;
 }
 
 export function initialiseState(initialState, { storage } = {}) {
@@ -246,7 +255,7 @@ export function runUndoable(label, mutation, {
 
     const draft = clone(before);
     const descriptor = mutation(draft) || {};
-    const candidate = nextStateFromDraft(draft);
+    const candidate = nextStateFromDraft(draft, appState.revision, true);
     const changed = descriptor.changed !== false
       && domainContent(candidate) !== domainContent(before);
     const hadActiveGroup = Boolean(undoGroup && activeUndoGroups.has(undoGroup));

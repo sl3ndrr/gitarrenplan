@@ -19,7 +19,7 @@ body {
   justify-content: center;
   background: var(--page-background);
   color: var(--text-main);
-  font-family: Inter, Arial, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .hidden {
@@ -149,3 +149,6 @@ body {
     display: none !important;
   }
 }
+
+.time-text, .group-occupancy, .overview-metrics, .overview-link,
+.output-table, .time-pair, .toolbar-pages { font-variant-numeric: tabular-nums; }

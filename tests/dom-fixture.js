@@ -29,7 +29,7 @@ export function mountAppFixture() {
       <select id="groupSelect"></select>
       <input id="studentName" type="text">
       <input id="studentClass" type="text">
-      <button id="addStudentBtn" type="button">Schüler hinzufügen</button>
+      <button id="addStudentBtn" type="button">Teilnehmende hinzufügen</button>
       <p id="studentFormHint" class="hidden"></p>
     </fieldset>
     <button id="undoBtn" type="button"></button>

@@ -35,8 +35,9 @@ for (const sample of manifest.samples) {
 
   const width = Number.parseFloat(sizeMatch[1]);
   const height = Number.parseFloat(sizeMatch[2]);
-  if (Math.abs(width - 595.28) > 1 || Math.abs(height - 841.89) > 1) {
-    throw new Error(sample.file + ": Ausgabe ist nicht A4-Porträt (" + width + " x " + height + ").");
+  const expectedSize = sample.orientation === "landscape" ? [841.89, 595.28] : [595.28, 841.89];
+  if (Math.abs(width - expectedSize[0]) > 1 || Math.abs(height - expectedSize[1]) > 1) {
+    throw new Error(sample.file + ": falsches A4-Format (" + width + " x " + height + ").");
   }
 
   for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
@@ -52,6 +53,10 @@ for (const sample of manifest.samples) {
       || !pageText.includes("Stand:")) {
       throw new Error(sample.file + ": Seite " + pageNumber + " enthält nicht alle Pflichttexte.");
     }
+    if (sample.grid === "week" && !pageText.includes("Wochenübersicht")) throw new Error("Wochenübersicht fehlt.");
+    if (sample.grid === "attendance" && (!pageText.includes("Anwesenheitsliste") || !pageText.includes("Notiz"))) {
+      throw new Error("Anwesenheitsliste oder Notizspalte fehlt.");
+    }
     if (pageCount > 1 && !pageText.includes("Seite " + pageNumber + " von " + pageCount)) {
       throw new Error(sample.file + ": Seitenzähler auf Seite " + pageNumber + " fehlt.");
     }
@@ -59,8 +64,8 @@ for (const sample of manifest.samples) {
 
   if (sample.file === "gruppe-40-schueler.pdf") {
     const text = execFileSync("pdftotext", [pdfPath, "-"], { encoding: "utf8" });
-    if (!text.includes("Fortsetzung") || !text.includes("Schüler 40")) {
-      throw new Error(sample.file + ": Fortsetzung oder letzter Schüler fehlt.");
+    if (!text.includes("Fortsetzung") || !text.includes("Person 40")) {
+      throw new Error(sample.file + ": Fortsetzung oder letzter Teilnehmende fehlt.");
     }
   }
 

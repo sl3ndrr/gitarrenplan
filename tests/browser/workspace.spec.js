@@ -130,7 +130,7 @@ test("Druck aus skalierter Vorschau bleibt A4 mit gemeinsamen Tagesköpfen", asy
   await page.goto("/");
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".day-heading")).toHaveText(["Montag", "Mittwoch", "Freitag"]);
-  await expect(page.locator(".document-summary")).toHaveText("6 Gruppen · 14 Schüler:innen gesamt");
+  await expect(page.locator(".document-summary")).toHaveText("6 Gruppen · 14 Teilnehmende gesamt");
   await expect(page.locator(".group-occupancy").first()).toHaveText("3 / 6 Plätze");
   const layout = await page.locator(".page").first().evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -170,6 +170,6 @@ test("Fortsetzungen zählen keine zusätzlichen Gruppen oder Plätze", async ({ 
   await seedState(page, createFortyStudentState());
   await page.goto("/");
   await expect(page.locator(".page")).toHaveCount(2);
-  await expect(page.locator(".document-summary")).toHaveText(["1 Gruppe · 40 Schüler:innen gesamt", "1 Gruppe · 40 Schüler:innen gesamt"]);
+  await expect(page.locator(".document-summary")).toHaveText(["1 Gruppe · 40 Teilnehmende gesamt", "1 Gruppe · 40 Teilnehmende gesamt"]);
   expect(await page.locator(".group-occupancy").allTextContents()).toEqual(Array(5).fill("40 / 40 Plätze"));
 });

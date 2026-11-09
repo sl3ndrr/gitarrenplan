@@ -130,7 +130,7 @@ test("sieben und zwölf Gruppen werden mit höchstens sechs 2x3-Slots paginiert"
   }
 });
 
-test("40 Schüler bleiben vollständig und erhalten Fortsetzungssegmente", async ({ page }) => {
+test("40 Teilnehmende bleiben vollständig und erhalten Fortsetzungssegmente", async ({ page }) => {
   await seedState(page, createFortyStudentState());
   await page.goto("/");
   await page.emulateMedia({ media: "print" });

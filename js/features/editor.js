@@ -143,6 +143,18 @@ export function initialiseEditor() {
     " px"
   ));
   cleanups.push(bindAppearanceToggle());
+  document.querySelectorAll("[data-layout-field]").forEach((element) => {
+    const field = element.dataset.layoutField;
+    const change = () => {
+      const checkbox = element.type === "checkbox";
+      const result = dispatch({
+        type: "layout/set", payload: { field, value: checkbox ? element.checked : element.value }
+      });
+      if (!result.ok) element[checkbox ? "checked" : "value"] = getActivePlan().layout[field];
+    };
+    element.addEventListener("change", change);
+    cleanups.push(() => element.removeEventListener("change", change));
+  });
 
   return () => cleanups.splice(0).reverse().forEach((cleanup) => cleanup());
 }

@@ -43,10 +43,16 @@ function wrappedLines(value, charactersPerLine) {
   return Math.max(1, Math.ceil(text(value).length / charactersPerLine));
 }
 
-export function getPrintLayout(logicalGroupCount) {
-  return logicalGroupCount > 4
-    ? PRINT_LAYOUTS.compact
-    : PRINT_LAYOUTS.regular;
+export function getPrintLayout(logicalGroupCount, orientation = "portrait", showNotes = false) {
+  const base = logicalGroupCount > 4 ? PRINT_LAYOUTS.compact : PRINT_LAYOUTS.regular;
+  const landscape = orientation === "landscape";
+  if (!landscape && !showNotes) return base;
+  return {
+    ...base,
+    rowUnitBudget: landscape ? base.rowUnitBudget - 5 : base.rowUnitBudget,
+    nameCharactersPerLine: base.nameCharactersPerLine + (landscape ? 12 : 0) - (showNotes ? 8 : 0),
+    classCharactersPerLine: base.classCharactersPerLine + (landscape ? 6 : 0) - (showNotes ? 4 : 0)
+  };
 }
 
 export function estimateStudentRowUnits(student, layout) {
@@ -120,9 +126,9 @@ function splitGroup(group, layout, minRows) {
  * Mindestzeilen erzeugen nur Leerzeilen im letzten Segment einer Gruppe und
  * lösen niemals selbst eine zusätzliche Seite aus.
  */
-export function paginateGroups(groups, minRows = 0) {
+export function paginateGroups(groups, minRows = 0, options = {}) {
   const logicalGroups = Array.isArray(groups) ? groups : [];
-  const layout = getPrintLayout(logicalGroups.length);
+  const layout = getPrintLayout(logicalGroups.length, options.orientation, options.showNotes);
   const safeMinRows = Number.isInteger(minRows) ? Math.max(0, minRows) : 0;
   const segments = logicalGroups.flatMap((group) => (
     splitGroup(group, layout, safeMinRows)

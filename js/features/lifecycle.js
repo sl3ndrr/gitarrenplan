@@ -1,4 +1,4 @@
-import { flushRender } from "../render.js";
+import { flushRender, setPrintPresentation } from "../render.js";
 import { handleStorageEvent } from "../state.js";
 import { showModal } from "../ui/feedback.js";
 import { flushPendingTextEdits } from "../ui/text-edit.js";
@@ -19,8 +19,12 @@ export function measurePrintOverflow() {
   shell?.classList.add("is-measuring-print");
   stylesheet.media = "all";
   try {
-    return [...document.querySelectorAll("#pages .timeslot")]
-      .filter((slot) => slot.clientHeight > 0 && slot.scrollHeight > slot.clientHeight + 1)
+    return [...document.querySelectorAll("#pages .timeslot, #pages [data-print-check]")]
+      .filter((slot) => slot.clientHeight > 0 && (
+        slot.scrollHeight > slot.clientHeight + 1 ||
+        (slot.classList.contains("week-card") && slot.getBoundingClientRect().bottom
+          > slot.closest(".page-content").getBoundingClientRect().bottom + 1)
+      ))
       .map((slot) => ({
         id: slot.dataset.groupId,
         label: slot.getAttribute("aria-label")
@@ -36,10 +40,12 @@ let nativeOverflow = [];
 
 function invokePrint() {
   approvedPrint = true;
+  setPrintPresentation("print", true);
   try {
     window.print();
   } finally {
     approvedPrint = false;
+    setPrintPresentation("print", false);
   }
 }
 
@@ -57,7 +63,9 @@ function warnAboutOverflow(groups, afterNativePrint = false) {
 
 export function printPlan() {
   if (!flushImmediately().ok) return;
+  setPrintPresentation("print", true);
   const groups = measurePrintOverflow();
+  setPrintPresentation("print", false);
   if (groups.length) warnAboutOverflow(groups);
   else invokePrint();
 }
@@ -66,10 +74,12 @@ export function initialiseLifecycle() {
   const printButton = document.getElementById("printBtn");
   const onBeforePrint = () => {
     if (!flushImmediately().ok) return;
+    setPrintPresentation("print", true);
     const groups = measurePrintOverflow();
     if (!approvedPrint) nativeOverflow = groups;
   };
   const onAfterPrint = () => {
+    setPrintPresentation("print", false);
     if (nativeOverflow.length) warnAboutOverflow(nativeOverflow, true);
     nativeOverflow = [];
   };

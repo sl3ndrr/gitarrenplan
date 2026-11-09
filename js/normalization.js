@@ -4,6 +4,7 @@ import {
   DATA_LIMITS,
   DEFAULT_APPEARANCE,
   DEFAULT_META,
+  DEFAULT_LAYOUT,
   DEFAULT_MIN_ROWS,
   WEEKDAYS,
   SUPPORTED_EXPORT_VERSIONS
@@ -97,7 +98,7 @@ function uniqueId(value, usedIds, createId) {
 function normalizeStudent(student, usedStudentIds) {
   const source = typeof student === "string"
     ? { name: student }
-    : requirePlainObject(student, "Ein Schüler");
+    : requirePlainObject(student, "Eine teilnehmende Person");
 
   return {
     id: uniqueId(source.id, usedStudentIds, createStudentId),
@@ -155,11 +156,11 @@ function normalizeGroup(group, context) {
   const source = requirePlainObject(group, "Eine Gruppe");
   const students = source.students === undefined
     ? []
-    : requireArray(source.students, "Die Schüler einer Gruppe");
+    : requireArray(source.students, "Die Teilnehmende einer Gruppe");
 
   if (students.length > DATA_LIMITS.studentsPerGroup) {
     throw new DataValidationError(
-      "Eine Gruppe darf höchstens " + DATA_LIMITS.studentsPerGroup + " Schüler enthalten."
+      "Eine Gruppe darf höchstens " + DATA_LIMITS.studentsPerGroup + " Teilnehmende enthalten."
     );
   }
 
@@ -168,7 +169,7 @@ function normalizeGroup(group, context) {
   );
   if (counters.students + normalizedStudents.length > DATA_LIMITS.totalStudents) {
     throw new DataValidationError(
-      "Ein Datenbestand darf höchstens " + DATA_LIMITS.totalStudents + " Schüler enthalten."
+      "Ein Datenbestand darf höchstens " + DATA_LIMITS.totalStudents + " Teilnehmende enthalten."
     );
   }
 
@@ -261,22 +262,24 @@ function normalizePlanWithContext(plan, context, regeneratePlanId = false, legac
     }),
     meta: normalizeMeta(source.meta),
     appearance: normalizeAppearance(source.appearance),
-    layout: { minRows: normalizeMinRows(source.layout?.minRows ?? legacyMinRows) },
+    layout: normalizeLayout(source.layout, legacyMinRows),
+    updatedAt: normalizeUpdatedAt(source.updatedAt, context.updatedAt ?? null),
     groups: recoverEntries(groups, (group) => normalizeGroup(group, context), context.discarded, "groups")
   };
 }
 
-function createNormalizationContext(discarded) {
+function createNormalizationContext(discarded, updatedAt) {
   return {
     planIds: new Set(),
     groupIds: new Set(),
     studentIds: new Set(),
     counters: { students: 0 },
-    discarded
+    discarded,
+    updatedAt
   };
 }
 
-export function normalizePlans(plans, { regeneratePlanIds = false, legacyMinRows, discarded } = {}) {
+export function normalizePlans(plans, { regeneratePlanIds = false, legacyMinRows, discarded, updatedAt } = {}) {
   const list = requireArray(plans, "Die Pläne");
 
   if (list.length === 0) {
@@ -289,7 +292,7 @@ export function normalizePlans(plans, { regeneratePlanIds = false, legacyMinRows
     );
   }
 
-  const context = createNormalizationContext(discarded);
+  const context = createNormalizationContext(discarded, updatedAt);
   return list.map((plan) => normalizePlanWithContext(plan, context, regeneratePlanIds, legacyMinRows));
 }
 
@@ -316,6 +319,7 @@ export function createDefaultPlan(name = "Gitarrenunterricht") {
     id: createPlanId(),
     name,
     meta: DEFAULT_META,
+    updatedAt: new Date().toISOString(),
     appearance: DEFAULT_APPEARANCE,
     groups: []
   });
@@ -328,6 +332,20 @@ function normalizeMinRows(value) {
   }
 
   return Math.max(0, Math.min(20, parsed));
+}
+
+export function normalizeLayout(layout, legacyMinRows) {
+  const source = layout ?? {};
+  const columns = Number.parseInt(source.attendanceColumns, 10);
+  return {
+    minRows: normalizeMinRows(source.minRows ?? legacyMinRows),
+    orientation: source.orientation === "landscape" ? "landscape" : DEFAULT_LAYOUT.orientation,
+    output: ["week", "attendance"].includes(source.output) ? source.output : DEFAULT_LAYOUT.output,
+    attendanceColumns: Number.isFinite(columns) ? Math.max(8, Math.min(12, columns)) : DEFAULT_LAYOUT.attendanceColumns,
+    showNotes: source.showNotes === true,
+    showUpdatedAt: source.showUpdatedAt !== false,
+    monochrome: source.monochrome === true
+  };
 }
 
 function normalizeUpdatedAt(value, fallback) {
@@ -347,6 +365,7 @@ export function normalizeAppState(value, { now = new Date().toISOString(), disca
 
   const plans = normalizePlans(source.plans, {
     discarded,
+    updatedAt: normalizeUpdatedAt(source.updatedAt, now),
     legacyMinRows: source.version === 3 ? source.minRows : undefined
   });
   const requestedActivePlanId = normalizeSingleLineText(source.activePlanId, {
@@ -370,7 +389,7 @@ export function normalizeAppState(value, { now = new Date().toISOString(), disca
 }
 
 export function createDefaultAppState({ now = new Date().toISOString() } = {}) {
-  const plan = createDefaultPlan();
+  const plan = { ...createDefaultPlan(), updatedAt: now };
 
   return {
     version: APP_STATE_VERSION,
