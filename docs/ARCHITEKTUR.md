@@ -98,9 +98,9 @@ Wiederherstellung von Eingabefokus und Textauswahl nach einem Render.
 `ui/motion.js` erfasst vor Strukturänderungen die sichtbaren stabilen
 Elemente. Nach dem Render gleicht FLIP die Positionen über
 `transform` aus. Für das Ausblenden entfernt der Store die Daten sofort,
-während eine kurzlebige, inerte Kopie visuell ausläuft. Planwechsel blenden
-die aktualisierte Vorschau über die Web Animations API ein. So bleiben
-`requestRender()` und der synchrone Flush vor dem Druck in einem Ablauf.
+während eine kurzlebige, inerte Kopie visuell ausläuft. Planwechsel verwenden, falls verfügbar, die View Transitions API. Ein
+synchroner Flush überspringt den Übergang und rendert sofort. So bleiben
+`requestRender()` und die Druckvorbereitung in einem Ablauf.
 Der Initialrender, Texteingaben, reduzierte Bewegung und Pläne mit über
 1.000 Teilnehmenden überspringen FLIP. CSS-Tokens steuern die übrigen
 kurzen Animationen. Der Browser-Test prüft den Grenzplan mit 5.000 Personen.

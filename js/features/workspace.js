@@ -151,10 +151,21 @@ export function initialiseWorkspace() {
     resize();
   }
 
-  function animateZoom() {
-    if (motionAllowed()) pages.animate([{ opacity: 0.82 }, { opacity: 1 }], {
-      duration: 160, easing: "ease-out"
-    });
+  function resizeWithMotion() {
+    const page = frames[current]?.firstElementChild;
+    const before = motionAllowed() && !proof && frames.length <= 30 ? page?.getBoundingClientRect() : null;
+    resize();
+    if (!before?.width) return;
+    const after = page.getBoundingClientRect();
+    if (!after.width) return;
+    const x = (before.left - after.left) / scale;
+    const y = (before.top - after.top) / scale;
+    const ratio = before.width / after.width;
+    if (Math.abs(x) + Math.abs(y) < 1 && Math.abs(ratio - 1) < 0.01) return;
+    page.animate([
+      { transformOrigin: "top left", transform: "translate(" + x + "px, " + y + "px) scale(" + ratio + ")", opacity: 0.88 },
+      { transformOrigin: "top left", transform: "none", opacity: 1 }
+    ], { duration: 200, easing: "cubic-bezier(.16, 1, .3, 1)" });
   }
 
   function changeZoom(direction) {
@@ -163,8 +174,7 @@ export function initialiseWorkspace() {
     if (!level) return;
     zoom = level;
     save();
-    resize();
-    animateZoom();
+    resizeWithMotion();
   }
 
   const mutations = new window.MutationObserver(refresh);
@@ -184,15 +194,13 @@ export function initialiseWorkspace() {
   listen(get("spreadBtn"), "click", () => {
     spread = get("spreadBtn").getAttribute("aria-pressed") !== "true";
     save();
-    resize();
-    animateZoom();
+    resizeWithMotion();
   });
   listen(select, "change", () => {
     zoom = select.value === "fit" ? "fit" : Number(select.value);
     if (zoom === "fit") spread = null;
     save();
-    resize();
-    animateZoom();
+    resizeWithMotion();
   });
   listen(get("zoomOut"), "click", () => changeZoom(-1));
   listen(get("zoomIn"), "click", () => changeZoom(1));

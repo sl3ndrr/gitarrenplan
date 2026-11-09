@@ -44,3 +44,12 @@
 @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
 @keyframes modal-out { to { opacity: 0; transform: translateY(5px) scale(.98); } }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-3px) scale(.97); } }
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  #pages.view-transition-plan { view-transition-name: gitarrenplan-document; }
+  ::view-transition { pointer-events: none; }
+  ::view-transition-old(root) { display: none; }
+  ::view-transition-new(root) { animation: none; }
+  ::view-transition-old(gitarrenplan-document) { animation: fade-out var(--motion-standard) var(--motion-out) both; }
+  ::view-transition-new(gitarrenplan-document) { animation: fade-in var(--motion-standard) var(--motion-enter) both; }
+}

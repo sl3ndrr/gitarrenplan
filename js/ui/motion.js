@@ -21,11 +21,11 @@ function visibleNodes(container) {
 }
 
 export function capturePageMotion(container, plan, type) {
-  if (!type || !motionAllowed() || container.closest(".print-proof")
+  if (!type || type === "plan/select" || !motionAllowed() || container.closest(".print-proof")
     || plan.groups.reduce((count, group) => count + group.students.length, 0) > MAX_MOTION_ROWS) {
     return null;
   }
-  return type === "plan/select" ? { type } : { type, before: visibleNodes(container) };
+  return { type, before: visibleNodes(container) };
 }
 
 function options(kind) {
@@ -77,11 +77,6 @@ function exitGhost({ node, rect }, timing, scale) {
 export function playPageMotion(container, snapshot) {
   if (!snapshot) return;
   const timing = options("enter");
-  if (snapshot.type === "plan/select") {
-    animate(container, "plan", [{ opacity: 0.45 }, { opacity: 1 }], timing);
-    return;
-  }
-
   const { before, type } = snapshot;
   const after = visibleNodes(container);
   const scale = Number(container.style.getPropertyValue("--preview-scale")) || 1;
