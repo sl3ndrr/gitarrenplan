@@ -49,3 +49,7 @@ export const DEFAULT_META = Object.freeze({
   location: "Lernwerkstatt",
   term: ""
 });
+
+export const WEEKDAYS = Object.freeze([
+  "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"
+]);

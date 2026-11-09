@@ -33,7 +33,7 @@ function createRichState() {
         groups: [
           {
             id: "group-1",
-            day: "Montag",
+            day: "Mittwoch",
             time: "15:00",
             students: [
               { id: "student-1", name: "Zed", className: "3 a" },
@@ -96,10 +96,12 @@ const undoableCommands = [
   ["Gestaltung", { type: "appearance/set", payload: { field: "colorIntensity", value: 40 } }],
   ["Gruppe hinzufügen", { type: "group/add", payload: { day: "Freitag", time: "18:00" } }],
   ["Gruppe verschieben", { type: "group/move", payload: { groupId: "group-2", offset: -1 } }],
+  ["Gruppen nach Stundenplan sortieren", { type: "groups/sortSchedule" }],
   ["Gruppe sortieren", { type: "group/sort", payload: { groupId: "group-1" } }],
   ["Gruppe entfernen", { type: "group/remove", payload: { groupId: "group-1" } }],
   ["Gruppe bearbeiten", { type: "group/update", payload: { groupId: "group-1", field: "time", value: "19:00" } }],
   ["Schüler hinzufügen", { type: "student/add", payload: { groupId: "group-1", student: { name: "Clara", className: "5 a" } } }],
+  ["Mehrere Teilnehmende hinzufügen", { type: "student/addMany", payload: { groupId: "group-1", students: [{ name: "Clara" }, { name: "Dora" }] } }],
   ["Schüler verschieben", { type: "student/move", payload: { groupId: "group-1", studentId: "student-2", offset: -1 } }],
   ["Schüler in Gruppe verschieben", { type: "student/moveToGroup", payload: { sourceGroupId: "group-1", targetGroupId: "group-2", studentId: "student-1" } }],
   ["Schüler entfernen", { type: "student/remove", payload: { groupId: "group-1", studentId: "student-1" } }],

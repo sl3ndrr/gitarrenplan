@@ -20,7 +20,7 @@ function cancelScheduled(timer) {
   feedbackTimers.delete(timer);
 }
 
-export function showToast(message, type = "success") {
+export function showToast(message, type = "success", undo = null) {
   const container = document.getElementById("toast-container");
   if (!container || !message) {
     return;
@@ -36,7 +36,49 @@ export function showToast(message, type = "success") {
   text.textContent = message;
   toast.append(symbol, text);
   container.appendChild(toast);
-  schedule(() => toast.remove(), 2200);
+  if (!undo) {
+    schedule(() => toast.remove(), 2200);
+    return;
+  }
+
+  toast.classList.add("undo-toast");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "button btn-secondary";
+  button.textContent = "Rückgängig";
+  const progress = document.createElement("span");
+  progress.className = "undo-toast-progress";
+  progress.setAttribute("aria-hidden", "true");
+  toast.append(button, progress);
+  let remaining = 6000;
+  let started = 0;
+  let timer = null;
+  const pause = () => {
+    if (timer === null) return;
+    remaining -= Date.now() - started;
+    cancelScheduled(timer);
+    timer = null;
+  };
+  const resume = () => {
+    if (toast.matches(":hover, :focus-within") || timer !== null) return;
+    started = Date.now();
+    timer = schedule(() => toast.remove(), Math.max(0, remaining));
+  };
+  toast.addEventListener("mouseenter", pause);
+  toast.addEventListener("mouseleave", resume);
+  toast.addEventListener("focusin", pause);
+  toast.addEventListener("focusout", () => schedule(resume, 0));
+  button.addEventListener("click", () => {
+    pause();
+    toast.remove();
+    undo();
+    document.getElementById("undoBtn")?.focus();
+  });
+  resume();
+}
+
+export function clearUndoToast() {
+  document.querySelectorAll(".undo-toast").forEach((toast) => toast.remove());
 }
 
 export function showSaveError(error) {
@@ -66,6 +108,7 @@ export function showModal({
   cancelLabel = "Abbrechen",
   onConfirm = null,
   alternative = null,
+  preview = null,
   onCancel = null
 } = {}) {
   const inheritedOrigin = activeDialog?.origin || null;
@@ -75,6 +118,8 @@ export function showModal({
   const titleElement = document.getElementById("modal-title");
   const messageElement = document.getElementById("modal-message");
   const inputElement = document.getElementById("modal-input");
+  const textarea = document.getElementById("modal-textarea");
+  const previewElement = document.getElementById("modal-preview");
   const selectElement = document.getElementById("modal-select");
   const cancelButton = document.getElementById("modal-cancel");
   const alternativeButton = document.getElementById("modal-alternative");
@@ -101,6 +146,15 @@ export function showModal({
   selectElement.classList.add("hidden");
   cancelButton.style.display = type === "alert" ? "none" : "";
 
+  textarea?.classList.toggle("hidden", type !== "textarea");
+  if (previewElement) previewElement.hidden = type !== "textarea";
+  if (type === "textarea") {
+    textarea.value = "";
+    updatePreview();
+    textarea.addEventListener("input", updatePreview);
+  } else {
+    confirmButton.disabled = false;
+  }
   if (type === "prompt") {
     inputElement.classList.remove("hidden");
     inputElement.value = inputValue;
@@ -130,6 +184,7 @@ export function showModal({
     cancelButton.removeEventListener("click", onCancelClick);
     overlay.removeEventListener("click", onOverlayClick);
     inputElement.removeEventListener("keydown", onInputKey);
+    textarea?.removeEventListener("input", updatePreview);
     document.removeEventListener("keydown", onDocumentKey);
     cancelScheduled(focusTimer);
     focusTimer = null;
@@ -144,12 +199,17 @@ export function showModal({
     }
   }
 
+  function updatePreview() {
+    const result = preview?.(textarea.value);
+    confirmButton.disabled = !result?.valid;
+    previewElement.textContent = result?.message || "";
+  }
+
   function onConfirmClick() {
     const value = type === "prompt"
       ? inputElement.value
-      : type === "select"
-        ? selectElement.value
-        : undefined;
+      : type === "select" ? selectElement.value
+        : type === "textarea" ? textarea.value : undefined;
     cleanup();
     onConfirm?.(value);
   }
@@ -190,7 +250,7 @@ export function showModal({
       return;
     }
 
-    const focusable = [inputElement, selectElement, cancelButton, alternativeButton, confirmButton]
+    const focusable = [inputElement, textarea, selectElement, cancelButton, alternativeButton, confirmButton]
       .filter((element) => (
         element && !element.disabled
         && !element.classList.contains("hidden")
@@ -225,6 +285,8 @@ export function showModal({
     if (type === "prompt") {
       inputElement.focus();
       inputElement.select();
+    } else if (type === "textarea") {
+      textarea.focus();
     } else if (type === "select") {
       selectElement.focus();
     } else {

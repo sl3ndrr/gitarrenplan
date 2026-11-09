@@ -5,6 +5,7 @@ import {
   DEFAULT_APPEARANCE,
   DEFAULT_META,
   DEFAULT_MIN_ROWS,
+  WEEKDAYS,
   SUPPORTED_EXPORT_VERSIONS
 } from "./config.js";
 import {
@@ -125,6 +126,30 @@ function recoverEntries(entries, normalize, discarded, kind) {
   });
 }
 
+export function normalizeWeekday(value) {
+  const day = normalizeSingleLineText(value);
+  const key = day.toLocaleLowerCase("de").replace(/\.$/, "");
+  return WEEKDAYS.find((weekday) => {
+    const full = weekday.toLocaleLowerCase("de");
+    return key === full || key === full + "s" || key === full.slice(0, 2);
+  }) || day;
+}
+
+export function normalizeClock(value) {
+  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : "";
+}
+
+export function normalizeGroupTime(source) {
+  const legacy = normalizeSingleLineText(source.time);
+  const match = legacy.match(/^(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})(?:\s+Uhr)?$/i);
+  const fromLegacy = (index) => normalizeClock(match?.[index].padStart(5, "0"));
+  const start = source.start === undefined ? fromLegacy(1) : normalizeClock(source.start);
+  const end = source.end === undefined ? fromLegacy(2) : normalizeClock(source.end);
+  const label = normalizeSingleLineText(source.label ?? (match ? "" : legacy));
+  const time = start && end ? start + " – " + end + " Uhr" : label || legacy || "Neue Gruppe";
+  return { start, end, label, time };
+}
+
 function normalizeGroup(group, context) {
   const { groupIds, studentIds, counters, discarded } = context;
   const source = requirePlainObject(group, "Eine Gruppe");
@@ -150,14 +175,8 @@ function normalizeGroup(group, context) {
   counters.students += normalizedStudents.length;
   return {
     id: uniqueId(source.id, groupIds, createGroupId),
-    day: normalizeSingleLineText(source.day, {
-      fallback: "",
-      maxLength: DATA_LIMITS.metadataLength
-    }),
-    time: normalizeSingleLineText(source.time, {
-      fallback: "Neue Gruppe",
-      maxLength: DATA_LIMITS.metadataLength
-    }),
+    day: normalizeWeekday(source.day),
+    ...normalizeGroupTime(source),
     students: normalizedStudents
   };
 }

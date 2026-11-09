@@ -171,3 +171,44 @@
 @media screen and (max-width: 900px) {
   .slot-row { grid-template-columns: minmax(0, 1fr); gap: var(--spacing-section); }
 }
+
+@media screen {
+  .workspace-switch { display: none; }
+  .editor-panel input[type="time"] { min-height: 44px; }
+  .student-table .inline-add-row input { width: 100%; min-width: 0; }
+  [data-drag-kind] { cursor: grab; }
+  .is-dragging { opacity: 0.45; }
+  .is-drop-target { outline: 2px dashed var(--primary); outline-offset: -2px; }
+}
+@media screen and (max-width: 1179px) {
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .workspace-switch { display: flex; gap: 8px; margin-bottom: 12px; }
+  .workspace-switch [aria-pressed="true"] { background: var(--primary); color: white; }
+  #app-shell[data-small-view="preview"] .editor-panel,
+  #app-shell[data-small-view="edit"] .preview-workspace { display: none; }
+  .utility-actions {
+    position: fixed;
+    z-index: 20;
+    inset: auto 0 0;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 4px;
+    margin: 0;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .utility-actions .action-group { display: contents; }
+  .utility-actions .action-group h3, .utility-actions #backup-actions-title + .button-row { display: none; }
+  .utility-actions .button { font-size: 12px; padding-inline: 6px; width: auto; }
+}
+@media screen and (max-width: 600px) {
+  .student-table tbody tr.inline-add-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-areas: "name actions" "class actions";
+    padding: 4px 6px;
+  }
+  .student-class input.class-badge.inline-editor { width: auto; max-width: 100%; background: transparent; }
+}

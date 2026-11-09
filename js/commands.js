@@ -1,7 +1,9 @@
-import { DATA_LIMITS, DEFAULT_APPEARANCE, DEFAULT_META, DEFAULT_MIN_ROWS } from "./config.js";
+import { DATA_LIMITS, DEFAULT_APPEARANCE, DEFAULT_META, DEFAULT_MIN_ROWS, WEEKDAYS } from "./config.js";
 import {
   createDefaultPlan,
   normalizeAppearance,
+  normalizeGroupTime,
+  normalizeWeekday,
   normalizeSingleLineText
 } from "./normalization.js";
 import {
@@ -76,6 +78,14 @@ function requiredText(value, message, maxLength = DATA_LIMITS.metadataLength) {
 
 function define(label, mutate) {
   return Object.freeze({ label, mutate });
+}
+
+function createStudent(source) {
+  return {
+    id: createStudentId(),
+    name: requiredText(source?.name, "Bitte einen Namen eingeben.", DATA_LIMITS.personNameLength),
+    className: normalizeSingleLineText(source?.className)
+  };
 }
 
 export const COMMAND_HANDLERS = Object.freeze({
@@ -180,17 +190,17 @@ export const COMMAND_HANDLERS = Object.freeze({
   }),
 
   "group/add": define("Gruppe hinzufügen", (draft, payload) => {
-    const time = requiredText(
-      payload?.time,
-      "Bitte eine Zeit oder einen Gruppennamen eingeben."
-    );
+    const { start, end, label, time } = normalizeGroupTime(payload ?? {});
+    if ((!label && !(start && end)) || Boolean(start) !== Boolean(end)) {
+      throw new CommandValidationError("Gib Beginn und Ende oder eine Gruppenbezeichnung ein.");
+    }
+    if (start && start >= end) {
+      throw new CommandValidationError("Das Ende muss nach dem Beginn liegen.");
+    }
     const group = {
       id: createGroupId(),
-      day: normalizeSingleLineText(payload?.day, {
-        fallback: "",
-        maxLength: DATA_LIMITS.metadataLength
-      }),
-      time,
+      day: normalizeWeekday(payload?.day),
+      start, end, label, time,
       students: []
     };
     activePlan(draft).groups.push(group);
@@ -216,6 +226,13 @@ export const COMMAND_HANDLERS = Object.freeze({
     return { render: RENDER_GROUPS, notification: notice("Gruppe verschoben ✓") };
   }),
 
+  "groups/sortSchedule": define("Gruppen nach Wochentag und Uhrzeit sortieren", (draft) => {
+    const dayIndex = (day) => WEEKDAYS.includes(day) ? WEEKDAYS.indexOf(day) : WEEKDAYS.length;
+    activePlan(draft).groups.sort((a, b) => dayIndex(a.day) - dayIndex(b.day)
+      || (a.start || "99:99").localeCompare(b.start || "99:99", "de"));
+    return { render: RENDER_GROUPS };
+  }),
+
   "group/sort": define("Gruppe sortieren", (draft, payload) => {
     const group = findGroup(activePlan(draft), payload?.groupId);
     if (group.students.length < 2) {
@@ -226,15 +243,18 @@ export const COMMAND_HANDLERS = Object.freeze({
       };
     }
     const before = group.students.map((student) => student.id).join("\u0000");
-    group.students.sort((first, second) => first.name.localeCompare(second.name, "de"));
+    const surname = (name) => name.split(" ").at(-1);
+    const key = payload?.surname ? surname : (name) => name;
+    group.students.sort((first, second) => key(first.name).localeCompare(key(second.name), "de")
+      || first.name.localeCompare(second.name, "de"));
     if (before === group.students.map((student) => student.id).join("\u0000")) {
       return {
         changed: false,
-        notification: notice("Die Gruppe ist bereits alphabetisch sortiert."),
+        notification: notice("Die Gruppe ist bereits in dieser Reihenfolge sortiert."),
         notifyOnNoop: true
       };
     }
-    return { render: RENDER_PAGES, notification: notice("Alphabetisch sortiert ✓") };
+    return { render: RENDER_PAGES, notification: notice(payload?.surname ? "Nach Nachname sortiert ✓" : "Alphabetisch sortiert ✓") };
   }),
 
   "group/remove": define("Gruppe entfernen", (draft, payload) => {
@@ -247,15 +267,11 @@ export const COMMAND_HANDLERS = Object.freeze({
   "group/update": define("Gruppe bearbeiten", (draft, payload) => {
     const group = findGroup(activePlan(draft), payload?.groupId);
     if (payload?.field === "day") {
-      group.day = normalizeSingleLineText(payload.value, {
-        fallback: "",
-        maxLength: DATA_LIMITS.metadataLength
-      });
+      group.day = normalizeWeekday(payload.value);
     } else if (payload?.field === "time") {
-      group.time = normalizeSingleLineText(payload.value, {
-        fallback: "Neue Gruppe",
-        maxLength: DATA_LIMITS.metadataLength
-      });
+      Object.assign(group, normalizeGroupTime({ time: payload.value }));
+    } else if (["start", "end", "label"].includes(payload?.field)) {
+      Object.assign(group, normalizeGroupTime({ ...group, time: "", [payload.field]: payload.value }));
     } else {
       throw new CommandValidationError("Unbekanntes Gruppenfeld.");
     }
@@ -263,26 +279,24 @@ export const COMMAND_HANDLERS = Object.freeze({
   }),
 
   "student/add": define("Schüler hinzufügen", (draft, payload) => {
-    const name = requiredText(
-      payload?.student?.name,
-      "Bitte einen Namen eingeben.",
-      DATA_LIMITS.personNameLength
-    );
-    const student = {
-      id: createStudentId(),
-      name,
-      className: normalizeSingleLineText(payload?.student?.className, {
-        fallback: "",
-        maxLength: DATA_LIMITS.metadataLength
-      })
-    };
+    const student = createStudent(payload?.student);
     const group = findGroup(activePlan(draft), payload?.groupId);
     group.students.push(student);
     return {
       render: RENDER_PAGES,
-      notification: notice(name + " hinzugefügt ✓"),
+      notification: notice(student.name + " hinzugefügt ✓"),
       value: { studentId: student.id }
     };
+  }),
+
+  "student/addMany": define("Mehrere Teilnehmende hinzufügen", (draft, payload) => {
+    const group = findGroup(activePlan(draft), payload?.groupId);
+    if (!Array.isArray(payload.students) || !payload.students.length
+      || group.students.length + payload.students.length > DATA_LIMITS.studentsPerGroup) {
+      throw new CommandValidationError("Prüfe die Anzahl der Teilnehmenden. Pro Gruppe sind höchstens 100 möglich.");
+    }
+    group.students.push(...payload.students.map(createStudent));
+    return { render: RENDER_PAGES, notification: notice(payload.students.length + " Teilnehmende hinzugefügt ✓") };
   }),
 
   "student/move": define("Schüler verschieben", (draft, payload) => {
@@ -314,7 +328,10 @@ export const COMMAND_HANDLERS = Object.freeze({
       throw new CommandValidationError("Der ausgewählte Schüler existiert nicht.");
     }
     const [student] = sourceGroup.students.splice(studentIndex, 1);
-    targetGroup.students.push(student);
+    const to = Number.isInteger(payload.toIndex)
+      ? Math.max(0, Math.min(targetGroup.students.length, payload.toIndex))
+      : targetGroup.students.length;
+    targetGroup.students.splice(to, 0, student);
     return {
       render: RENDER_PAGES,
       notification: notice(student.name + " verschoben ✓")

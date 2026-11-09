@@ -1,3 +1,7 @@
+import { WEEKDAYS } from "../config.js";
+import { flushRender } from "../render.js";
+import { openBulkEntry } from "./bulk-entry.js";
+import { initialiseDragDrop } from "./drag-drop.js";
 import { dispatch, getActivePlan } from "../state.js";
 import { showModal } from "../ui/feedback.js";
 import {
@@ -7,7 +11,7 @@ import {
   hasTextEditSession,
   queueTextEdit
 } from "../ui/text-edit.js";
-import { undo } from "./history.js";
+import { redo, undo } from "./history.js";
 
 function inlineConfig(element) {
   const { inlineKey, inlineType, field, groupId, studentId } = element.dataset;
@@ -42,17 +46,20 @@ function inlineConfig(element) {
 export function addGroup() {
   const dayInput = document.getElementById("newGroupDay");
   const timeInput = document.getElementById("newGroupTime");
+  const start = document.getElementById("newGroupStart");
+  const end = document.getElementById("newGroupEnd");
   const result = dispatch({
     type: "group/add",
-    payload: { day: dayInput.value, time: timeInput.value }
+    payload: { day: dayInput.value, time: timeInput.value, start: start?.value, end: end?.value }
   });
 
   if (!result.ok) {
     timeInput.focus();
     return result;
   }
-  dayInput.value = "Montag";
   timeInput.value = "";
+  if (start) start.value = "";
+  if (end) end.value = "";
   timeInput.focus();
   return result;
 }
@@ -88,40 +95,35 @@ function handleUndoShortcut(event) {
     activeElement.isContentEditable
     || ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement.tagName)
   );
-  if (!isEditing) {
+  if (!isEditing && !document.getElementById("app-shell")?.hasAttribute("inert")) {
     event.preventDefault();
-    undo();
+    if (event.shiftKey) redo();
+    else undo();
   }
 }
 
-function sortGroup(group) {
-  if (group.students.length < 2) {
-    dispatch({ type: "group/sort", payload: { groupId: group.id } });
-    return;
-  }
-  showModal({
-    title: "Alphabetisch sortieren",
-    message: "Schüler in der Gruppe „" + group.time + "“ alphabetisch nach Namen sortieren?",
-    type: "confirm",
-    confirmLabel: "Sortieren",
-    onConfirm() {
-      dispatch({ type: "group/sort", payload: { groupId: group.id } });
-    }
-  });
+function sortGroup(group, surname) {
+  dispatch({ type: "group/sort", payload: { groupId: group.id, surname } });
 }
 
-function removeGroup(group) {
-  const label = group.day ? group.day + " · " + group.time : group.time;
-  showModal({
-    title: "Gruppe entfernen",
-    message: "Gruppe „" + label + "“ wirklich entfernen? Alle Schüler dieser Gruppe werden ebenfalls gelöscht.",
-    type: "confirm",
-    confirmLabel: "Entfernen",
-    confirmClass: "btn-danger",
-    onConfirm() {
-      dispatch({ type: "group/remove", payload: { groupId: group.id } });
-    }
+function addInlineStudent(row) {
+  if (!row) return;
+  const name = row.querySelector('[data-add-field="name"]');
+  const className = row.querySelector('[data-add-field="className"]');
+  const result = dispatch({
+    type: "student/add",
+    payload: { groupId: name.dataset.addGroup, student: { name: name.value, className: className.value } }
   });
+  if (result.ok) {
+    name.value = "";
+    className.value = "";
+    const key = name.dataset.addKey;
+    flushRender();
+    [...document.querySelectorAll("[data-add-key]")]
+      .find((field) => field.dataset.addKey === key)?.focus();
+  } else {
+    name.focus();
+  }
 }
 
 function moveStudentToAnotherGroup(plan, group, student) {
@@ -160,22 +162,6 @@ function moveStudentToAnotherGroup(plan, group, student) {
   });
 }
 
-function removeStudent(group, student) {
-  showModal({
-    title: "Schüler entfernen",
-    message: "„" + student.name + "“ aus der Gruppe entfernen?",
-    type: "confirm",
-    confirmLabel: "Entfernen",
-    confirmClass: "btn-danger",
-    onConfirm() {
-      dispatch({
-        type: "student/remove",
-        payload: { groupId: group.id, studentId: student.id }
-      });
-    }
-  });
-}
-
 function handlePageClick(event) {
   const button = event.target.closest?.("button[data-action]");
   if (!button) {
@@ -183,13 +169,18 @@ function handlePageClick(event) {
   }
 
   const action = button.dataset.action;
+  if (action === "inline-add") {
+    addInlineStudent(button.closest("tr"));
+    return;
+  }
   const menu = button.closest(".action-menu");
   if (menu) {
     menu.open = false;
     menu.querySelector("summary")?.focus({ preventScroll: true });
   }
   if (action === "focus-group-form") {
-    const groupInput = document.getElementById("newGroupTime");
+    document.getElementById("editViewBtn")?.click();
+    const groupInput = document.getElementById("newGroupStart") || document.getElementById("newGroupTime");
     const section = groupInput?.closest("details");
     if (section) {
       section.open = true;
@@ -212,12 +203,12 @@ function handlePageClick(event) {
     });
     return;
   }
-  if (action === "sort-group") {
-    sortGroup(group);
+  if (action === "sort-group" || action === "sort-surname") {
+    sortGroup(group, action === "sort-surname");
     return;
   }
   if (action === "remove-group") {
-    removeGroup(group);
+    dispatch({ type: "group/remove", payload: { groupId: group.id } });
     return;
   }
 
@@ -237,7 +228,7 @@ function handlePageClick(event) {
   } else if (action === "move-student") {
     moveStudentToAnotherGroup(plan, group, student);
   } else if (action === "remove-student") {
-    removeStudent(group, student);
+    dispatch({ type: "student/remove", payload: { groupId: group.id, studentId: student.id } });
   }
 }
 
@@ -278,6 +269,11 @@ function inlineFocusOut(event) {
 }
 
 function inlineKeyDown(event) {
+  if (event.key === "Enter" && !event.isComposing && event.target.dataset.addKey) {
+    event.preventDefault();
+    addInlineStudent(event.target.closest("tr"));
+    return;
+  }
   const element = closestInlineInput(event);
   if (!element) {
     return;
@@ -296,6 +292,7 @@ function inlineKeyDown(event) {
 export function initialiseScheduleActions() {
   const bindings = [];
   const listen = (target, type, listener) => {
+    if (!target) return;
     target.addEventListener(type, listener);
     bindings.push(() => target.removeEventListener(type, listener));
   };
@@ -307,7 +304,27 @@ export function initialiseScheduleActions() {
   const studentClass = document.getElementById("studentClass");
   const pages = document.getElementById("pages");
 
+  const weekdayList = document.getElementById("weekdays");
+  if (weekdayList) {
+    const daySelect = document.getElementById("newGroupDay");
+    WEEKDAYS.forEach((day) => {
+      const option = document.createElement("option");
+      option.value = day;
+      option.textContent = day;
+      weekdayList.append(option);
+      daySelect.append(option.cloneNode(true));
+    });
+    daySelect.value = WEEKDAYS[0];
+    bindings.push(() => {
+      weekdayList.replaceChildren();
+      daySelect.querySelectorAll('option:not([value=""])').forEach((option) => option.remove());
+    });
+  }
+
   listen(addGroupButton, "click", addGroup);
+  listen(document.getElementById("bulkStudentsBtn"), "click", openBulkEntry);
+  listen(document.getElementById("sortScheduleBtn"), "click", () => dispatch({ type: "groups/sortSchedule" }));
+  bindings.push(initialiseDragDrop(pages));
   listen(addStudentButton, "click", addStudent);
   listen(groupTime, "keydown", (event) => {
     if (event.key === "Enter") {
