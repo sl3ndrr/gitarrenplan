@@ -14,12 +14,15 @@ export function markBackup(date) {
 
 function updateBackupStatus() {
   const status = document.getElementById("backupStatus");
+  const overview = document.getElementById("overviewBackupStatus");
   const reminder = document.getElementById("backupReminder");
   const previous = Date.parse(safeGetItem(LAST_BACKUP));
   const days = Math.max(0, Math.floor((Date.now() - previous) / 86400000));
-  if (status) status.textContent = !Number.isFinite(days) ? "Noch nie gesichert"
+  const message = !Number.isFinite(days) ? "Noch nie gesichert"
     : days === 0 ? "Letzte Sicherung: heute"
       : "Letzte Sicherung: vor " + days + (days === 1 ? " Tag" : " Tagen");
+  if (status) status.textContent = message;
+  if (overview) overview.textContent = message;
   if (reminder) reminder.hidden = Number(safeGetItem(BACKUP_CHANGES)) < REMINDER_THRESHOLD;
 }
 

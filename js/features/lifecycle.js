@@ -15,6 +15,8 @@ export function measurePrintOverflow() {
   const stylesheet = document.getElementById("printLayoutStyles");
   if (!stylesheet) return [];
   const previousMedia = stylesheet.media;
+  const shell = document.getElementById("app-shell");
+  shell?.classList.add("is-measuring-print");
   stylesheet.media = "all";
   try {
     return [...document.querySelectorAll("#pages .timeslot")]
@@ -25,6 +27,7 @@ export function measurePrintOverflow() {
       }));
   } finally {
     stylesheet.media = previousMedia;
+    shell?.classList.remove("is-measuring-print");
   }
 }
 

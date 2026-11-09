@@ -14,12 +14,11 @@
     min-width: 0;
     width: 100%;
   }
-  .page-frame { flex: none; max-width: 100%; }
+  .page-frame { flex: none; }
   .page {
     height: auto;
     min-height: 297mm;
-    transform: scale(var(--preview-scale, 1));
-    transform-origin: top left;
+    zoom: var(--preview-scale, 1);
   }
   .page-content { height: auto; min-height: 252mm; }
   .slots.grid-2x2 { grid-template-rows: repeat(2, minmax(min-content, 1fr)); }
@@ -82,7 +81,7 @@
 }
 
 @media screen and (min-width: 1180px) {
-  .workspace-layout { grid-template-columns: 400px minmax(0, 1fr); }
+  .workspace-layout { grid-template-columns: clamp(280px, 18.75vw, 420px) minmax(0, 1fr); }
   .editor-panel {
     position: sticky;
     top: 16px;
@@ -93,10 +92,6 @@
   }
   .editor-grid, .plan-row { grid-template-columns: minmax(0, 1fr); }
   .editor-grid { gap: 8px; }
-  .utility-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
-  .utility-actions .action-group, .utility-actions .button-row { display: contents; }
-  .utility-actions h3 { display: none; }
-  .utility-actions .button { flex: 1 0 40%; }
 }
 
 @media screen and (hover: hover) {
@@ -106,8 +101,8 @@
 
 @media screen and (max-width: 900px) {
   body { padding: 12px; }
-  .wrapper, .page { width: 100%; }
-  .page-frame { width: 100% !important; }
+  .wrapper { width: 100%; }
+  .fluid-page .page { width: var(--fluid-width, 100%); }
   .page { min-height: 0; padding: clamp(16px, 5vw, 32px); padding-bottom: 70px; }
   .page-content { min-height: 0; }
   .editor-grid, .utility-actions, .slots, .slots.grid-2x2, .slots.grid-2x3,
@@ -186,22 +181,7 @@
   .workspace-switch [aria-pressed="true"] { background: var(--primary); color: white; }
   #app-shell[data-small-view="preview"] .editor-panel,
   #app-shell[data-small-view="edit"] .preview-workspace { display: none; }
-  .utility-actions {
-    position: fixed;
-    z-index: 20;
-    inset: auto 0 0;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 4px;
-    margin: 0;
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-  }
-  .utility-actions .action-group { display: contents; }
-  .utility-actions .action-group h3, .utility-actions #backup-actions-title + .button-row { display: none; }
-  .utility-actions .button { font-size: 12px; padding-inline: 6px; width: auto; }
+
 }
 @media screen and (max-width: 600px) {
   .student-table tbody tr.inline-add-row {
@@ -211,4 +191,150 @@
     padding: 4px 6px;
   }
   .student-class input.class-badge.inline-editor { width: auto; max-width: 100%; background: transparent; }
+}
+
+@media screen {
+  body { padding: 0; background: #eef3f8; }
+  .app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    margin: 0;
+    padding: 8px clamp(12px, 1.25vw, 28px);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .app-brand { display: flex; align-items: center; gap: 12px; }
+  .app-brand h1 { font-size: 19px; white-space: nowrap; }
+  .app-brand > span:last-child, #saveStatus { font-size: 13px; }
+  .app-brand > span:last-child { color: var(--text-muted); }
+  .brand-mark { border-radius: 8px; background: var(--primary); color: white; padding: 5px 7px; }
+  #saveStatus { color: var(--success); text-align: right; }
+  .workspace-layout {
+    gap: 0;
+    grid-template-areas: "tools" "editor" "preview" "overview";
+  }
+  .editor-panel {
+    grid-area: editor;
+    background: #f6f8fb;
+    font-size: clamp(13px, 0.9vw, 16px);
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .editor-panel > h2 { display: none; }
+  .preview-workspace { grid-area: preview; min-width: 0; }
+  .utility-actions {
+    grid-area: tools;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 7px 10px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 12;
+  }
+  .utility-actions > div { display: flex; align-items: center; gap: 4px; }
+  .utility-actions .button { padding-inline: clamp(6px, 0.75vw, 14px); font-size: 13px; }
+  .utility-actions select {
+    min-height: 44px;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font: inherit;
+  }
+  .toolbar-pages, #zoomValue { font-size: 13px; font-variant-numeric: tabular-nums; }
+  .toolbar-view [aria-pressed="true"] { color: white; background: var(--primary); }
+  .preview-region {
+    display: grid;
+    grid-template-columns: repeat(var(--page-columns, 1), max-content);
+    justify-content: safe center;
+    align-items: start;
+    gap: 24px;
+    padding: 24px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+  }
+  .page-frame { scroll-margin-block: 128px; }
+  .preview-region .timeslot { scroll-margin-block: 124px; }
+  .overview-panel {
+    grid-area: overview;
+    background: #f6f8fb;
+    border: 1px solid var(--border);
+    padding: 12px;
+  }
+  .overview-panel summary {
+    color: var(--primary);
+    font-weight: 750;
+    line-height: 44px;
+    cursor: pointer;
+  }
+  .overview-panel h3 { margin: 16px 0 4px; color: var(--text-muted); font-size: 13px; }
+  .overview-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .overview-metrics > div { background: #edf2f8; border-radius: 10px; padding: 10px; color: var(--text-muted); font-size: 13px; }
+  .overview-metrics strong { display: block; font-size: 25px; color: var(--text-main); }
+  .overview-link {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-content: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 44px;
+    padding: 4px;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+  }
+  .overview-link:hover { background: #fff8; }
+  .overview-link progress { width: 100%; height: 9px; grid-column: 1 / -1; accent-color: var(--primary); }
+  .overview-note { margin-block: 8px; padding: 8px; border: 1px solid #ffcc91; border-radius: 8px; background: #fff6e8; font-size: 13px; }
+  .overview-note.success { border-color: #97e3b4; background: #eefcf2; }
+  .overview-note.info { border-color: var(--border); background: #edf3ff; }
+  .overview-note .overview-link { font-size: 12px; }
+  #overviewBackupStatus { font-size: 13px; }
+  .is-measuring-print .preview-workspace { visibility: hidden; }
+  #app-shell.is-measuring-print .preview-workspace { display: block; }
+  .is-measuring-print .preview-region .page { zoom: 1; }
+}
+@media screen and (min-width: 1180px) {
+  .workspace-layout { grid-template-areas: "editor tools" "editor preview" "overview overview"; grid-template-rows: auto 1fr auto; }
+  .utility-actions { position: sticky; top: 0; }
+  .editor-panel { top: 0; max-height: 100dvh; padding: clamp(12px, 1vw, 22px); }
+  .preview-workspace { min-height: calc(100dvh - 120px); }
+}
+@media screen and (min-width: 1800px) {
+  .workspace-layout {
+    grid-template-columns: clamp(290px, 18.75vw, 420px) minmax(0, 1fr) clamp(258px, 17.7vw, 360px);
+    grid-template-areas: "editor tools overview" "editor preview overview";
+  }
+  .overview-panel { position: sticky; top: 0; max-height: 100dvh; overflow: auto; }
+}
+@media screen and (max-width: 1179px) {
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .workspace-switch { margin: 8px 10px; }
+  .toolbar-history, .toolbar-print {
+    position: fixed;
+    z-index: 14;
+    bottom: 0;
+    padding: 6px 5px calc(6px + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .toolbar-history { left: 0; width: 62%; justify-content: end; }
+  .toolbar-print { right: 0; width: 38%; }
+  .toolbar-zoom { min-width: 0; }
+  #toast-container { bottom: calc(72px + env(safe-area-inset-bottom)); }
+}
+@media screen and (max-width: 600px) {
+  .app-brand > span:last-child { display: none; }
+  #saveStatus { max-width: 130px; font-size: 11px; }
+  .preview-region { padding-block: 12px; }
+  .print-proof .page .continuation-header, .is-measuring-print .page .continuation-header { flex-direction: row; }
 }

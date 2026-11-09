@@ -91,7 +91,7 @@ for (const width of [320, 375, 768, 900, 1024, 1180, 1280, 1440]) {
     expect(layout.scroll).toBeLessThanOrEqual(layout.client + 1);
     expect(width >= 1180 ? layout.sideBySide : layout.editorHidden).toBe(true);
     if (width > 900) expect(layout.paperWidth).toBeCloseTo(210 * 96 / 25.4, 0);
-    if (width === 1180) expect(layout.scale).toBeLessThan(1);
+    if (width === 1180) expect(layout.scale).toBeGreaterThan(0.75);
 
     const slot = page.locator(".timeslot").first();
     for (const summary of [slot.locator(".timeslot-header summary"), slot.locator(".student-actions summary").first()]) {

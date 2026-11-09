@@ -70,11 +70,15 @@ function handleStateEvent(event) {
       scope.preferredGroupId = event.value.groupId;
     }
     requestRender(scope);
+    const status = document.getElementById("saveStatus");
+    if (status) status.textContent = "Alle Änderungen sind lokal gespeichert";
     updateUndoButton();
     clearUndoToast();
   } else if (event.type === "undo-stack") {
     updateUndoButton();
   } else if (event.type === "error") {
+    const status = document.getElementById("saveStatus");
+    if (status) status.textContent = "Änderung konnte nicht gespeichert werden";
     showSaveError(event.error);
   } else if (event.type === "conflict") {
     showConflictDialog();

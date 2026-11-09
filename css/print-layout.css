@@ -7,7 +7,6 @@
 
 .page {
   transform: none !important;
-  zoom: 1 !important;
   --footer-offset: 6mm;
   --footer-height: 7mm;
   width: 210mm;
@@ -138,11 +137,16 @@
 }
 
 .student-table {
+  display: table;
   flex: 1;
   min-height: 0;
   width: 100%;
   table-layout: fixed;
 }
+
+#pages .student-table tbody { display: table-row-group; }
+#pages .student-table tr { display: table-row; border: 0; }
+#pages .student-table tr.no-print { display: none; }
 
 .student-table td {
   height: 34px;
@@ -287,7 +291,7 @@
 .continuation-page .continuation-header {
   flex: 0 0 auto;
 }
-.slot-row { grid-template-rows: auto minmax(0, 1fr); }
+.slot-row { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto minmax(0, 1fr); }
 .slot-row.no-day-heading { grid-template-rows: minmax(0, 1fr); }
 #pages .day-heading-group.print-only { display: grid !important; }
 .student-table .empty-row td { height: 20px; padding: 2px 6px; border-bottom-color: #f1f5f9; }
