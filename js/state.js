@@ -49,6 +49,7 @@ function isNewer(candidate, current) {
 let appState = deepFreeze(createDefaultAppState());
 let persistenceStorage;
 let undoStack = [];
+let redoStack = [];
 let undoSequence = 0;
 const activeUndoGroups = new Map();
 const pendingLocalEdits = new Set();
@@ -155,6 +156,7 @@ export function initialiseState(initialState, { storage } = {}) {
   appState = deepFreeze(normalizeAppState(initialState));
   persistenceStorage = storage;
   undoStack = [];
+  redoStack = [];
   undoSequence = 0;
   activeUndoGroups.clear();
   pendingLocalEdits.clear();
@@ -202,6 +204,10 @@ export function getUndoDepth() {
 
 export function canUndo() {
   return undoStack.length > 0;
+}
+
+export function canRedo() {
+  return redoStack.length > 0;
 }
 
 export function hasPendingLocalChanges() {
@@ -271,6 +277,7 @@ export function runUndoable(label, mutation, {
       finalizeAllGroups();
     }
     if (undoable) {
+      redoStack = [];
       pushUndo(label, before, undoGroup);
     }
     installState(candidate);
@@ -332,37 +339,40 @@ export function cancelUndoGroup(groupKey, restoreCommand) {
   return result;
 }
 
-export function undo() {
-  const entry = undoStack.at(-1);
-  if (!entry) {
-    return { ok: true, changed: false, error: null };
-  }
-
+function restoreHistory(source, destination, commandType, message) {
+  const entry = source.at(-1);
+  if (!entry) return { ok: true, changed: false, error: null };
   try {
     const candidate = nextStateFromDraft(entry.snapshot);
     const persisted = persistCandidate(candidate);
     if (!persisted.ok) {
-      if (persisted.error?.code !== "STATE_CONFLICT") {
-        emit({ type: "error", error: persisted.error });
-      }
+      if (persisted.error?.code !== "STATE_CONFLICT") emit({ type: "error", error: persisted.error });
       return { ok: false, changed: false, error: persisted.error };
     }
-
     finalizeAllGroups();
-    undoStack.pop();
+    source.pop();
+    destination.push({ ...entry, snapshot: getStateSnapshot(), groupKey: null });
     installState(candidate);
     emit({
       type: "change",
-      commandType: "history/undo",
+      commandType,
       label: entry.label,
       render: RENDER_ALL,
-      notification: { message: "Rückgängig gemacht ✓", type: "success" }
+      notification: { message, type: "success" }
     });
     return { ok: true, changed: true, error: null };
   } catch (error) {
     emit({ type: "error", error });
     return { ok: false, changed: false, error };
   }
+}
+
+export function undo() {
+  return restoreHistory(undoStack, redoStack, "history/undo", "Rückgängig gemacht ✓");
+}
+
+export function redo() {
+  return restoreHistory(redoStack, undoStack, "history/redo", "Wiederholt ✓");
 }
 
 export function handleExternalState(rawState) {
@@ -385,6 +395,7 @@ export function handleExternalState(rawState) {
 
   installState(candidate);
   undoStack = [];
+  redoStack = [];
   activeUndoGroups.clear();
   externalConflict = null;
   emit({
@@ -418,6 +429,7 @@ export function resolveExternalConflict(strategy) {
   if (strategy === "external") {
     installState(clone(externalConflict));
     undoStack = [];
+    redoStack = [];
     activeUndoGroups.clear();
     pendingLocalEdits.clear();
     externalConflict = null;

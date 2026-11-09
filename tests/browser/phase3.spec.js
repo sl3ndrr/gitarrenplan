@@ -32,6 +32,7 @@ for (const width of [320, 375, 768, 1024]) {
 
 test("Dialog bleibt per Tastatur geschlossen fokussierbar und gibt Fokus zurück", async ({ page }) => {
   await page.goto("/");
+  await page.locator('[aria-labelledby="plan-management-title"] > summary').click();
   const newPlan = page.getByRole("button", { name: "Neuer Plan" });
   await newPlan.focus();
   await newPlan.press("Enter");
@@ -87,7 +88,7 @@ test("Empty State führt zur Gruppenerstellung und sperrt den Schülerworkflow",
   const cta = page.getByRole("button", { name: "Erste Gruppe anlegen" });
   await cta.focus();
   await cta.press("Enter");
-  await expect(page.locator("#newGroupTime")).toBeFocused();
+  await expect(page.locator("#newGroupStart")).toBeFocused();
 });
 
 test("reduzierte Bewegung deaktiviert Animationen und Transformationen", async ({ page }) => {

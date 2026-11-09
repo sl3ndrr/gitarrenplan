@@ -83,13 +83,13 @@ for (const width of [320, 375, 768, 900, 1024, 1180, 1280, 1440]) {
       const paper = document.querySelector(".page");
       return {
         client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth,
-        sideBySide: editor.right <= preview.left, stacked: editor.bottom <= preview.top,
+        sideBySide: editor.width > 0 && editor.right <= preview.left, editorHidden: editor.width === 0,
         paperWidth: parseFloat(getComputedStyle(paper).width),
         scale: parseFloat(getComputedStyle(document.querySelector("#pages")).getPropertyValue("--preview-scale"))
       };
     });
     expect(layout.scroll).toBeLessThanOrEqual(layout.client + 1);
-    expect(width >= 1180 ? layout.sideBySide : layout.stacked).toBe(true);
+    expect(width >= 1180 ? layout.sideBySide : layout.editorHidden).toBe(true);
     if (width > 900) expect(layout.paperWidth).toBeCloseTo(210 * 96 / 25.4, 0);
     if (width === 1180) expect(layout.scale).toBeLessThan(1);
 

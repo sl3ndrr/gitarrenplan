@@ -3,6 +3,7 @@ import { initialiseDataTransfer } from "./features/data-transfer.js";
 import { initialiseEditor } from "./features/editor.js";
 import {
   initialiseHistory,
+  undo,
   updateUndoButton
 } from "./features/history.js";
 import { initialiseLifecycle } from "./features/lifecycle.js";
@@ -27,6 +28,7 @@ import {
   flushPendingTextEdits
 } from "./ui/text-edit.js";
 import {
+  clearUndoToast,
   disposeFeedback,
   showModal,
   showSaveError,
@@ -69,6 +71,7 @@ function handleStateEvent(event) {
     }
     requestRender(scope);
     updateUndoButton();
+    clearUndoToast();
   } else if (event.type === "undo-stack") {
     updateUndoButton();
   } else if (event.type === "error") {
@@ -78,7 +81,8 @@ function handleStateEvent(event) {
   }
 
   if (event.notification) {
-    showToast(event.notification.message, event.notification.type);
+    const removal = event.type === "change" && ["group/remove", "student/remove"].includes(event.commandType);
+    showToast(event.notification.message, event.notification.type, removal ? undo : null);
   }
 }
 

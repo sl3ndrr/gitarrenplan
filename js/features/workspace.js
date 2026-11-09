@@ -1,3 +1,5 @@
+import { safeGetItem, safeSetItem } from "../persistence.js";
+
 /** Screen scaling never changes the page's physical CSS dimensions. */
 export function initialiseWorkspace() {
   const pages = document.getElementById("pages");
@@ -6,16 +8,40 @@ export function initialiseWorkspace() {
     return () => {};
   }
 
-  if (window.innerWidth >= 1180) {
-    document.querySelectorAll(".editor-grid > details").forEach((section) => {
-      section.open = section.getAttribute("aria-labelledby") === "plan-management-title"
-        || section.getAttribute("aria-labelledby") === "new-group-title";
-    });
+  const sectionsKey = "gitarrenunterricht_editor_bereiche";
+  const sections = [...document.querySelectorAll(".editor-grid > details, .danger-zone")];
+  let openSections = {};
+  try {
+    openSections = JSON.parse(safeGetItem(sectionsKey)) || {};
+  } catch {
+    // Use the defaults when a device preference is invalid.
   }
+  const keyFor = (section) => section.getAttribute("aria-labelledby") || "danger";
+  const rememberSections = () => {
+    safeSetItem(sectionsKey, JSON.stringify(Object.fromEntries(sections.map((section) => [keyFor(section), section.open]))));
+  };
+  sections.forEach((section) => {
+    section.open = openSections[keyFor(section)] ?? section.open;
+    section.addEventListener("toggle", rememberSections);
+  });
+
+  const shell = document.getElementById("app-shell");
+  const editButton = document.getElementById("editViewBtn");
+  const previewButton = document.getElementById("previewViewBtn");
+  const setView = (view) => {
+    shell.dataset.smallView = view;
+    editButton?.setAttribute("aria-pressed", String(view === "edit"));
+    previewButton?.setAttribute("aria-pressed", String(view === "preview"));
+    resize();
+  };
+  const edit = () => setView("edit");
+  const preview = () => setView("preview");
+  editButton?.addEventListener("click", edit);
+  previewButton?.addEventListener("click", preview);
 
   const resize = () => {
     const firstPage = pages.querySelector(".page");
-    if (!firstPage) {
+    if (!firstPage || !pages.clientWidth || !firstPage.offsetWidth) {
       return;
     }
     const scale = window.innerWidth > 900
@@ -38,9 +64,13 @@ export function initialiseWorkspace() {
   const mutations = new window.MutationObserver(observePages);
   mutations.observe(pages, { childList: true });
   window.addEventListener("resize", resize);
+  preview();
   observePages();
 
   return () => {
+    sections.forEach((section) => section.removeEventListener("toggle", rememberSections));
+    editButton?.removeEventListener("click", edit);
+    previewButton?.removeEventListener("click", preview);
     observer?.disconnect();
     mutations.disconnect();
     window.removeEventListener("resize", resize);

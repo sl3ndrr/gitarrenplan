@@ -1,7 +1,8 @@
 import {
   APPEARANCE_LAYOUT_SCALES,
   APPEARANCE_LIMITS,
-  DATA_LIMITS
+  DATA_LIMITS,
+  WEEKDAYS
 } from "./config.js";
 import { paginateGroups } from "./pagination.js";
 import { getActivePlan, getActivePlanId, getMinRows, getPlans } from "./state.js";
@@ -142,7 +143,7 @@ function restoreInlineFocus(snapshot, container) {
     return;
   }
   element.focus({ preventScroll: true });
-  if (typeof element.setSelectionRange === "function") {
+  if (snapshot.start !== null && typeof element.setSelectionRange === "function") {
     const max = element.value.length;
     element.setSelectionRange(
       Math.min(snapshot.start ?? max, max),
@@ -170,6 +171,8 @@ function renderPages() {
   const appearance = plan.appearance;
   const container = document.getElementById("pages");
   const focusSnapshot = captureInlineFocus();
+  const drafts = new Map([...container.querySelectorAll("[data-add-key]")]
+    .filter((input) => input.value).map((input) => [input.dataset.addKey, input.value]));
   const fragment = document.createDocumentFragment();
   const minRows = getMinRows();
   const pagination = paginateGroups(plan.groups, minRows);
@@ -215,6 +218,9 @@ function renderPages() {
   });
 
   container.replaceChildren(fragment);
+  container.querySelectorAll("[data-add-key]").forEach((input) => {
+    input.value = drafts.get(input.dataset.addKey) || "";
+  });
   restoreInlineFocus(focusSnapshot, container);
 }
 
@@ -260,9 +266,8 @@ function renderContinuationHeader(meta) {
 }
 
 function weekdayKey(day) {
-  const days = ["montag", "dienstag", "mittwoch", "donnerstag", "freitag", "samstag", "sonntag"];
   const key = (day || "").trim().toLocaleLowerCase("de");
-  return days.includes(key) ? key : "neutral";
+  return WEEKDAYS.some((weekday) => weekday.toLocaleLowerCase("de") === key) ? key : "neutral";
 }
 
 function headingDayKey(day) {
@@ -328,9 +333,12 @@ function renderGroup(segment, studentCount, minRows, appearance) {
   const studentRows = segment.students.map((student, index) => (
     renderStudentRow(student, groupId, segment.studentOffset + index)
   ));
-  const emptyRows = Array.from({ length: segment.emptyRows }, renderEmptyRow);
+  const isLastSegment = segment.part === segment.totalParts;
+  const emptyRows = Array.from({ length: segment.emptyRows }, (_, index) =>
+    renderEmptyRow(isLastSegment && index === 0 ? segment.groupId : "")
+  );
+  if (isLastSegment && !emptyRows.length) emptyRows.push(renderEmptyRow(segment.groupId, true));
   const dayKey = escapeHtml("group:" + segment.groupId + ":day");
-  const timeKey = escapeHtml("group:" + segment.groupId + ":time");
   const groupLabel = segment.day ? segment.day + " · " + segment.time : segment.time;
   const accessibleLabel = groupLabel + (segment.continuation ? " · Fortsetzung" : "");
   const editableHeader = segment.continuation
@@ -339,8 +347,8 @@ function renderGroup(segment, studentCount, minRows, appearance) {
       '<span class="time-text no-print">' + escapeHtml(segment.time) + "</span>"
     ].join("")
     : [
-      '<input type="text" class="' + dayClass + ' editable inline-editor no-print" value="' + escapeHtml(segment.day) + '" placeholder="Wochentag" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + dayKey + '" data-inline-type="group" data-field="day" data-group-id="' + groupId + '" aria-label="Wochentag dieser Gruppe bearbeiten">',
-      '<input type="text" class="time-text editable inline-editor no-print" value="' + escapeHtml(segment.time) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + timeKey + '" data-inline-type="group" data-field="time" data-group-id="' + groupId + '" aria-label="Zeit oder Gruppenname bearbeiten">'
+      '<input type="text" class="' + dayClass + ' editable inline-editor no-print" value="' + escapeHtml(segment.day) + '" placeholder="Wochentag" list="weekdays" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + dayKey + '" data-inline-type="group" data-field="day" data-group-id="' + groupId + '" aria-label="Wochentag dieser Gruppe bearbeiten">',
+      renderGroupTimeEditors(segment)
     ].join("");
   const continuationMarker = segment.continuation
     ? '<span class="continuation-marker">Fortsetzung</span>'
@@ -355,6 +363,7 @@ function renderGroup(segment, studentCount, minRows, appearance) {
     '<div class="timeslot-header">',
     '<div class="group-header-left">',
     '<span class="time-text print-only">' + escapeHtml(segment.time) + "</span>",
+    segment.start && segment.end && segment.label ? '<span class="print-only">' + escapeHtml(segment.label) + "</span>" : "",
     editableHeader,
     continuationMarker,
     occupancy,
@@ -363,6 +372,7 @@ function renderGroup(segment, studentCount, minRows, appearance) {
     '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
     '<button class="button icon-button" aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '"><span aria-hidden="true">↓</span><span>Nach unten</span></button>',
     '<button class="button icon-button" aria-label="Schüler alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span><span>Alphabetisch sortieren</span></button>',
+    '<button class="button icon-button" data-action="sort-surname" data-group-id="' + groupId + '">Nach Nachname sortieren</button>',
     '<button class="button remove-group-button" aria-label="Gruppe entfernen" title="Gruppe entfernen" data-action="remove-group" data-group-id="' + groupId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
     ].join(""), "Gruppenaktionen", "group-actions:" + segment.groupId, "slot-actions"),
     "</div>",
@@ -377,7 +387,8 @@ function renderGroup(segment, studentCount, minRows, appearance) {
 }
 
 function renderActionMenu(content, label, focusKey, className) {
-  return '<details class="action-menu no-print"><summary class="button actions-toggle" data-focus-key="'
+  const drag = className === "slot-actions" ? ' draggable="true" data-drag-kind="group"' : "";
+  return '<details class="action-menu no-print"><summary class="button actions-toggle"' + drag + ' data-focus-key="'
     + escapeHtml(focusKey) + '" aria-label="' + escapeHtml(label) + ' öffnen" title="'
     + escapeHtml(label) + '"><span aria-hidden="true">⋮</span></summary>'
     + '<div class="action-menu-items ' + className + '" role="group" aria-label="'
@@ -391,7 +402,7 @@ function renderStudentRow(student, groupId, index) {
   const classKey = escapeHtml("student:" + student.id + ":className");
 
   return [
-    "<tr>",
+    '<tr draggable="true" data-drag-kind="student" data-student-id="' + studentId + '">',
     '<td class="student-name"><span class="print-only">' + labelName + "</span>",
     '<input type="text" class="student-name-input editable inline-editor no-print" value="' + labelName + '" maxlength="' + DATA_LIMITS.personNameLength + '" data-inline-key="' + nameKey + '" data-inline-type="student" data-field="name" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Name von Schüler ' + (index + 1) + ' bearbeiten"></td>',
     '<td class="student-class">',
@@ -408,8 +419,34 @@ function renderStudentRow(student, groupId, index) {
   ].join("");
 }
 
-function renderEmptyRow() {
-  return '<tr class="empty-row" aria-hidden="true"><td></td><td></td><td class="student-actions no-print"></td></tr>';
+function renderGroupTimeEditors(segment) {
+  const fields = [
+    ["start", "time", "Beginn", segment.start],
+    ["end", "time", "Ende", segment.end],
+    [segment.start || segment.end ? "label" : "time", "text", "Bezeichnung", segment.label]
+  ];
+  const inputs = fields.map(([field, type, label, value]) => {
+    const groupId = escapeHtml(segment.groupId);
+    return '<input class="time-text editable inline-editor no-print" type="' + type
+      + '" value="' + escapeHtml(value || "") + '" placeholder="' + label + '" aria-label="' + label
+      + '" data-inline-key="group:' + groupId + ':' + field
+      + '" data-inline-type="group" data-field="' + field + '" data-group-id="' + groupId + '">';
+  });
+  return '<div class="time-pair no-print">' + inputs.slice(0, 2).join("") + "</div>" + inputs[2];
+}
+
+function renderEmptyRow(groupId, onlyScreen = false) {
+  if (!groupId) {
+    return '<tr class="empty-row" aria-hidden="true"><td></td><td></td><td class="student-actions no-print"></td></tr>';
+  }
+  const id = escapeHtml(groupId);
+  const field = (key, label, maxLength) => '<input class="inline-editor no-print" type="text" maxlength="'
+    + maxLength + '" placeholder="' + label + '" aria-label="' + label
+    + '" data-add-key="' + id + ':' + key + '" data-add-group="' + id + '" data-add-field="' + key + '">';
+  return '<tr class="empty-row inline-add-row' + (onlyScreen ? ' no-print' : '') + '"><td class="student-name">'
+    + field("name", "Name hinzufügen", DATA_LIMITS.personNameLength) + '</td><td class="student-class">'
+    + field("className", "Klasse", DATA_LIMITS.metadataLength)
+    + '</td><td class="student-actions no-print"><button class="button btn-secondary" type="button" data-action="inline-add" aria-label="Teilnehmende hinzufügen">+</button></td></tr>';
 }
 
 function optionsSignature(items) {

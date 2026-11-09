@@ -179,7 +179,7 @@ describe("Dokumentsemantik und Empty State", () => {
       ["Klasse", "col"],
       ["Aktionen", "col"]
     ]);
-    expect([...table.querySelectorAll(".empty-row")]
+    expect([...table.querySelectorAll(".empty-row:not(.inline-add-row)")]
       .every((row) => row.getAttribute("aria-hidden") === "true")).toBe(true);
   });
 
