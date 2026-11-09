@@ -47,11 +47,14 @@ test("die genaue Vorschau verwendet auch auf dem Handy die Druckmaße", async ({
     };
   });
   await expect(page.locator(".preview-document-title")).toHaveCSS("font-size", "28px");
+  const fitted = await layout();
+  expect(fitted.meta).toHaveLength(3);
+  expect(fitted.columns).toHaveLength(2);
+  // At 100% both media use the same font raster and table-pixel rounding.
+  await page.locator("#zoomSelect").selectOption({ value: "1" });
   const screen = await layout();
   await page.emulateMedia({ media: "print" });
   const printed = await layout();
-  expect(screen.meta).toHaveLength(3);
-  expect(screen.columns).toHaveLength(2);
   for (const key of ["paper", "title", "row", "padding"]) {
     expect(Math.abs(screen[key] - printed[key]), key).toBeLessThanOrEqual(1);
   }
