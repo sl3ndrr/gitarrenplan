@@ -65,3 +65,22 @@
     transition: none !important;
   }
 }
+
+@page landscape {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  html:has(.landscape-page),
+  body:has(.landscape-page),
+  .wrapper:has(.landscape-page),
+  .workspace-layout:has(.landscape-page),
+  .preview-workspace:has(.landscape-page),
+  .page-frame:has(.landscape-page) {
+    width: 297mm !important;
+    min-width: 297mm;
+    max-width: 297mm;
+  }
+  .page-frame:has(.landscape-page) { page: landscape; }
+}

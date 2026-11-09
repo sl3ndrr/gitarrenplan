@@ -106,7 +106,7 @@ export function initialiseOverview(pages) {
     pending = window.setTimeout(() => {
       pending = null;
       if (!panel.open || !pages.clientWidth) return;
-      if (total > 1000) {
+      if (total > 1000 || plan.layout.output !== "groups" || plan.layout.orientation !== "portrait") {
         warnings.append(warning("Druckprüfung beim Drucken", [], "info"));
         return;
       }

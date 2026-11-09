@@ -1,3 +1,4 @@
+import { setPrintPresentation } from "../render.js";
 import { safeGetItem, safeSetItem } from "../persistence.js";
 import { motionAllowed } from "../ui/motion.js";
 import { showModal } from "../ui/feedback.js";
@@ -177,6 +178,7 @@ export function initialiseWorkspace() {
     stylesheet.media = proof ? "all" : "print";
     shell.classList.toggle("print-proof", proof);
     get("proofBtn").setAttribute("aria-pressed", String(proof));
+    setPrintPresentation("proof", proof);
     switchView("preview");
   });
   listen(get("spreadBtn"), "click", () => {
@@ -233,6 +235,7 @@ export function initialiseWorkspace() {
     cleanups.splice(0).reverse().forEach((cleanup) => cleanup());
     stylesheet.media = "print";
     shell.classList.remove("print-proof");
+    if (proof) setPrintPresentation("proof", false);
     sizeObserver?.disconnect();
     intersection?.disconnect();
     mutations.disconnect();

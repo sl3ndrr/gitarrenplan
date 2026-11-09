@@ -4,6 +4,7 @@ import {
   DATA_LIMITS,
   WEEKDAYS
 } from "./config.js";
+import { paginateAttendance, paginateWeek, renderAttendance, renderWeek } from "./print-formats.js";
 import { paginateGroups } from "./pagination.js";
 import { getActivePlan, getActivePlanId, getMinRows, getPlans } from "./state.js";
 import { capturePageMotion, playPageMotion } from "./ui/motion.js";
@@ -19,6 +20,18 @@ const ALL_RENDER_SCOPES = Object.freeze({
 let pendingRender = {};
 let scheduledFrame = null;
 let scheduledWithTimeout = false;
+let proofPresentation = false;
+let printPresentation = false;
+
+export function setPrintPresentation(mode, active) {
+  const before = proofPresentation || printPresentation;
+  if (mode === "proof") proofPresentation = active;
+  else printPresentation = active;
+  if (before !== (proofPresentation || printPresentation)) {
+    const { layout } = getActivePlan();
+    if (layout.output !== "groups" || layout.orientation !== "portrait") render({ pages: true });
+  }
+}
 
 function normalizeScope(scope) {
   if (typeof scope === "string") {
@@ -177,14 +190,19 @@ function renderPages(motion) {
   const drafts = new Map([...container.querySelectorAll("[data-add-key]")]
     .filter((input) => input.value).map((input) => [input.dataset.addKey, input.value]));
   const fragment = document.createDocumentFragment();
-  const minRows = getMinRows();
-  const pagination = paginateGroups(plan.groups, minRows);
+  const minRows = plan.layout.minRows;
+  const showingOutput = proofPresentation || printPresentation;
+  const output = showingOutput ? plan.layout.output : "groups";
+  const orientation = showingOutput ? plan.layout.orientation : "portrait";
+  const pagination = output === "week" ? paginateWeek(plan.groups, orientation)
+    : output === "attendance" ? { pages: paginateAttendance(plan.groups, plan.layout) }
+      : paginateGroups(plan.groups, minRows, { orientation, showNotes: plan.layout.showNotes });
   const totalPages = pagination.pages.length;
-  const printDate = formatDate(new Date());
+  const footerDate = plan.layout.showUpdatedAt && plan.updatedAt ? "Stand: " + formatDate(new Date(plan.updatedAt)) : "";
   const studentCounts = new Map(plan.groups.map((group) => [group.id, group.students.length]));
   const totalStudents = plan.groups.reduce((sum, group) => sum + group.students.length, 0);
   const summary = plan.groups.length + (plan.groups.length === 1 ? " Gruppe" : " Gruppen")
-    + " · " + totalStudents + " Schüler:innen gesamt";
+    + " · " + totalStudents + " Teilnehmende gesamt";
 
   pagination.pages.forEach((segmentsForPage, pageIndex) => {
     const pageNumber = pageIndex + 1;
@@ -192,28 +210,34 @@ function renderPages(motion) {
     const page = document.createElement("article");
     page.className = [
       "page",
-      pagination.layout.id === "2x3" ? "compact-page" : "regular-page",
-      isFirstPage ? "first-page" : "continuation-page"
+      pagination.layout?.id === "2x3" ? "compact-page" : "regular-page",
+      isFirstPage ? "first-page" : "continuation-page",
+      orientation === "landscape" ? "landscape-page" : "",
+      output === "groups" ? "" : "alternative-page",
+      plan.layout.showNotes ? "has-note-column" : "",
+      plan.layout.monochrome ? "monochrome-page" : ""
     ].join(" ");
-    page.dataset.grid = pagination.layout.id;
+    page.dataset.grid = pagination.layout?.id ?? output;
     page.dataset.colorIntensity = String(appearance.colorIntensity);
     applyAppearanceVariables(page, appearance);
     page.setAttribute("aria-label", "Druckseite " + pageNumber + " von " + totalPages);
-    page.innerHTML = [
-      '<div class="page-content">',
-      isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta),
-      '<div class="slots ' + pagination.layout.gridClass + (segmentsForPage.length ? "" : " has-empty-state") + '">',
-      segmentsForPage.length
-        ? renderSlotRows(segmentsForPage, studentCounts, minRows, appearance)
-        : renderEmptyState(),
-      "</div>",
-      "</div>",
-      '<footer class="page-footer">',
-      '<span class="document-summary">' + summary + "</span> · ",
-      totalPages > 1 ? "Seite " + pageNumber + " von " + totalPages + " · " : "",
-      "Stand: " + printDate,
-      "</footer>"
-    ].join("");
+    const header = output === "groups"
+      ? isFirstPage ? renderMainHeader(plan.meta) : renderContinuationHeader(plan.meta)
+      : renderFormatHeader(plan.meta, output);
+    let content;
+    if (output === "week") {
+      content = renderWeek(segmentsForPage, pagination.columns, minRows);
+    } else if (output === "attendance") {
+      content = renderAttendance(segmentsForPage, minRows);
+    } else {
+      content = '<div class="slots ' + pagination.layout.gridClass + (segmentsForPage.length ? "" : " has-empty-state") + '">'
+        + (segmentsForPage.length ? renderSlotRows(segmentsForPage, studentCounts, minRows, appearance, plan.layout.showNotes)
+          : renderEmptyState()) + "</div>";
+    }
+    const footer = [totalPages > 1 ? "Seite " + pageNumber + " von " + totalPages : "", footerDate].filter(Boolean);
+    page.innerHTML = '<div class="page-content">' + header + content + '</div><footer class="page-footer">'
+      + '<span class="document-summary">' + summary + "</span>"
+      + (footer.length ? " · " + footer.join(" · ") : "") + "</footer>";
     const frame = document.createElement("div");
     frame.className = "page-frame";
     frame.appendChild(page);
@@ -226,6 +250,13 @@ function renderPages(motion) {
   });
   restoreInlineFocus(focusSnapshot, container);
   playPageMotion(container, motionSnapshot);
+}
+
+function renderFormatHeader(meta, output) {
+  const heading = output === "week" ? "Wochenübersicht" : "Anwesenheitsliste";
+  const information = [meta.teacher, meta.location, meta.term].filter(Boolean).map(escapeHtml).join(" · ");
+  return '<header class="format-header"><div><h3>' + escapeHtml(meta.title) + "</h3><p>" + heading
+    + "</p></div>" + (information ? "<p>" + information + "</p>" : "") + "</header>";
 }
 
 function renderMainHeader(meta) {
@@ -249,7 +280,7 @@ function renderEmptyState() {
   return [
     '<section class="empty-state no-print" aria-labelledby="empty-state-title">',
     '<h3 id="empty-state-title">Noch keine Gruppen</h3>',
-    '<p>Lege zuerst eine Unterrichtsgruppe an. Danach kannst du Schüler hinzufügen.</p>',
+    '<p>Lege zuerst eine Unterrichtsgruppe an. Danach kannst du Teilnehmende hinzufügen.</p>',
     '<button class="button btn-primary" type="button" data-action="focus-group-form">Erste Gruppe anlegen</button>',
     "</section>"
   ].join("");
@@ -288,7 +319,7 @@ function renderDayHeading(segment, column, sharedDay) {
 
 // Preserve group order. The next row continues a day only when its first
 // group matches the last group in the preceding visual row.
-function renderSlotRows(segments, studentCounts, minRows, appearance) {
+function renderSlotRows(segments, studentCounts, minRows, appearance, showNotes) {
   const rows = [];
   let previousRowLastDay = null;
 
@@ -308,7 +339,7 @@ function renderSlotRows(segments, studentCounts, minRows, appearance) {
           : renderDayHeading(segment, column, false)
       )).filter(Boolean);
     const headingMarkup = headings.length
-      ? '<div class="day-heading-group print-only' + (sharedDay ? " shared-day" : "") + '">'
+      ? '<div class="day-heading-group' + (sharedDay ? " shared-day" : "") + '">'
         + headings.join("") + "</div>"
       : "";
 
@@ -320,7 +351,8 @@ function renderSlotRows(segments, studentCounts, minRows, appearance) {
         segment,
         studentCounts.get(segment.groupId),
         minRows,
-        appearance
+        appearance,
+        showNotes
       )),
       "</div>"
     );
@@ -329,19 +361,19 @@ function renderSlotRows(segments, studentCounts, minRows, appearance) {
   return rows.join("");
 }
 
-function renderGroup(segment, studentCount, minRows, appearance) {
+function renderGroup(segment, studentCount, minRows, appearance, showNotes) {
 
   const groupId = escapeHtml(segment.groupId);
   const dayText = segment.day || "Wochentag";
   const dayClass = segment.day ? "day-badge" : "day-badge empty-day";
   const studentRows = segment.students.map((student, index) => (
-    renderStudentRow(student, groupId, segment.studentOffset + index)
+    renderStudentRow(student, groupId, segment.studentOffset + index, showNotes)
   ));
   const isLastSegment = segment.part === segment.totalParts;
   const emptyRows = Array.from({ length: segment.emptyRows }, (_, index) =>
-    renderEmptyRow(isLastSegment && index === 0 ? segment.groupId : "")
+    renderEmptyRow(isLastSegment && index === 0 ? segment.groupId : "", false, showNotes)
   );
-  if (isLastSegment && !emptyRows.length) emptyRows.push(renderEmptyRow(segment.groupId, true));
+  if (isLastSegment && !emptyRows.length) emptyRows.push(renderEmptyRow(segment.groupId, true, showNotes));
   const dayKey = escapeHtml("group:" + segment.groupId + ":day");
   const groupLabel = segment.day ? segment.day + " · " + segment.time : segment.time;
   const accessibleLabel = groupLabel + (segment.continuation ? " · Fortsetzung" : "");
@@ -375,13 +407,13 @@ function renderGroup(segment, studentCount, minRows, appearance) {
     segment.continuation ? "" : renderActionMenu([
     '<button class="button icon-button" aria-label="Gruppe nach oben verschieben" title="Gruppe nach oben" data-action="group-up" data-group-id="' + groupId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
     '<button class="button icon-button" aria-label="Gruppe nach unten verschieben" title="Gruppe nach unten" data-action="group-down" data-group-id="' + groupId + '"><span aria-hidden="true">↓</span><span>Nach unten</span></button>',
-    '<button class="button icon-button" aria-label="Schüler alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span><span>Alphabetisch sortieren</span></button>',
+    '<button class="button icon-button" aria-label="Teilnehmende alphabetisch sortieren" title="Alphabetisch sortieren" data-action="sort-group" data-group-id="' + groupId + '"><span aria-hidden="true">A–Z</span><span>Alphabetisch sortieren</span></button>',
     '<button class="button icon-button" data-action="sort-surname" data-group-id="' + groupId + '">Nach Nachname sortieren</button>',
     '<button class="button remove-group-button" aria-label="Gruppe entfernen" title="Gruppe entfernen" data-action="remove-group" data-group-id="' + groupId + '"><span aria-hidden="true">✕</span><span>Entfernen</span></button>',
     ].join(""), "Gruppenaktionen", "group-actions:" + segment.groupId, "slot-actions"),
     "</div>",
     '<table class="student-table">',
-    '<caption class="visually-hidden">Schüler in Gruppe ' + escapeHtml(accessibleLabel) + "</caption>",
+    '<caption class="visually-hidden">Teilnehmende in Gruppe ' + escapeHtml(accessibleLabel) + "</caption>",
     '<thead class="visually-hidden"><tr><th scope="col">Name</th><th scope="col">Klasse</th><th scope="col">Aktionen</th></tr></thead>',
     "<tbody>",
     studentRows.join(""),
@@ -399,7 +431,7 @@ function renderActionMenu(content, label, focusKey, className) {
     + escapeHtml(label) + '">' + content + '</div></details>';
 }
 
-function renderStudentRow(student, groupId, index) {
+function renderStudentRow(student, groupId, index, showNotes) {
   const studentId = escapeHtml(student.id);
   const labelName = escapeHtml(student.name);
   const nameKey = escapeHtml("student:" + student.id + ":name");
@@ -408,10 +440,11 @@ function renderStudentRow(student, groupId, index) {
   return [
     '<tr draggable="true" data-drag-kind="student" data-motion-key="student:' + studentId + '" data-student-id="' + studentId + '">',
     '<td class="student-name"><span class="print-only">' + labelName + "</span>",
-    '<input type="text" class="student-name-input editable inline-editor no-print" value="' + labelName + '" maxlength="' + DATA_LIMITS.personNameLength + '" data-inline-key="' + nameKey + '" data-inline-type="student" data-field="name" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Name von Schüler ' + (index + 1) + ' bearbeiten"></td>',
+    '<input type="text" class="student-name-input editable inline-editor no-print" value="' + labelName + '" maxlength="' + DATA_LIMITS.personNameLength + '" data-inline-key="' + nameKey + '" data-inline-type="student" data-field="name" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Name von Person ' + (index + 1) + ' bearbeiten"></td>',
     '<td class="student-class">',
     student.className ? '<span class="class-badge print-only">' + escapeHtml(student.className) + "</span>" : "",
-    '<input type="text" class="class-badge editable inline-editor no-print" placeholder="Klasse" value="' + escapeHtml(student.className) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + classKey + '" data-inline-type="student" data-field="className" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Schüler ' + (index + 1) + ' bearbeiten"></td>',
+    '<input type="text" class="class-badge editable inline-editor no-print" placeholder="Klasse" value="' + escapeHtml(student.className) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + classKey + '" data-inline-type="student" data-field="className" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Person ' + (index + 1) + ' bearbeiten"></td>',
+    noteCell(showNotes),
     '<td class="student-actions no-print">',
     renderActionMenu([
     '<button class="button icon-button" aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',
@@ -439,9 +472,13 @@ function renderGroupTimeEditors(segment) {
   return '<div class="time-pair no-print">' + inputs.slice(0, 2).join("") + "</div>" + inputs[2];
 }
 
-function renderEmptyRow(groupId, onlyScreen = false) {
+function noteCell(showNotes) {
+  return showNotes ? '<td class="student-note print-only"></td>' : "";
+}
+
+function renderEmptyRow(groupId, onlyScreen = false, showNotes = false) {
   if (!groupId) {
-    return '<tr class="empty-row" aria-hidden="true"><td></td><td></td><td class="student-actions no-print"></td></tr>';
+    return '<tr class="empty-row" aria-hidden="true"><td></td><td></td>' + noteCell(showNotes) + '<td class="student-actions no-print"></td></tr>';
   }
   const id = escapeHtml(groupId);
   const field = (key, label, maxLength) => '<input class="inline-editor no-print" type="text" maxlength="'
@@ -450,7 +487,7 @@ function renderEmptyRow(groupId, onlyScreen = false) {
   return '<tr class="empty-row inline-add-row' + (onlyScreen ? ' no-print' : '') + '"><td class="student-name">'
     + field("name", "Name hinzufügen", DATA_LIMITS.personNameLength) + '</td><td class="student-class">'
     + field("className", "Klasse", DATA_LIMITS.metadataLength)
-    + '</td><td class="student-actions no-print"><button class="button btn-secondary" type="button" data-action="inline-add" aria-label="Teilnehmende hinzufügen">+</button></td></tr>';
+    + '</td>' + noteCell(showNotes) + '<td class="student-actions no-print"><button class="button btn-secondary" type="button" data-action="inline-add" aria-label="Teilnehmende hinzufügen">+</button></td></tr>';
 }
 
 function optionsSignature(items) {
@@ -532,6 +569,11 @@ export function updateEditorValues() {
   document.getElementById("metaLocation").value = plan.meta.location;
   document.getElementById("metaTerm").value = plan.meta.term;
   document.getElementById("minRows").value = getMinRows();
+  document.querySelectorAll("[data-layout-field]").forEach((element) => {
+    const value = plan.layout[element.dataset.layoutField];
+    if (element.type === "checkbox") element.checked = value;
+    else element.value = value;
+  });
   updateAppearanceRangeControl(
     "colorIntensity",
     "colorIntensityValue",

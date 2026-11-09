@@ -68,7 +68,7 @@ test("Inline-Bearbeitung lässt sich mit Escape verwerfen und mit Enter bestäti
   await nameInput.fill("Verworfener Name");
   await nameInput.press("Escape");
   await expect(page.locator('[data-inline-type="student"][data-student-id="student-0-1"][data-field="name"]'))
-    .toHaveValue("Sehr langer Schülername mit mehreren Bestandteilen und zusätzlicher Bezeichnung");
+    .toHaveValue("Sehr langer Name mit mehreren Bestandteilen und zusätzlicher Bezeichnung");
 
   const restoredInput = page.locator('[data-inline-type="student"][data-student-id="student-0-1"][data-field="name"]');
   await restoredInput.focus();
@@ -77,7 +77,7 @@ test("Inline-Bearbeitung lässt sich mit Escape verwerfen und mit Enter bestäti
   await expect(page.locator('.student-name .print-only').first()).toHaveText("Bestätigter Name");
 });
 
-test("Empty State führt zur Gruppenerstellung und sperrt den Schülerworkflow", async ({ page }) => {
+test("Empty State führt zur Gruppenerstellung und sperrt den Erfassung von Teilnehmenden", async ({ page }) => {
   await seedState(page, createState(0));
   await page.goto("/");
 

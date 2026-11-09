@@ -89,7 +89,7 @@ describe("Gruppenauswahl", () => {
     expect(getActivePlan().meta.term).toBe("2. Halbjahr 2026");
   });
 
-  it("fügt zwei Schüler nacheinander weiterhin der zweiten Gruppe hinzu", () => {
+  it("fügt zwei Teilnehmende nacheinander weiterhin der zweiten Gruppe hinzu", () => {
     const groupSelect = document.getElementById("groupSelect");
     const nameInput = document.getElementById("studentName");
     const classInput = document.getElementById("studentClass");
@@ -126,7 +126,7 @@ describe("Gruppenauswahl", () => {
     expect(document.getElementById("groupSelect").value).toBe(newGroup.id);
   });
 
-  it("deaktiviert Gruppenauswahl und Schüler-Button ohne Gruppen", () => {
+  it("deaktiviert Gruppenauswahl und Button zum Hinzufügen ohne Gruppen", () => {
     const state = createState();
     initialiseState(normalizeAppState({
       ...state,

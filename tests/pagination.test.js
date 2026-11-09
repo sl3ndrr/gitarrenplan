@@ -9,7 +9,7 @@ import {
 function student(index, overrides = {}) {
   return {
     id: "student-" + index,
-    name: "Schüler " + index,
+    name: "Person " + index,
     className: "Klasse 3 a",
     ...overrides
   };
@@ -58,7 +58,7 @@ describe("reine Druckpaginierung", () => {
     }
   });
 
-  it("teilt 40 Schüler verlustfrei in gleich große 2x2-Segmente", () => {
+  it("teilt 40 Teilnehmende verlustfrei in gleich große 2x2-Segmente", () => {
     const source = group(1, 40);
     const result = paginateGroups([source], 6);
     const segments = result.pages.flat();
@@ -73,7 +73,7 @@ describe("reine Druckpaginierung", () => {
       .toEqual(source.students.map((item) => item.id));
   });
 
-  it("reduziert Mindest-Leerzeilen, bevor echte Schüler verschoben werden", () => {
+  it("reduziert Mindest-Leerzeilen, bevor echte Teilnehmende verschoben werden", () => {
     const source = group(1, 7);
     const result = paginateGroups([source], 20);
     const segments = result.pages.flat();
@@ -88,7 +88,7 @@ describe("reine Druckpaginierung", () => {
 
   it("berücksichtigt lange Namen und Metadaten konservativ, ohne Daten zu verlieren", () => {
     const longStudents = Array.from({ length: 6 }, (_, index) => student(index, {
-      name: "Sehr langer Schülername mit mehreren Bestandteilen Nummer " + index,
+      name: "Sehr langer Name mit mehreren Bestandteilen Nummer " + index,
       className: "Sehr ausführliche Klassenbezeichnung für den Ausdruck"
     }));
     const source = group(1, 0, {

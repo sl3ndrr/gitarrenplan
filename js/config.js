@@ -53,3 +53,14 @@ export const DEFAULT_META = Object.freeze({
 export const WEEKDAYS = Object.freeze([
   "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"
 ]);
+
+
+export const DEFAULT_LAYOUT = Object.freeze({
+  minRows: DEFAULT_MIN_ROWS,
+  orientation: "portrait",
+  output: "groups",
+  attendanceColumns: 10,
+  showNotes: false,
+  showUpdatedAt: true,
+  monochrome: false
+});

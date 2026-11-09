@@ -21,7 +21,7 @@ describe("atomare Persistenz", () => {
     expect(emptyState).toMatchObject({
       version: APP_STATE_VERSION,
       revision: 0,
-      plans: [expect.objectContaining({ layout: { minRows: DEFAULT_MIN_ROWS } })]
+      plans: [expect.objectContaining({ layout: expect.objectContaining({ minRows: DEFAULT_MIN_ROWS }) })]
     });
     expect(emptyState.plans).toHaveLength(1);
     expect(emptyState.activePlanId).toBe(emptyState.plans[0].id);
@@ -92,7 +92,7 @@ describe("Migration", () => {
     expect(state).toMatchObject({
       version: APP_STATE_VERSION,
       activePlanId: "plan-v2",
-      plans: [expect.objectContaining({ layout: { minRows: 9 } })]
+      plans: [expect.objectContaining({ layout: expect.objectContaining({ minRows: 9 }) })]
     });
     expect(state.plans[0].meta.term).toBe("2025");
     expect(state.plans[0].groups[0].students[0].id).toEqual(expect.any(String));
