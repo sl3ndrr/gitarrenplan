@@ -7,7 +7,7 @@ test("Umsortieren gleitet und räumt Animationszustände auf", async ({ page }) 
   await seedState(page, createState(2));
   await page.goto("/");
   await page.evaluate(() => {
-    const observer = new MutationObserver(() => {
+    const observer = new window.MutationObserver(() => {
       if (document.querySelector('[data-motion="moving"]')) document.body.dataset.motionObserved = "yes";
     });
     observer.observe(document.getElementById("pages"), { subtree: true, attributes: true, childList: true });
@@ -29,10 +29,10 @@ test("Grenzplan mit 100 Gruppen und 5000 Teilnehmenden lässt sich bearbeiten", 
   const loadMilliseconds = Date.now() - started;
   const result = await page.evaluate(async () => {
     const [{ dispatch }, { flushRender }] = await Promise.all([import("/js/state.js"), import("/js/render.js")]);
-    const start = performance.now();
+    const start = window.performance.now();
     const moved = dispatch({ type: "group/move", payload: { groupId: "group-1", toIndex: 1 } });
     flushRender();
-    const duration = performance.now() - start;
+    const duration = window.performance.now() - start;
     return { ok: moved.ok, duration, animated: Boolean(document.querySelector("[data-motion]")) };
   });
   expect(result.ok).toBe(true);
