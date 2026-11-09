@@ -7,7 +7,7 @@ import {
 import { paginateAttendance, paginateWeek, renderAttendance, renderWeek } from "./print-formats.js";
 import { paginateGroups } from "./pagination.js";
 import { getActivePlan, getActivePlanId, getMinRows, getPlans } from "./state.js";
-import { capturePageMotion, playPageMotion } from "./ui/motion.js";
+import { capturePageMotion, motionAllowed, playPageMotion } from "./ui/motion.js";
 import { escapeHtml, formatDate } from "./utils.js";
 
 const ALL_RENDER_SCOPES = Object.freeze({
@@ -20,6 +20,7 @@ const ALL_RENDER_SCOPES = Object.freeze({
 let pendingRender = {};
 let scheduledFrame = null;
 let scheduledWithTimeout = false;
+let planTransition = null;
 let proofPresentation = false;
 let printPresentation = false;
 
@@ -68,7 +69,47 @@ function cancelFrame(handle) {
   }
 }
 
+function completePlanTransition({ commit = true } = {}) {
+  if (!planTransition) return false;
+  const record = planTransition;
+  planTransition = null;
+  record.container.classList.remove("view-transition-plan");
+  record.transition.skipTransition();
+  if (commit) record.commit();
+  else record.cancelled = true;
+  return true;
+}
+
+function renderScheduledScope(scope) {
+  const container = document.getElementById("pages");
+  if (scope.motion !== "plan/select" || !motionAllowed() || typeof document.startViewTransition !== "function"
+    || !container?.clientWidth || container.closest(".print-proof") || container.childElementCount > 30) {
+    performRender(scope);
+    return;
+  }
+  const record = {
+    container,
+    rendered: false,
+    cancelled: false,
+    commit() {
+      if (record.cancelled || record.rendered) return;
+      record.rendered = true;
+      performRender(scope);
+    }
+  };
+  container.classList.add("view-transition-plan");
+  record.transition = document.startViewTransition(record.commit);
+  planTransition = record;
+  record.transition.finished.catch(record.commit).finally(() => {
+    if (planTransition === record) {
+      planTransition = null;
+      container.classList.remove("view-transition-plan");
+    }
+  });
+}
+
 export function requestRender(scope = ALL_RENDER_SCOPES) {
+  completePlanTransition();
   mergeRenderScope(pendingRender, normalizeScope(scope));
   if (scheduledFrame !== null) {
     return;
@@ -77,13 +118,14 @@ export function requestRender(scope = ALL_RENDER_SCOPES) {
     scheduledFrame = null;
     const nextScope = pendingRender;
     pendingRender = {};
-    performRender(nextScope);
+    renderScheduledScope(nextScope);
   });
 }
 
 export function flushRender() {
+  const transitioned = completePlanTransition();
   if (scheduledFrame === null) {
-    return false;
+    return transitioned;
   }
   cancelFrame(scheduledFrame);
   scheduledFrame = null;
@@ -94,6 +136,7 @@ export function flushRender() {
 }
 
 export function disposeRenderScheduler() {
+  completePlanTransition({ commit: false });
   if (scheduledFrame !== null) {
     cancelFrame(scheduledFrame);
   }
@@ -103,6 +146,7 @@ export function disposeRenderScheduler() {
 
 // Synchroner Kompatibilitätseinstieg für Initialrender und ältere Aufrufer.
 export function render(scope = ALL_RENDER_SCOPES) {
+  completePlanTransition();
   const nextScope = mergeRenderScope({}, normalizeScope(scope));
   if (scheduledFrame !== null) {
     cancelFrame(scheduledFrame);

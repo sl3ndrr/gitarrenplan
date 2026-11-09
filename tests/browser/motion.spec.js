@@ -41,3 +41,23 @@ test("Grenzplan mit 100 Gruppen und 5000 Teilnehmenden lässt sich bearbeiten", 
   mkdirSync("output/evidence", { recursive: true });
   writeFileSync("output/evidence/grenzplan-performance.json", JSON.stringify({ loadMilliseconds, ...result }, null, 2));
 });
+
+test("ein synchroner Render zeigt beim Planwechsel sofort den neuen Plan", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const state = createState(1);
+  const other = createState(1).plans[0];
+  other.id = "zweiter-plan";
+  other.name = "Zweiter Plan";
+  other.meta.title = "Zweites Dokument";
+  state.plans.push(other);
+  await seedState(page, state);
+  await page.goto("/");
+  await page.locator("#planSelect").selectOption({ value: "zweiter-plan" });
+  const title = await page.evaluate(async () => {
+    const { flushRender } = await import("/js/render.js");
+    flushRender();
+    return document.querySelector(".preview-document-title").textContent;
+  });
+  expect(title).toBe("Zweites Dokument");
+  await expect(page.locator(".view-transition-plan")).toHaveCount(0);
+});
