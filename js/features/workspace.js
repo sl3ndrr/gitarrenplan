@@ -73,6 +73,7 @@ export function initialiseWorkspace() {
   let proof = false;
   let scale = 1;
   let current = 0;
+  let navigationUntil = 0;
   let frames = [];
   const save = () => safeSetItem(VIEW_KEY, JSON.stringify({ zoom, spread }));
 
@@ -92,7 +93,7 @@ export function initialiseWorkspace() {
     const available = Math.max(1, pages.clientWidth - 2 * PAGE_GAP);
     const width = fluid ? available : paper.offsetWidth;
     if (!width) return;
-    const automaticSpread = zoom === "fit" && window.innerWidth >= 1900 && available >= width * 1.5 + PAGE_GAP;
+    const automaticSpread = zoom === "fit" && window.innerWidth >= 1900 && available >= width * 1.44 + PAGE_GAP;
     const columns = frames.length > 1 && window.innerWidth >= 1180 && (spread ?? automaticSpread) ? 2 : 1;
     const fit = (available - (columns - 1) * PAGE_GAP) / (columns * width);
     scale = fluid ? 1 : zoom === "fit" ? Math.max(0.3, Math.min(1.5, fit)) : zoom;
@@ -113,6 +114,7 @@ export function initialiseWorkspace() {
   const visible = new Map();
   const intersection = typeof window.IntersectionObserver === "function" ? new window.IntersectionObserver((entries) => {
     entries.forEach((entry) => visible.set(entry.target, entry.intersectionRatio));
+    if (Date.now() < navigationUntil) return;
     const maximum = Math.max(0, ...visible.values());
     if (!maximum || visible.get(frames[current]) === maximum) return;
     updateNavigator(frames.findIndex((frame) => visible.get(frame) === maximum));
@@ -193,8 +195,10 @@ export function initialiseWorkspace() {
   listen(get("zoomOut"), "click", () => changeZoom(-1));
   listen(get("zoomIn"), "click", () => changeZoom(1));
   listen(navigation, "change", () => {
+    navigationUntil = Date.now() + 600;
     updateNavigator(Number(navigation.value));
-    frames[current]?.scrollIntoView({ block: "start", inline: "nearest" });
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    frames[current]?.scrollIntoView({ block: "start", inline: "nearest", behavior: reduce ? "instant" : "smooth" });
   });
   listen(pages, "wheel", (event) => {
     if (!(event.ctrlKey || event.metaKey) || inputFocused(event)) return;
