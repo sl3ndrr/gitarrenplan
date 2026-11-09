@@ -1,3 +1,4 @@
+import { initialiseBackupNotices } from "./features/backup-notices.js";
 import { initialiseDataTransfer } from "./features/data-transfer.js";
 import { initialiseEditor } from "./features/editor.js";
 import {
@@ -83,7 +84,8 @@ function handleStateEvent(event) {
 
 export function bootstrap() {
   cleanupApp?.();
-  initialiseState(loadState());
+  const issues = [];
+  initialiseState(loadState(undefined, (issue) => issues.push(issue)));
 
   const cleanups = [
     subscribe(handleStateEvent),
@@ -92,6 +94,7 @@ export function bootstrap() {
     initialisePlanActions(),
     initialiseScheduleActions(),
     initialiseDataTransfer(),
+    initialiseBackupNotices(issues),
     initialiseLifecycle()
   ];
 

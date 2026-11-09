@@ -219,23 +219,19 @@ function renderPages() {
 }
 
 function renderMainHeader(meta) {
-  const hasTerm = Boolean(meta.term && meta.term.trim());
+  const info = [["Lehrkraft", meta.teacher], ["Ort", meta.location], ["Schuljahr / Halbjahr", meta.term]]
+    .filter(([, value]) => value);
+  const boxes = info.map(([label, value]) =>
+    '<div class="info-box"><span class="info-label">' + label + '</span><span class="info-value">'
+      + escapeHtml(value) + "</span></div>"
+  ).join("");
   return [
     '<header class="preview-header">',
     '<div class="header-inner">',
     '<h3 class="preview-document-title">' + escapeHtml(meta.title) + "</h3>",
     '<div class="guitar-bg" aria-hidden="true">🎸</div>',
-    "</div>",
-    "</header>",
-    '<div class="info-grid ' + (hasTerm ? "has-term" : "") + '">',
-    '<div class="info-box"><span class="info-label">Lehrkraft</span>',
-    '<span class="info-value">' + escapeHtml(meta.teacher) + "</span></div>",
-    '<div class="info-box"><span class="info-label">Ort</span>',
-    '<span class="info-value">' + escapeHtml(meta.location) + "</span></div>",
-    hasTerm
-      ? '<div class="info-box"><span class="info-label">Schuljahr / Halbjahr</span><span class="info-value">' + escapeHtml(meta.term) + "</span></div>"
-      : "",
-    "</div>"
+    "</div></header>",
+    boxes ? '<div class="info-grid" data-info-count="' + info.length + '">' + boxes + "</div>" : ""
   ].join("");
 }
 
@@ -256,7 +252,9 @@ function renderContinuationHeader(meta) {
     '<div class="continuation-title"><strong>' + escapeHtml(meta.title) + "</strong>",
     hasTerm ? "<span>" + escapeHtml(meta.term) + "</span>" : "",
     "</div>",
-    '<div class="continuation-meta">' + escapeHtml(meta.teacher) + "<br>" + escapeHtml(meta.location) + "</div>",
+    meta.teacher || meta.location
+      ? '<div class="continuation-meta">' + [meta.teacher, meta.location].filter(Boolean).map(escapeHtml).join("<br>") + "</div>"
+      : "",
     "</div>"
   ].join("");
 }
@@ -396,8 +394,9 @@ function renderStudentRow(student, groupId, index) {
     "<tr>",
     '<td class="student-name"><span class="print-only">' + labelName + "</span>",
     '<input type="text" class="student-name-input editable inline-editor no-print" value="' + labelName + '" maxlength="' + DATA_LIMITS.personNameLength + '" data-inline-key="' + nameKey + '" data-inline-type="student" data-field="name" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Name von Schüler ' + (index + 1) + ' bearbeiten"></td>',
-    '<td class="student-class"><span class="class-badge print-only">' + escapeHtml(student.className) + "</span>",
-    '<input type="text" class="class-badge editable inline-editor no-print" value="' + escapeHtml(student.className) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + classKey + '" data-inline-type="student" data-field="className" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Schüler ' + (index + 1) + ' bearbeiten"></td>',
+    '<td class="student-class">',
+    student.className ? '<span class="class-badge print-only">' + escapeHtml(student.className) + "</span>" : "",
+    '<input type="text" class="class-badge editable inline-editor no-print" placeholder="Klasse" value="' + escapeHtml(student.className) + '" maxlength="' + DATA_LIMITS.metadataLength + '" data-inline-key="' + classKey + '" data-inline-type="student" data-field="className" data-group-id="' + groupId + '" data-student-id="' + studentId + '" aria-label="Klasse von Schüler ' + (index + 1) + ' bearbeiten"></td>',
     '<td class="student-actions no-print">',
     renderActionMenu([
     '<button class="button icon-button" aria-label="' + labelName + ' nach oben" title="Nach oben" data-action="student-up" data-group-id="' + groupId + '" data-student-id="' + studentId + '"><span aria-hidden="true">↑</span><span>Nach oben</span></button>',

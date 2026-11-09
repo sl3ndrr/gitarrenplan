@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { APP_STATE_VERSION } from "../js/config.js";
 import { initialiseEditor } from "../js/features/editor.js";
 import {
   addGroup,
@@ -22,7 +21,7 @@ import { mountAppFixture } from "./dom-fixture.js";
 
 function createState() {
   return normalizeAppState({
-    version: APP_STATE_VERSION,
+    version: 3,
     revision: 0,
     updatedAt: "2026-01-01T00:00:00.000Z",
     activePlanId: "plan-1",

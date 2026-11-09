@@ -80,10 +80,12 @@
   margin-bottom: var(--spacing-section);
 }
 
-.info-grid.has-term {
+.info-grid[data-info-count="3"] {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6mm;
 }
+
+.info-grid[data-info-count="1"] { grid-template-columns: minmax(0, 1fr); }
 
 .info-box {
   min-width: 0;
@@ -548,3 +550,6 @@ input[type="text"].inline-editor {
   border-bottom-color: #f1f5f9;
 }
 .document-summary { font-weight: 600; }
+
+.student-class input.class-badge:placeholder-shown:not(:focus, :hover) { background: transparent; }
+.student-class input.class-badge:placeholder-shown:not(:focus, :hover)::placeholder { color: transparent; }

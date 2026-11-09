@@ -49,7 +49,7 @@ function clearPlan() {
   const plan = getActivePlan();
   showModal({
     title: "Plan leeren",
-    message: "Plan „" + plan.name + "“ vollständig leeren? Alle Gruppen und Schüler werden entfernt.",
+    message: "Plan „" + plan.name + "“ vollständig leeren? Alle Gruppen und Teilnehmenden werden entfernt. Name, Angaben und Gestaltung bleiben erhalten.",
     type: "confirm",
     confirmLabel: "Jetzt leeren",
     confirmClass: "btn-danger",
@@ -63,7 +63,7 @@ function resetPlan() {
   const plan = getActivePlan();
   showModal({
     title: "Plan zurücksetzen",
-    message: "Plan „" + plan.name + "“ auf den leeren Grundzustand zurücksetzen?",
+    message: "Plan „" + plan.name + "“ zurücksetzen? Alle Gruppen und Teilnehmenden werden entfernt. Name, Angaben, Gestaltung und Mindestzeilen werden auf Standardwerte gesetzt.",
     type: "confirm",
     confirmLabel: "Zurücksetzen",
     confirmClass: "btn-danger",

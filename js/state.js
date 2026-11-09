@@ -35,8 +35,7 @@ function deepFreeze(value) {
 function domainContent(state) {
   return JSON.stringify({
     plans: state.plans,
-    activePlanId: state.activePlanId,
-    minRows: state.minRows
+    activePlanId: state.activePlanId
   });
 }
 
@@ -194,7 +193,7 @@ export function getActivePlan() {
 }
 
 export function getMinRows() {
-  return appState.minRows;
+  return appState.plans.find((plan) => plan.id === appState.activePlanId).layout.minRows;
 }
 
 export function getUndoDepth() {

@@ -110,7 +110,7 @@ export function initialiseEditor() {
 
   const minRows = document.getElementById("minRows");
   cleanups.push(bindDebouncedTextInput(minRows, () => ({
-    key: "state:minRows",
+    key: "plan:" + getActivePlanId() + ":minRows",
     getValue: () => String(getMinRows()),
     createCommand: (value) => ({
       type: "minRows/set",
